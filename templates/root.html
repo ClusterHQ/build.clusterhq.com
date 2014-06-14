@@ -1,0 +1,19 @@
+{% extends 'layout.html' %}
+{% import 'forms.html' as forms %}
+
+{% block content %}
+
+<h1>Welcome to the Buildbot
+{%- if title -%}
+  &nbsp;for the&nbsp;
+  {%- if title_url -%}
+    <a href="{{ title_url }}">{{ title }}</a>
+  {%- else -%}
+    {{ title }}
+  {%- endif -%}
+&nbsp;project
+{%- endif -%}
+!
+</h1>
+
+{% endblock %}

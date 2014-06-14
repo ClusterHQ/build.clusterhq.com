@@ -1,0 +1,5 @@
+#!/bin/sh
+docker.io build -t registry.flocker.hybridcluster.net:5000/flocker/buildmaster .
+docker.io push registry.flocker.hybridcluster.net:5000/flocker/buildmaster
+docker.io build -t registry.flocker.hybridcluster.net:5000/flocker/buildslave-ubuntu slave
+docker.io push registry.flocker.hybridcluster.net:5000/flocker/buildslave-ubuntu
