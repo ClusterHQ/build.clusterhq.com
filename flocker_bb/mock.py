@@ -56,6 +56,7 @@ class Mock(ShellCommand):
     def __init__(self,
                  root=None,
                  resultdir=None,
+                 extraOptions=None,
                  **kwargs):
         """
         Creates the Mock object.
@@ -79,6 +80,9 @@ class Mock(ShellCommand):
         self.command = ['mock', '--root', self.root]
         if self.resultdir:
             self.command += ['--resultdir', self.resultdir]
+
+        if extraOptions:
+            self.command += extraOptions
 
     def start(self):
         """
