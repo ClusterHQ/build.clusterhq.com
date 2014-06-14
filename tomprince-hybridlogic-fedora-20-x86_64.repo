@@ -1,0 +1,6 @@
+[tomprince-hybridlogic]
+name=Copr repo for hybridlogic owned by tomprince
+baseurl=http://copr-be.cloud.fedoraproject.org/results/tomprince/hybridlogic/fedora-$releasever-$basearch/
+skip_if_unavailable=True
+gpgcheck=0
+enabled=1
