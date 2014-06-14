@@ -405,14 +405,18 @@ class EC2LatentBuildSlave(AbstractLatentBuildSlave):
             return None, None, None
 
     def _wait_for_request(self, reservation):
-        log.msg('%s %s requesting spot instance' %
-                (self.__class__.__name__, self.slavename))
+        log.msg(format='%(class_)s %(slavename)s requesting spot instance (request %(request)s).',
+                class_=self.__class__.__name__, slavename=self.slavename,
+                request=reservation.id)
         duration = 0
         interval = self._poll_resolution
-        requests = self.conn.get_all_spot_instance_requests(
-            request_ids=[reservation.id])
-        request = requests[0]
-        request_status = request.status.code
+        try:
+            requests = self.conn.get_all_spot_instance_requests(
+                request_ids=[reservation.id])
+            request = requests[0]
+            request_status = request.status.code
+        except boto.exception.EC2ResponseError:
+            request_status = SPOT_REQUEST_PENDING_STATES[0]
         while request_status in SPOT_REQUEST_PENDING_STATES:
             time.sleep(interval)
             duration += interval
@@ -420,10 +424,13 @@ class EC2LatentBuildSlave(AbstractLatentBuildSlave):
                 log.msg('%s %s has waited %d minutes for spot request %s' %
                         (self.__class__.__name__, self.slavename, duration // 60,
                          request.id))
-            requests = self.conn.get_all_spot_instance_requests(
-                request_ids=[request.id])
-            request = requests[0]
-            request_status = request.status.code
+            try:
+                requests = self.conn.get_all_spot_instance_requests(
+                    request_ids=[reservation.id])
+                request = requests[0]
+                request_status = request.status.code
+            except boto.exception.EC2ResponseError:
+                request_status = SPOT_REQUEST_PENDING_STATES[0]
         if request_status == FULFILLED:
             minutes = duration // 60
             seconds = duration % 60
