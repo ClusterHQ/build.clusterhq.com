@@ -61,6 +61,9 @@ def _flockerTests(kwargs, tests=None):
             tests=tests,
             testpath=None,
             workdir=TMPDIR,
+            env={
+                b"PATH": [Interpolate(path.join(VIRTUALENV_DIR, "bin")), "${PATH}"],
+                },
             **kwargs),
         ShellCommand(command=[b"rm", b"-rf", TMPDIR],
                      alwaysRun=True,
