@@ -3,10 +3,11 @@ from zope.interface import implementer
 from buildbot.steps.shell import ShellCommand
 from buildbot.steps.python_twisted import Trial
 from buildbot.steps.python import PyFlakes, Sphinx
-from buildbot.steps.transfer import DirectoryUpload
+from buildbot.steps.transfer import DirectoryUpload, FileUpload
 from buildbot.steps.master import MasterShellCommand
 from buildbot.steps.source.git import Git
-from buildbot.process.properties import Interpolate, IRenderable
+from buildbot.process.properties import Interpolate, renderer, Property
+from buildbot.steps.package.rpm import RpmLint
 
 from os import path
 
@@ -16,6 +17,8 @@ from ..steps import (
         GITHUB,
         TWISTED_GIT,
         )
+
+from ..mock import MockBuildSRPM, MockRebuild
 
 # This is where temporary files associated with a build will be dumped.
 TMPDIR = Interpolate(b"%(prop:workdir)s/tmp-%(prop:buildnumber)s")
@@ -208,7 +211,6 @@ def makeMetaFactory():
 
 
 
-@implementer(IRenderable)
 
 
 def sphinxBuild(builder, workdir=b"build/docs"):
@@ -293,6 +295,69 @@ def makeInternalDocsFactory():
     return factory
 
 
+@renderer
+def underscoreVersion(props):
+    return props.getProperty('version').replace('-', '_')
+
+def makeRPMFactory():
+    branch = "%(src:flocker:branch)s"
+    revision = "flocker-%(prop:buildnumber)s"
+    factory = getFlockerFactory(python="python2.7")
+    factory.addStep(ShellCommand(
+        name='build-sdist',
+        description=["building", "sdist"],
+        descriptionDone=["build", "sdist"],
+        command=[
+            Interpolate(path.join(VIRTUALENV_DIR, "bin/python")),
+            "setup.py", "sdist",
+            ],
+        workdir=TMPDIR,
+        haltOnFailure=True))
+    factory.addStep(SetPropertyFromCommand(
+        command=[b"cat", b"src/hybridcluster/version"],
+        name='check-version',
+        description=['checking', 'version'],
+        descriptionDone=['checking', 'version'],
+        property='version'
+        ))
+    factory.addStep(MockBuildSRPM(
+        root='fedora-20-x86_64',
+        resultdir='dist',
+        spec='python-flocker.spec',
+        sources='dist',
+        extraOptions=["-D", Interpolate('flocker_version %(prop:version)s')],
+        ))
+    factory.addStep(FileUpload(
+        Interpolate('dist/python-flocker-%(kw:version)s-1.fc20.srpm', version=underscoreVersion),
+        Interpolate(b"private_html/%s/%s/" % (branch, revision)),
+        url=Interpolate(
+            b"http://build.hybridcluster.net/private/%s/%s/python-flocker-%%(kw:version)s-1.fc20.srpm" % (
+                branch, revision)),
+        name="upload-srpm",
+        ))
+    factory.addStep(MockRebuild(
+        root='fedora-20-x86_64',
+        resultdir='dist',
+        srpm=Interpolate('dist/python-flocker-%(kw:version)s-1.fc20.srpm', version=underscoreVersion),
+        spec='python-flocker.spec',
+        sources='dist',
+        extraOptions=["-D", Interpolate('flocker_version %(prop:version)s')],
+        ))
+    factory.addStep(FileUpload(
+        Interpolate('dist/python-flocker-%(kw:version)s-1.fc20.noarch.rpm', version=underscoreVersion),
+        Interpolate(b"private_html/%s/%s/" % (branch, revision)),
+        url=Interpolate(
+            b"http://build.hybridcluster.net/private/%s/%s/change" % (
+                branch, revision)),
+        name="upload-rpm",
+        ))
+    factory.addStep(RpmLint([
+        Interpolate('dist/python-flocker-%(kw:version)s-1.fc20.srpm', version=underscoreVersion),
+        Interpolate('dist/python-flocker-%(kw:version)s-1.fc20.noarch.rpm', version=underscoreVersion),
+        ]))
+
+
+
 from buildbot.config import BuilderConfig
 from buildbot.schedulers.basic import AnyBranchScheduler
 from buildbot.schedulers.forcesched import (
@@ -324,6 +389,11 @@ def getBuilders(slavenames):
                       slavenames=slavenames,
                       category='flocker',
                       factory=makeInternalDocsFactory(),
+                      nextSlave=idleSlave),
+        BuilderConfig(name='flocker-rpms',
+                      slavenames=slavenames,
+                      category='flocker',
+                      factory=makeRPMFactory(),
                       nextSlave=idleSlave),
         ]
 
