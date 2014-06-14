@@ -19,7 +19,6 @@ from ..steps import (
 
 # This is where temporary files associated with a build will be dumped.
 TMPDIR = Interpolate(b"%(prop:workdir)s/tmp-%(prop:buildnumber)s")
-PIP_DOWNLOAD_CACHE = Interpolate(b"%(prop:workdir)s/../pip-download-cache")
 
 
 def getFlockerFactory(python):
@@ -35,7 +34,6 @@ def pip(what, packages):
         descriptionDone=["install", what],
         command=[Interpolate(path.join(VIRTUALENV_DIR, "bin/pip")),
                  "install",
-                 "--download-cache", PIP_DOWNLOAD_CACHE,
                  packages,
                  ],
         haltOnFailure=True)
@@ -155,7 +153,6 @@ def installTwistedTrunk():
                  "install",
                  "--no-index", '--use-wheel',
                  "-f", "http://data.hybridcluster.net/python/",
-                 "--download-cache", PIP_DOWNLOAD_CACHE,
                  "."
                  ],
         workdir='Twisted',
