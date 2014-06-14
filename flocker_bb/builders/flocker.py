@@ -298,24 +298,33 @@ from buildbot.schedulers.basic import AnyBranchScheduler
 from buildbot.schedulers.forcesched import (
     CodebaseParameter, StringParameter, ForceScheduler, FixedParameter)
 
+def idleSlave(builder, slaves):
+    idle = [slave for slave in slaves if slave.isAvailable()]
+    if idle:
+        return idle[0]
+
 def getBuilders(slavenames):
     return [
         BuilderConfig(name='flocker',
                       slavenames=slavenames,
                       category='flocker',
-                      factory=makeFactory(b'python2.7')),
+                      factory=makeFactory(b'python2.7'),
+                      nextSlave=idleSlave),
         BuilderConfig(name='flocker-twisted-trunk',
                       slavenames=slavenames,
                       category='flocker',
-                      factory=makeFactory(b'python2.7', twistedTrunk=True)),
+                      factory=makeFactory(b'python2.7', twistedTrunk=True),
+                      nextSlave=idleSlave),
         BuilderConfig(name='flocker-coverage',
                       slavenames=slavenames,
                       category='flocker',
-                      factory=makeMetaFactory()),
+                      factory=makeMetaFactory(),
+                      nextSlave=idleSlave),
         BuilderConfig(name='flocker-docs',
                       slavenames=slavenames,
                       category='flocker',
-                      factory=makeInternalDocsFactory()),
+                      factory=makeInternalDocsFactory(),
+                      nextSlave=idleSlave),
         ]
 
 BUILDERS = [
