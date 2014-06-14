@@ -332,6 +332,7 @@ class EC2LatentBuildSlave(AbstractLatentBuildSlave):
                  instance.id, goal, duration // 60, duration % 60))
 
     def _request_spot_instance(self):
+        image = self.get_image()
         timestamp_yesterday = time.gmtime(int(time.time() - 86400))
         spot_history_starttime = time.strftime(
             '%Y-%m-%dT%H:%M:%SZ', timestamp_yesterday)
@@ -359,7 +360,7 @@ class EC2LatentBuildSlave(AbstractLatentBuildSlave):
             log.msg('%s %s requesting spot instance with price %0.2f.' %
                     (self.__class__.__name__, self.slavename, target_price))
         reservations = self.conn.request_spot_instances(
-            target_price, self.ami, key_name=self.keypair_name,
+            target_price, image.id, key_name=self.keypair_name,
             security_groups=[
                 self.security_name],
             instance_type=self.instance_type,
@@ -369,7 +370,7 @@ class EC2LatentBuildSlave(AbstractLatentBuildSlave):
         instance_id = request.instance_id
         reservations = self.conn.get_all_instances(instance_ids=[instance_id])
         self.instance = reservations[0].instances[0]
-        return self._wait_for_instance(self.get_image())
+        return self._wait_for_instance(image)
 
     def _wait_for_instance(self, image):
         log.msg('%s %s waiting for instance %s to start' %
