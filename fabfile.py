@@ -28,21 +28,6 @@ def startBuildmaster():
         '--volumes-from', 'buildmaster-data',
         IMAGE))
 
-def startBuildslave(name, password, githubToken):
-    IMAGE = 'registry.flocker.hybridcluster.net:5000/flocker/buildslave-ubuntu'
-    pull(IMAGE)
-    container = 'buildslave-%s' % (name,)
-    removeContainer(container)
-    sudo(cmd(
-        'docker.io', 'run', '-d',
-        '--name', container,
-        '--link', 'buildmaster:buildmaster',
-        '-e', 'SLAVENAME=%s' % (name,),
-        '-e', 'SLAVEPASSWD=%s' % (password,),
-        '-e', 'GITHUB_TOKEN=%s' % (githubToken,),
-        IMAGE))
-
-
 @task
 def start():
     sudo('apt-get update', pty=False)
@@ -52,18 +37,9 @@ def start():
     if not containerExists('buildmaster-data'):
         sudo('docker.io run --name buildmaster-data -v /srv/buildmaster/data busybox /bin/true')
     startBuildmaster()
-    startSlaves()
 
 
 @task
 def update():
     removeContainer('buildmaster')
     startBuildmaster()
-    # This regenerates the links to the buildmaster.
-    startSlaves()
-
-@task
-def startSlaves():
-    slaves = json.load(open('slaves.json'))
-    for slave, args in slaves.iteritems():
-        startBuildslave(name=slave, password=args['password'], githubToken=GITHUB_TOKEN)

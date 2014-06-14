@@ -24,15 +24,36 @@ PASSWORD = privateData['auth']['password'].encode("utf-8")
 ####### BUILDSLAVES
 
 from buildbot.buildslave import BuildSlave
-from twisted.python.filepath import FilePath
-import json
-slaves = json.loads(FilePath(__file__).sibling('slaves.json').getContent())
-c['slaves'] = [
-        BuildSlave(name, password=args['password'])
-        for name, args in slaves.iteritems()
-        ]
+from flocker_bb import password
+from flocker_bb.ec2_buildslave import EC2LatentBuildSlave
 
-FLOCKER_SLAVES = slaves.keys()
+slaves = [('slave-%d' % (i,), password.generate(32))
+          for i in range(2)]
+cloudInit = FilePath(__file__).sibling("slave").child("cloud-init.sh").getContent()
+
+c['slaves'] = [
+        EC2LatentBuildSlave(
+            name, password,
+            'm1.medium',
+            valid_ami_owners=[121466501720],
+            valid_ami_location_regex=r'.*/fedora-buildslave-base',
+            region='us-west-2',
+            security_name='ssh',
+            keypair_name='hybrid-master',
+            identifier=privateData['aws']['identifier'],
+            secret_identifier=privateData['aws']['secret_identifier'],
+            user_data=cloudInit % {
+                "token": privateData['github']['token'],
+                "name": name,
+                "password": password,
+                },
+            spot_instance=True,
+            max_spot_price=0.05,
+            )
+        for name, password in slaves]
+
+
+FLOCKER_SLAVES = [name for name, password in slaves]
 
 # 'slavePortnum' defines the TCP port to listen on for connections from slaves.
 # This must match the value configured into the buildslaves (with their
