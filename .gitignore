@@ -1,3 +1,4 @@
 *.pyc
 data
 private_html
+/config.yml

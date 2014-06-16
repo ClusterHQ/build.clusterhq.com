@@ -1,0 +1,11 @@
+auth:
+    user: "<web user>"
+    password: "<web password>"
+zulip:
+    user: "<zulip user>"
+    password: "<zulip password>"
+aws:
+    identifier: "<aws user>"
+    secret_identifier: "<aws password>"
+github:
+    token: "<github api token>"
