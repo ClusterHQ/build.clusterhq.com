@@ -20,5 +20,19 @@ metadata_expire=10
 EOF
 
 yum upgrade -y
-yum install -y buildbot-slave git python-devel python-tox python-virtualenv mock rpmdev zfs rpm-build @buildsys-build
-yum clean -y
+yum install -y \
+	buildbot-slave \
+	git \
+	python-devel \
+	python-tox \
+	python-virtualenv \
+	mock \
+	rpmdev \
+	zfs \
+	rpm-build \
+	docker-io \
+	geard \
+	@buildsys-build
+yum clean -y all
+
+systemctl enable docker
