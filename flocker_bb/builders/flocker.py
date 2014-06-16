@@ -118,7 +118,7 @@ def _flockerCoverage():
             b"change-coverage-annotations",
             Interpolate(b"private_html/%s/%s/change" % (branch, revision)),
             url=Interpolate(
-                b"http://build.hybridcluster.net/private/%s/%s/change" % (
+                b"/private/%s/%s/change" % (
                     branch, revision)),
             name="upload-coverage-annotations",
             ),
@@ -135,7 +135,7 @@ def _flockerCoverage():
             b"html-coverage",
             Interpolate(b"private_html/%s/%s/complete" % (branch, revision)),
             url=Interpolate(
-                b"http://build.hybridcluster.net/private/%s/%s/complete" % (
+                b"/private/%s/%s/complete" % (
                     branch, revision)),
             name="upload-coverage-html",
             ),
@@ -275,7 +275,7 @@ def makeInternalDocsFactory():
         b"docs/_build/html",
         Interpolate(b"private_html/%s/%s/docs" % (branch, revision)),
         url=Interpolate(
-            b"http://build.hybridcluster.net/private/%s/%s/docs" % (
+            b"/private/%s/%s/docs" % (
                 branch, revision)),
         name="upload-html",
         ))
