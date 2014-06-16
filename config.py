@@ -35,6 +35,7 @@ c['slaves'] = [
         EC2LatentBuildSlave(
             name, password,
             'm1.medium',
+            build_wait_timeout=50*60,
             valid_ami_owners=[121466501720],
             valid_ami_location_regex=r'.*/fedora-buildslave-base',
             region='us-west-2',
