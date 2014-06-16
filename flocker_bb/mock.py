@@ -183,3 +183,10 @@ class MockRebuild(Mock):
             config.error("You must specify a srpm")
 
         self.command += ['--rebuild', self.srpm]
+
+
+    def commandComplete(self, cmd):
+        out = cmd.logs['build.log'].getText()
+        m = re.search(r"Wrote: .*/([^/]*.src.rpm)", out)
+        if m:
+            self.setProperty("rpm", m.group(1), 'MockRebuild')
