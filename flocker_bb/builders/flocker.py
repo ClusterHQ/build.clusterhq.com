@@ -1,6 +1,6 @@
 from zope.interface import implementer
 
-from buildbot.steps.shell import ShellCommand
+from buildbot.steps.shell import ShellCommand, SetPropertyFromCommand
 from buildbot.steps.python_twisted import Trial
 from buildbot.steps.python import PyFlakes, Sphinx
 from buildbot.steps.transfer import DirectoryUpload, FileUpload
@@ -311,10 +311,12 @@ def makeRPMFactory():
             Interpolate(path.join(VIRTUALENV_DIR, "bin/python")),
             "setup.py", "sdist",
             ],
-        workdir=TMPDIR,
         haltOnFailure=True))
     factory.addStep(SetPropertyFromCommand(
-        command=[b"cat", b"src/hybridcluster/version"],
+        command=[
+            Interpolate(path.join(VIRTUALENV_DIR, "bin/python")),
+            "setup.py", "--version",
+            ],
         name='check-version',
         description=['checking', 'version'],
         descriptionDone=['checking', 'version'],
@@ -328,33 +330,35 @@ def makeRPMFactory():
         extraOptions=["-D", Interpolate('flocker_version %(prop:version)s')],
         ))
     factory.addStep(FileUpload(
-        Interpolate('dist/python-flocker-%(kw:version)s-1.fc20.srpm', version=underscoreVersion),
-        Interpolate(b"private_html/%s/%s/" % (branch, revision)),
+        Interpolate('dist/%(prop:srpm)s', version=underscoreVersion),
+        Interpolate(b"private_html/%s/%s/%%(prop:srpm)s" % (branch, revision)),
         url=Interpolate(
-            b"http://build.hybridcluster.net/private/%s/%s/python-flocker-%%(kw:version)s-1.fc20.srpm" % (
+            b"/private/%s/%s/%%(prop:srpm)s" % (
                 branch, revision)),
         name="upload-srpm",
         ))
     factory.addStep(MockRebuild(
         root='fedora-20-x86_64',
         resultdir='dist',
-        srpm=Interpolate('dist/python-flocker-%(kw:version)s-1.fc20.srpm', version=underscoreVersion),
-        spec='python-flocker.spec',
-        sources='dist',
+        srpm=Interpolate('dist/%(prop:srpm)s'),
         extraOptions=["-D", Interpolate('flocker_version %(prop:version)s')],
         ))
     factory.addStep(FileUpload(
-        Interpolate('dist/python-flocker-%(kw:version)s-1.fc20.noarch.rpm', version=underscoreVersion),
-        Interpolate(b"private_html/%s/%s/" % (branch, revision)),
+        Interpolate('dist/%(prop:rpm)s', version=underscoreVersion),
+        Interpolate(b"private_html/%s/%s/%%(prop:rpm)s" % (branch, revision)),
         url=Interpolate(
-            b"http://build.hybridcluster.net/private/%s/%s/change" % (
-                branch, revision)),
+            b"/private/%s/%s/%%(prop:rpm)s" % (
+                branch, revision),
+            version=underscoreVersion
+            ),
         name="upload-rpm",
         ))
     factory.addStep(RpmLint([
-        Interpolate('dist/python-flocker-%(kw:version)s-1.fc20.srpm', version=underscoreVersion),
-        Interpolate('dist/python-flocker-%(kw:version)s-1.fc20.noarch.rpm', version=underscoreVersion),
+        Interpolate('dist/%(prop:srpm)s', version=underscoreVersion),
+        Interpolate('dist/%(prop:rpm)s', version=underscoreVersion),
         ]))
+
+    return factory
 
 
 
@@ -402,6 +406,7 @@ BUILDERS = [
     'flocker-twisted-trunk',
     'flocker-coverage',
     'flocker-docs',
+    'flocker-rpms',
     ]
 
 def getSchedulers():
