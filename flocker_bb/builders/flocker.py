@@ -1,4 +1,4 @@
-from buildbot.steps.shell import ShellCommand, SetPropertyFromCommand
+from buildbot.steps.shell import ShellCommand
 from buildbot.steps.python_twisted import Trial
 from buildbot.steps.python import PyFlakes, Sphinx
 from buildbot.steps.transfer import DirectoryUpload, FileUpload
@@ -307,25 +307,14 @@ def makeRPMFactory():
         descriptionDone=["build", "sdist"],
         command=[
             Interpolate(path.join(VIRTUALENV_DIR, "bin/python")),
-            "setup.py", "sdist",
+            "setup.py", "sdist", "generate_spec",
             ],
         haltOnFailure=True))
-    factory.addStep(SetPropertyFromCommand(
-        command=[
-            Interpolate(path.join(VIRTUALENV_DIR, "bin/python")),
-            "setup.py", "--version",
-            ],
-        name='check-version',
-        description=['checking', 'version'],
-        descriptionDone=['checking', 'version'],
-        property='version'
-        ))
     factory.addStep(MockBuildSRPM(
         root='fedora-20-x86_64',
         resultdir='dist',
         spec='flocker.spec',
         sources='dist',
-        extraOptions=["-D", Interpolate('flocker_version %(prop:version)s')],
         ))
     factory.addStep(FileUpload(
         Interpolate('dist/%(prop:srpm)s', version=underscoreVersion),
@@ -339,7 +328,6 @@ def makeRPMFactory():
         root='fedora-20-x86_64',
         resultdir='dist',
         srpm=Interpolate('dist/%(prop:srpm)s'),
-        extraOptions=["-D", Interpolate('flocker_version %(prop:version)s')],
         ))
     factory.addStep(FileUpload(
         Interpolate('dist/%(prop:rpm)s', version=underscoreVersion),
