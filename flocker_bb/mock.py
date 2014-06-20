@@ -150,7 +150,7 @@ class MockBuildSRPM(Mock):
 
     def commandComplete(self, cmd):
         out = cmd.logs['build.log'].getText()
-        m = re.search(r"Wrote: .*/([^/]*.src.rpm)", out)
+        m = re.search(r"Wrote: .*/([^/]*\.src\.rpm)", out)
         if m:
             self.setProperty("srpm", m.group(1), 'MockBuildSRPM')
 
@@ -187,6 +187,6 @@ class MockRebuild(Mock):
 
     def commandComplete(self, cmd):
         out = cmd.logs['build.log'].getText()
-        m = re.search(r"Wrote: .*/([^/]*.src.rpm)", out)
+        m = re.search(r"Wrote: .*/([^/]*\.(?!src)[^.]+\.rpm)", out)
         if m:
             self.setProperty("rpm", m.group(1), 'MockRebuild')
