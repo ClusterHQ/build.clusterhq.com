@@ -323,7 +323,7 @@ def makeRPMFactory():
     factory.addStep(MockBuildSRPM(
         root='fedora-20-x86_64',
         resultdir='dist',
-        spec='python-flocker.spec',
+        spec='flocker.spec',
         sources='dist',
         extraOptions=["-D", Interpolate('flocker_version %(prop:version)s')],
         ))
