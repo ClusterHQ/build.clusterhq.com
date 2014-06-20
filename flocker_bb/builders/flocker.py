@@ -1,12 +1,10 @@
-from zope.interface import implementer
-
 from buildbot.steps.shell import ShellCommand, SetPropertyFromCommand
 from buildbot.steps.python_twisted import Trial
 from buildbot.steps.python import PyFlakes, Sphinx
 from buildbot.steps.transfer import DirectoryUpload, FileUpload
 from buildbot.steps.master import MasterShellCommand
 from buildbot.steps.source.git import Git
-from buildbot.process.properties import Interpolate, renderer, Property
+from buildbot.process.properties import Interpolate, renderer
 from buildbot.steps.package.rpm import RpmLint
 
 from os import path

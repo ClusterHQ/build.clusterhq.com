@@ -8,9 +8,7 @@ from base64 import b64encode
 from twisted.python.log import msg, err
 from twisted.web.http_headers import Headers
 from twisted.web.client import FileBodyProducer, Agent, readBody
-from twisted.internet.defer import gatherResults
 
-from buildbot.status.base import StatusReceiverService
 from buildbot.status.results import (
     Results, EXCEPTION, FAILURE, RETRY, SUCCESS, WARNINGS)
 

@@ -23,7 +23,6 @@ PASSWORD = privateData['auth']['password'].encode("utf-8")
 
 ####### BUILDSLAVES
 
-from buildbot.buildslave import BuildSlave
 from flocker_bb import password
 from flocker_bb.ec2_buildslave import EC2LatentBuildSlave
 

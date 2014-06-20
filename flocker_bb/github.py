@@ -15,16 +15,9 @@
 
 from __future__ import absolute_import
 
-import datetime
-
-from twisted.internet import defer
 from twisted.python import log
 from txgithub.api import GithubApi as GitHubAPI
-from zope.interface import implements
 
-from buildbot.interfaces import IStatusReceiver
-from buildbot.process.properties import Interpolate
-from buildbot.status.base import StatusReceiverMultiService
 from buildbot.status.builder import SUCCESS
 
 from flocker_bb.buildset_status import BuildsetStatusReceiver
