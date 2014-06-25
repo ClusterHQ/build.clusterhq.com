@@ -188,6 +188,18 @@ def makeFactory(python, tests=None, twistedTrunk=False):
     return factory
 
 
+def makeLintFactory():
+    """
+    Create and return a new build factory for linting the code.
+    """
+    factory = getFactory("flocker", useSubmodules=False, mergeForward=True)
+    factory.addStep(PyFlakes(
+        command=["tox", "-e", "lint"],
+        workdir='build',
+        flunkOnFailure=True,
+        ))
+    return factory
+
 
 def makeMetaFactory():
     """
