@@ -23,6 +23,11 @@ PASSWORD = privateData['auth']['password'].encode("utf-8")
 
 ####### BUILDSLAVES
 
+# 'slavePortnum' defines the TCP port to listen on for connections from slaves.
+# This must match the value configured into the buildslaves (with their
+# --master option)
+c['slavePortnum'] = 9989
+
 from flocker_bb import password
 from flocker_bb.ec2_buildslave import EC2LatentBuildSlave
 
@@ -46,6 +51,8 @@ c['slaves'] = [
                 "token": privateData['github']['token'],
                 "name": name,
                 "password": password,
+                'buildmaster_host': privateData['buildmaster']['host'],
+                'buildmaster_port': c['slavePortnum'],
                 },
             spot_instance=True,
             max_spot_price=0.05,
@@ -55,10 +62,7 @@ c['slaves'] = [
 
 FLOCKER_SLAVES = [name for name, password in slaves]
 
-# 'slavePortnum' defines the TCP port to listen on for connections from slaves.
-# This must match the value configured into the buildslaves (with their
-# --master option)
-c['slavePortnum'] = 9989
+
 
 ####### CODEBASE GENERATOR
 
@@ -68,11 +72,11 @@ c['slavePortnum'] = 9989
 # multiple change sources (eg, multiple repositories being fetched for a single
 # build).
 
-FLOCKER_REPOSITORY = "git@github.com:hybridlogic/flocker.git"
+FLOCKER_REPOSITORY = "git@github.com:ClusterHQ/flocker.git"
 
 CODEBASES = {
     FLOCKER_REPOSITORY: "flocker",
-    "https://github.com/hybridlogic/flocker": "flocker",
+    "https://github.com/ClusterHQ/flocker": "flocker",
     }
 
 c['codebaseGenerator'] = lambda change: CODEBASES[change["repository"]]
@@ -110,7 +114,8 @@ c['schedulers'] = flocker.getSchedulers()
 c['status'] = []
 
 from flocker_bb.github import codebaseStatus
-c['status'].append(codebaseStatus('flocker', token=privateData['github']['token']))
+if privateData['github']['report_status']:
+    c['status'].append(codebaseStatus('flocker', token=privateData['github']['token']))
 
 rebuild('flocker_bb.boxes')
 rebuild('flocker_bb.github')
@@ -167,7 +172,7 @@ c['titleURL'] = "http://www.clusterhq.com/"
 # with an externally-visible host name which the buildbot cannot figure out
 # without some help.
 
-c['buildbotURL'] = "http://build.flocker.hybridcluster.net/"
+c['buildbotURL'] = "http://%s/" % (privateData['buildmaster']['host'],)
 
 ####### DB URL
 

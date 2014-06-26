@@ -14,7 +14,7 @@ from os import path
 VIRTUALENV_DIR = '%(prop:workdir)s/venv'
 
 VIRTUALENV_PY = Interpolate("%(prop:workdir)s/../dependencies/virtualenv.py")
-GITHUB = b"https://github.com/hybridlogic"
+GITHUB = b"https://github.com/ClusterHQ"
 
 TWISTED_GIT = b'https://github.com/twisted/twisted'
 
