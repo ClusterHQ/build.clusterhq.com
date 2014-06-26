@@ -1,3 +1,6 @@
+# The production config.yml, when updated, should also be updated in the
+# "FlockerBuildbot Credentials" note on LastPass
+
 auth:
     user: "<web user>"
     password: "<web password>"
@@ -9,3 +12,6 @@ aws:
     secret_identifier: "<aws password>"
 github:
     token: "<github api token>"
+    report_status: True
+buildmaster:
+    host: build.flocker.hybridcluster.net
