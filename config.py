@@ -68,11 +68,11 @@ c['slavePortnum'] = 9989
 # multiple change sources (eg, multiple repositories being fetched for a single
 # build).
 
-FLOCKER_REPOSITORY = "git@github.com:clusterhq/flocker.git"
+FLOCKER_REPOSITORY = "git@github.com:ClusterHQ/flocker.git"
 
 CODEBASES = {
     FLOCKER_REPOSITORY: "flocker",
-    "https://github.com/clusterhq/flocker": "flocker",
+    "https://github.com/ClusterHQ/flocker": "flocker",
     }
 
 c['codebaseGenerator'] = lambda change: CODEBASES[change["repository"]]
