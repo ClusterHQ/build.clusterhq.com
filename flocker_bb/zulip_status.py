@@ -131,7 +131,7 @@ class _ZulipWriteOnlyStatus(object):
             template = u"%(codebase)s : %(branch)s"
             subjects += [template % sourceStamp]
             if sourceStamp['revision']:
-                template += u": [%(revision)s](https://github.com/hybridlogic/%(codebase)s/commit/%(revision)s)"
+                template += u": [%(revision)s](https://github.com/clusterhq/%(codebase)s/commit/%(revision)s)"
                 message += template % sourceStamp + u"\n"
 
         success = []
