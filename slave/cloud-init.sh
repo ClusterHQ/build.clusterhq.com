@@ -3,7 +3,7 @@ setenforce 0
 modprobe zfs
 
 # Set umask, so mock can write rpms to dist directory
-buildslave create-slave --umask 002 /srv/buildslave build.flocker.hybridcluster.net:9989 '%(name)s' '%(password)s'
+buildslave create-slave --umask 002 /srv/buildslave %(buildmaster_host)s:%(buildmaster_port)d '%(name)s' '%(password)s'
 
 # mock needs a unprivelged user to drop priveleges to.
 useradd -d /srv/buildslave -g mock -r buildslave
