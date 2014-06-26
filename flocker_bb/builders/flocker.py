@@ -189,7 +189,10 @@ def makeLintFactory():
     Create and return a new build factory for linting the code.
     """
     factory = getFactory("flocker", useSubmodules=False, mergeForward=True)
-    factory.addStep(PyFlakes(
+    factory.addStep(ShellCommand(
+        name='lint',
+        description=["linting"],
+        descriptionDone=["lint"],
         command=["tox", "-e", "lint"],
         workdir='build',
         flunkOnFailure=True,
