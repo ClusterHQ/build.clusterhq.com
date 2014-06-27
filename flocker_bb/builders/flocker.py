@@ -45,10 +45,6 @@ def installDependencies():
     return pip("dependencies", ["-e", ".[doc,dev]"])
 
 
-def installMetaTools():
-    return pip("coverage", ["coverage==3.7", "http://data.hybridcluster.net/python/coverage_reporter-0.01_hl0-py27-none-any.whl"])
-
-
 def _flockerTests(kwargs, tests=None):
     if tests is None:
         tests = [b"flocker"]
@@ -188,27 +184,32 @@ def makeFactory(python, tests=None, twistedTrunk=False):
     return factory
 
 
-
-def makeMetaFactory():
+def makeLintFactory():
     """
-    Create and return a new build factory for doing reporting *about* the code.
-
-    XXX Stupid function name.
+    Create and return a new build factory for linting the code.
     """
-    factory = getFlockerFactory(python="python2.7")
-    factory.addStep(installDependencies())
-    factory.addStep(installMetaTools())
+    factory = getFactory("flocker", useSubmodules=False, mergeForward=True)
     factory.addStep(PyFlakes(
-        command=[Interpolate(path.join(VIRTUALENV_DIR, "bin/pyflakes")),
-                 "flocker"],
+        command=["tox", "-e", "lint"],
         workdir='build',
         flunkOnFailure=True,
         ))
-    factory.addSteps(_flockerCoverage())
     return factory
 
 
+def installCoverage():
+    return pip("coverage", ["coverage==3.7", "http://data.hybridcluster.net/python/coverage_reporter-0.01_hl0-py27-none-any.whl"])
 
+
+def makeCoverageFactory():
+    """
+    Create and return a new build factory for checking test coverage.
+    """
+    factory = getFlockerFactory(python="python2.7")
+    factory.addStep(installDependencies())
+    factory.addStep(installCoverage())
+    factory.addSteps(_flockerCoverage())
+    return factory
 
 
 def sphinxBuild(builder, workdir=b"build/docs"):
@@ -373,7 +374,12 @@ def getBuilders(slavenames):
         BuilderConfig(name='flocker-coverage',
                       slavenames=slavenames,
                       category='flocker',
-                      factory=makeMetaFactory(),
+                      factory=makeCoverageFactory(),
+                      nextSlave=idleSlave),
+        BuilderConfig(name='flocker-lint',
+                      slavenames=slavenames,
+                      category='flocker',
+                      factory=makeLintFactory(),
                       nextSlave=idleSlave),
         BuilderConfig(name='flocker-docs',
                       slavenames=slavenames,
@@ -391,6 +397,7 @@ BUILDERS = [
     'flocker',
     'flocker-twisted-trunk',
     'flocker-coverage',
+    'flocker-lint',
     'flocker-docs',
     'flocker-rpms',
     ]

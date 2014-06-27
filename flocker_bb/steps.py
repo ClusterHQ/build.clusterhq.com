@@ -95,10 +95,10 @@ class MergeForward(Source):
         self.repourl = repourl
         self.branch = branch
         kwargs['env'] = {
-                'GIT_AUTHOR_EMAIL': 'buildbot@hybridcluster.net',
-                'GIT_AUTHOR_NAME': 'HybridCluster Buildbot',
-                'GIT_COMMITTER_EMAIL': 'buildbot@hybridcluster.net',
-                'GIT_COMMITTER_NAME': 'HybridCluster Buildbot',
+                'GIT_AUTHOR_EMAIL': 'buildbot@clusterhq.com',
+                'GIT_AUTHOR_NAME': 'ClusterHQ Buildbot',
+                'GIT_COMMITTER_EMAIL': 'buildbot@clusterhq.com',
+                'GIT_COMMITTER_NAME': 'ClusterHQ Buildbot',
                 }
         Source.__init__(self, **kwargs)
         self.addFactoryArguments(repourl=repourl, branch=branch)

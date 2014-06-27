@@ -163,8 +163,8 @@ if 'zulip' in privateData:
 # installation's html.WebStatus home page (linked to the
 # 'titleURL') and is embedded in the title of the waterfall HTML page.
 
-c['title'] = "HybridCluster"
-c['titleURL'] = "http://www.hybridcluster.com/"
+c['title'] = "ClusterHQ"
+c['titleURL'] = "http://www.clusterhq.com/"
 
 # the 'buildbotURL' string should point to the location where the buildbot's
 # internal web server (usually the html.WebStatus page) is visible. This
