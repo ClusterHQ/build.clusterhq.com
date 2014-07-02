@@ -1,6 +1,6 @@
 from buildbot.steps.shell import ShellCommand
 from buildbot.steps.python_twisted import Trial
-from buildbot.steps.python import PyFlakes, Sphinx
+from buildbot.steps.python import Sphinx
 from buildbot.steps.transfer import DirectoryUpload, FileUpload
 from buildbot.steps.master import MasterShellCommand
 from buildbot.steps.source.git import Git
