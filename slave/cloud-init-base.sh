@@ -33,10 +33,12 @@ yum install -y \
 	rpm-build \
 	docker-io \
 	geard \
+	libffi-devel \
 	@buildsys-build
 yum clean -y all
 
 systemctl enable docker
+systemctl enable geard
 
 
 # Initialize mock yum cache
