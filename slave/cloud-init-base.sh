@@ -51,3 +51,14 @@ mock --init --root fedora-20-x86_64
 systemctl start docker
 docker pull busybox
 docker pull openshift/busybox-http-app
+
+
+# Configure pip wheelhouse and cache
+mkdir ~root/.pip
+cat > ~root/.pip/pip.conf <<EOF
+[global]
+find-links = https://s3-us-west-2.amazonaws.com/clusterhq-wheelhouse/fedora20-x86_64/index
+find-links = file:///var/cache/wheelhouse
+EOF
+mkdir /var/cache/wheelhouse
+wget -r -nd -P /var/cache/wheelhouse https://s3-us-west-2.amazonaws.com/clusterhq-wheelhouse/fedora20-x86_64/index

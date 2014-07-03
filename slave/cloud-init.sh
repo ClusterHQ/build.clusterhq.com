@@ -35,6 +35,8 @@ EOF
 export HOME=/srv/buildslave
 echo "https://%(token)s:@github.com" >/srv/buildslave/.git-credentials
 
+cp -r ~root/.pip $HOME/.pip
+
 git config --global credential.helper "store"
 
 # Set group so that mock can write rpms to dist directory.
