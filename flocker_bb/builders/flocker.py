@@ -42,7 +42,10 @@ def pip(what, packages):
 
 
 def installDependencies():
-    return pip("dependencies", ["-e", ".[doc,dev]"])
+    return [
+        pip("dependencies", ["."]),
+        pip("extras", ["Flocker[doc,dev]"]),
+        ]
 
 
 def _flockerTests(kwargs, tests=None):
@@ -174,7 +177,7 @@ def makeFactory(python, tests=None, twistedTrunk=False):
     """
     factory = getFlockerFactory(python=python)
 
-    factory.addStep(installDependencies())
+    factory.addSteps(installDependencies())
 
     if twistedTrunk:
         factory.addSteps(installTwistedTrunk())
@@ -209,7 +212,7 @@ def makeCoverageFactory():
     Create and return a new build factory for checking test coverage.
     """
     factory = getFlockerFactory(python="python2.7")
-    factory.addStep(installDependencies())
+    factory.addSteps(installDependencies())
     factory.addStep(installCoverage())
     factory.addSteps(_flockerCoverage())
     return factory
@@ -271,7 +274,7 @@ def makeInternalDocsFactory():
     revision = "flocker-%(prop:buildnumber)s"
 
     factory = getFlockerFactory(python="python2.7")
-    factory.addStep(installDependencies())
+    factory.addSteps(installDependencies())
     factory.addStep(sphinxBuild("html", "build/docs"))
     factory.addStep(DirectoryUpload(
         b"docs/_build/html",
