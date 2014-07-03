@@ -46,3 +46,8 @@ systemctl enable geard
 export SUDO_UID=99 # nobody
 export SUDO_GID=135 # mock
 mock --init --root fedora-20-x86_64
+
+# Pre-cache docker images
+systemctl start docker
+docker pull busybox
+docker pull openshift/busybox-http-app
