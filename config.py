@@ -38,7 +38,7 @@ cloudInit = FilePath(__file__).sibling("slave").child("cloud-init.sh").getConten
 c['slaves'] = [
         EC2LatentBuildSlave(
             name, password,
-            'm1.medium',
+            'c3.large',
             build_wait_timeout=50*60,
             valid_ami_owners=[121466501720],
             valid_ami_location_regex=r'.*/fedora-buildslave-base',
@@ -55,7 +55,7 @@ c['slaves'] = [
                 'buildmaster_port': c['slavePortnum'],
                 },
             spot_instance=True,
-            max_spot_price=0.05,
+            max_spot_price=0.10,
             )
         for name, password in slaves]
 
