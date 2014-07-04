@@ -56,6 +56,7 @@ c['slaves'] = [
                 },
             spot_instance=True,
             max_spot_price=0.10,
+            keepalive_interval=60,
             )
         for name, password in slaves]
 
