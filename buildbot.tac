@@ -21,4 +21,4 @@ master = BuildMaster(basedir, configfile)
 UpgradeService(basedir, configfile, master).setServiceParent(application)
 
 from twisted.application.internet import TimerService
-TimerService(30, master.botmaster.maybeStartBuildsForAllBuilders)
+TimerService(30, master.botmaster.maybeStartBuildsForAllBuilders).setServiceParent(master)
