@@ -115,7 +115,7 @@ def _flockerCoverage():
             b"change-coverage-annotations",
             Interpolate(b"private_html/%s/%s/change" % (branch, revision)),
             url=Interpolate(
-                b"/private/%s/%s/change" % (
+                b"/results/%s/%s/change" % (
                     branch, revision)),
             name="upload-coverage-annotations",
             ),
@@ -132,7 +132,7 @@ def _flockerCoverage():
             b"html-coverage",
             Interpolate(b"private_html/%s/%s/complete" % (branch, revision)),
             url=Interpolate(
-                b"/private/%s/%s/complete" % (
+                b"/results/%s/%s/complete" % (
                     branch, revision)),
             name="upload-coverage-html",
             ),
@@ -280,7 +280,7 @@ def makeInternalDocsFactory():
         b"docs/_build/html",
         Interpolate(b"private_html/%s/%s/docs" % (branch, revision)),
         url=Interpolate(
-            b"/private/%s/%s/docs" % (
+            b"/results/%s/%s/docs" % (
                 branch, revision)),
         name="upload-html",
         ))
@@ -327,7 +327,7 @@ def makeRPMFactory():
         Interpolate('dist/%(prop:srpm)s', version=underscoreVersion),
         Interpolate(b"private_html/%s/%s/%%(prop:srpm)s" % (branch, revision)),
         url=Interpolate(
-            b"/private/%s/%s/%%(prop:srpm)s" % (
+            b"/results/%s/%s/%%(prop:srpm)s" % (
                 branch, revision)),
         name="upload-srpm",
         ))
@@ -340,7 +340,7 @@ def makeRPMFactory():
         Interpolate('dist/%(prop:rpm)s', version=underscoreVersion),
         Interpolate(b"private_html/%s/%s/%%(prop:rpm)s" % (branch, revision)),
         url=Interpolate(
-            b"/private/%s/%s/%%(prop:rpm)s" % (
+            b"/results/%s/%s/%%(prop:rpm)s" % (
                 branch, revision),
             version=underscoreVersion
             ),
