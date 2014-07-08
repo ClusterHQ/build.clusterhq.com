@@ -455,3 +455,17 @@ class EC2LatentBuildSlave(AbstractLatentBuildSlave):
                      request.id, request_status))
             raise interfaces.LatentBuildSlaveFailedToSubstantiate(
                 request.id, request.status)
+
+
+
+    def substantiate(self, sb, build):
+        # AbstractLatentBuildSlave returns the same deferred multiple times.
+        # This causes later callers to get `None` as a result.
+        # Wrap it here to get a more sensible result.
+        original = AbstractLatentBuildSlave.substantiate(self, sb, build)
+        new = defer.Deferred()
+        def propagate(result):
+            new.callback(result)
+            return result
+        original.addCallback(propagate)
+        return new

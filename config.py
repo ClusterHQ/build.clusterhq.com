@@ -32,7 +32,7 @@ from flocker_bb import password
 from flocker_bb.ec2_buildslave import EC2LatentBuildSlave
 
 slaves = [('slave-%d' % (i,), password.generate(32))
-          for i in range(2)]
+          for i in range(3)]
 cloudInit = FilePath(__file__).sibling("slave").child("cloud-init.sh").getContent()
 
 c['slaves'] = [

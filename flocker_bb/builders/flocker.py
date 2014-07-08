@@ -378,6 +378,11 @@ from buildbot.config import BuilderConfig
 from buildbot.schedulers.basic import AnyBranchScheduler
 from buildbot.schedulers.forcesched import (
     CodebaseParameter, StringParameter, ForceScheduler, FixedParameter)
+from buildbot.locks import SlaveLock
+
+# A lock to prevent multiple functional tests running at the same time
+functionalLock = SlaveLock('functional-tests')
+
 
 def idleSlave(builder, slaves):
     idle = [slave for slave in slaves if slave.isAvailable()]
@@ -390,16 +395,19 @@ def getBuilders(slavenames):
                       slavenames=slavenames,
                       category='flocker',
                       factory=makeFactory(b'python2.7'),
+                      locks=[functionalLock.access('counting')],
                       nextSlave=idleSlave),
         BuilderConfig(name='flocker-twisted-trunk',
                       slavenames=slavenames,
                       category='flocker',
                       factory=makeFactory(b'python2.7', twistedTrunk=True),
+                      locks=[functionalLock.access('counting')],
                       nextSlave=idleSlave),
         BuilderConfig(name='flocker-coverage',
                       slavenames=slavenames,
                       category='flocker',
                       factory=makeCoverageFactory(),
+                      locks=[functionalLock.access('counting')],
                       nextSlave=idleSlave),
         BuilderConfig(name='flocker-lint',
                       slavenames=slavenames,
