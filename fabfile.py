@@ -18,9 +18,11 @@ def removeContainer(name):
     if containerExists(name):
         sudo(cmd('docker.io', 'rm', '-f', name))
 
-def startBuildmaster(config):
+def startBuildmaster(config, shouldPull=True):
     IMAGE = 'registry.flocker.hybridcluster.net:5000/flocker/buildmaster'
-    pull(IMAGE)
+    if shouldPull:
+        pull(IMAGE)
+    removeContainer('buildmaster')
     sudo(cmd(
         'docker.io', 'run', '-d',
         '--name', 'buildmaster',
@@ -45,5 +47,9 @@ def start(configFile="config.yml"):
 @task
 def update(configFile="config.yml"):
     config = loadConfig(configFile)
-    removeContainer('buildmaster')
     startBuildmaster(config)
+
+@task
+def restart(configFile="config.yml"):
+    config = loadConfig(configFile)
+    startBuildmaster(config, shouldPull=False)
