@@ -30,6 +30,14 @@ def startBuildmaster(config, shouldPull=True):
         '-e', 'BUILDBOT_CONFIG=%s' % (config,),
         '--volumes-from', 'buildmaster-data',
         IMAGE))
+    removeUntaggedImages()
+
+@task
+def removeUntaggedImages():
+    images = [line.split() for line in sudo(cmd("docker.io", "images")).splitlines()]
+    untagged = [image[2] for image in images if image[0] == '<none>']
+    if untagged:
+        sudo(cmd('docker.io', 'rmi', *untagged))
 
 @task
 def start(configFile="config.yml"):
