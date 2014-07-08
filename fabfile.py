@@ -33,6 +33,7 @@ def startBuildmaster(config, shouldPull=True):
 
 @task
 def start(configFile="config.yml"):
+    "Start buildmaster on fresh host."
     config = loadConfig(configFile)
     
     sudo('apt-get update', pty=False)
@@ -46,10 +47,22 @@ def start(configFile="config.yml"):
 
 @task
 def update(configFile="config.yml"):
+    "Update buildmaster to latest image."
     config = loadConfig(configFile)
     startBuildmaster(config)
 
 @task
 def restart(configFile="config.yml"):
+    "Restart buildmaster with current image."
     config = loadConfig(configFile)
     startBuildmaster(config, shouldPull=False)
+
+@task
+def logs(follow=True):
+    """
+    Show logs.
+    """
+    if follow:
+        sudo(cmd('docker.io', 'logs', '-f', 'buildmasster'))
+    else:
+        sudo(cmd('docker.io', 'logs', 'buildmaster'))
