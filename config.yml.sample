@@ -14,4 +14,4 @@ github:
     token: "<github api token>"
     report_status: True
 buildmaster:
-    host: build.flocker.hybridcluster.net
+    host: build.clusterhq.com
