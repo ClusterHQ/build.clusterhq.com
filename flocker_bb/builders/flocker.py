@@ -1,7 +1,7 @@
 from buildbot.steps.shell import ShellCommand
 from buildbot.steps.python_twisted import Trial
 from buildbot.steps.python import Sphinx
-from buildbot.steps.transfer import DirectoryUpload, FileUpload
+from buildbot.steps.transfer import DirectoryUpload, FileUpload, StringDownload
 from buildbot.steps.master import MasterShellCommand
 from buildbot.steps.source.git import Git
 from buildbot.process.properties import Interpolate, renderer
@@ -85,18 +85,37 @@ def _flockerCoverage():
                 [Interpolate(path.join(VIRTUALENV_DIR, "bin/coverage"))],
                 b"run",
                 b"--branch",
-                b"--source", "../build/flocker",
+                b"--source", "flocker",
                 ]
             })
+    # This needs to be before we delete the temporary directory.
     steps.insert(len(steps)-1,
         ShellCommand(
             name='move-coverage',
             description=["moving", "coverage"],
             descriptionDone=["move", "coverage"],
-            command=['cp', '.coverage', '../build'],
+            command=['cp', '.coverage', '../build/.coverage.original'],
             workdir=TMPDIR,
             haltOnFailure=True))
     steps += [
+        StringDownload(
+            '\n'.join([
+                '[paths]',
+                'sources =',
+                '    flocker',
+                '    /*/site-packages/flocker',
+                '']),
+            '.coveragerc',
+            name="download-coveragerc"),
+        ShellCommand(
+            command=[
+                Interpolate(path.join(VIRTUALENV_DIR, "bin/coverage")),
+                'combine',
+                ],
+            name='rewrite-coverage',
+            description=[b'Rewriting', b'coverage'],
+            descriptionDone=[b'Rewrite', 'coverage'],
+            ),
         ShellCommand(
             command=Interpolate(
                 b"git diff --no-prefix %(prop:lint_revision)s..HEAD | "
