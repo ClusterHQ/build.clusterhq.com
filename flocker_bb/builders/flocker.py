@@ -1,10 +1,10 @@
 from buildbot.steps.shell import ShellCommand
 from buildbot.steps.python_twisted import Trial
 from buildbot.steps.python import Sphinx
-from buildbot.steps.transfer import DirectoryUpload, FileUpload, StringDownload
+from buildbot.steps.transfer import DirectoryUpload, StringDownload
 from buildbot.steps.master import MasterShellCommand
 from buildbot.steps.source.git import Git
-from buildbot.process.properties import Interpolate, renderer
+from buildbot.process.properties import Interpolate, renderer, Property
 from buildbot.steps.package.rpm import RpmLint
 
 from os import path
@@ -325,7 +325,6 @@ def underscoreVersion(props):
 
 def makeRPMFactory():
     branch = "%(src:flocker:branch)s"
-    revision = "flocker-%(prop:buildnumber)s"
     factory = getFlockerFactory(python="python2.7")
     factory.addStep(ShellCommand(
         name='build-sdist',
@@ -342,33 +341,44 @@ def makeRPMFactory():
         spec='python-flocker.spec',
         sources='dist',
         ))
-    factory.addStep(FileUpload(
-        Interpolate('dist/%(prop:srpm)s', version=underscoreVersion),
-        Interpolate(b"private_html/%s/%s/%%(prop:srpm)s" % (branch, revision)),
-        url=Interpolate(
-            b"/results/%s/%s/%%(prop:srpm)s" % (
-                branch, revision)),
-        name="upload-srpm",
-        ))
     factory.addStep(MockRebuild(
         root='fedora-20-x86_64',
         resultdir='dist',
         srpm=Interpolate('dist/%(prop:srpm)s'),
         ))
-    factory.addStep(FileUpload(
-        Interpolate('dist/%(prop:rpm)s', version=underscoreVersion),
-        Interpolate(b"private_html/%s/%s/%%(prop:rpm)s" % (branch, revision)),
+    factory.addStep(ShellCommand(
+        name="create-repo-directory",
+        description=["creating", "repo", "directory"],
+        descriptionDone=["create", "repo", "directory"],
+        command=["mkdir", "repo"],
+        haltOnFailure=True))
+    factory.addStep(ShellCommand(
+        name="populate-repo",
+        description=["populating", "repo"],
+        descriptionDone=["populate", "repo"],
+        command=["cp", "-t", "../repo", Property('srpm'), Property('rpm')],
+        workdir='build/dist',
+        haltOnFailure=True))
+    factory.addStep(ShellCommand(
+        name='build-repo-metadata',
+        description=["building", "repo", "metadata"],
+        descriptionDone=["build", "repo", "metadata"],
+        command=["createrepo_c", "repo"], # Fix this to use createrepo
+        haltOnFailure=True))
+    factory.addStep(DirectoryUpload(
+        Interpolate('repo'),
+        Interpolate(b"private_html/fedora/20/x86_64/%s/" % (branch,)),
         url=Interpolate(
-            b"/results/%s/%s/%%(prop:rpm)s" % (
-                branch, revision),
-            version=underscoreVersion
+            b"/results/fedora/20/x86_64/%s/" % (branch,),
             ),
-        name="upload-rpm",
+        name="upload-repo",
         ))
     factory.addStep(RpmLint([
-        Interpolate('dist/%(prop:srpm)s', version=underscoreVersion),
-        Interpolate('dist/%(prop:rpm)s', version=underscoreVersion),
-        ]))
+            Property('srpm'),
+            Property('rpm'),
+            ],
+        workdir="build/dist",
+        ))
 
     return factory
 
