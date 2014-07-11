@@ -187,6 +187,6 @@ class MockRebuild(Mock):
 
     def commandComplete(self, cmd):
         out = cmd.logs['build.log'].getText()
-        m = re.search(r"Wrote: .*/([^/]*\.(?!src)[^.]+\.rpm)", out)
-        if m:
-            self.setProperty("rpm", m.group(1), 'MockRebuild')
+        matches = re.findall(r"Wrote: .*/([^/]*\.(?!src)[^.]+\.rpm)", out)
+        if matches:
+            self.setProperty("rpm", matches, 'MockRebuild')
