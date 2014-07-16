@@ -110,7 +110,7 @@ class MergeForward(Source):
 
     @staticmethod
     def _isRelease(branch):
-        return branch.startswith('release-')
+        return branch.startswith('release/')
 
 
     def startVC(self, branch, revision, patch):
