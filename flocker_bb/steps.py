@@ -10,6 +10,7 @@ from buildbot.status.results import SUCCESS
 from buildbot.process import buildstep
 
 from os import path
+import re
 
 VIRTUALENV_DIR = '%(prop:workdir)s/venv'
 
@@ -110,7 +111,7 @@ class MergeForward(Source):
 
     @staticmethod
     def _isRelease(branch):
-        return branch.startswith('release/')
+        return (branch.startswith('release/') or re.match('^[0-9]*\.[0-9]*\.[0-9]*$', branch))
 
 
     def startVC(self, branch, revision, patch):
