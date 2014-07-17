@@ -71,6 +71,6 @@ def logs(follow=True):
     Show logs.
     """
     if follow:
-        sudo(cmd('docker.io', 'logs', '-f', 'buildmasster'))
+        sudo(cmd('docker.io', 'logs', '-f', 'buildmaster'))
     else:
         sudo(cmd('docker.io', 'logs', 'buildmaster'))
