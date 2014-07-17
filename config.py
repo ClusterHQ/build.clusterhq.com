@@ -48,7 +48,8 @@ c['slaves'] = [
             identifier=privateData['aws']['identifier'],
             secret_identifier=privateData['aws']['secret_identifier'],
             user_data=cloudInit % {
-                "token": privateData['github']['token'],
+                "github_token": privateData['github']['token'],
+                "coveralls_token": privateData['coveralls']['token'],
                 "name": name,
                 "password": password,
                 'buildmaster_host': privateData['buildmaster']['host'],
