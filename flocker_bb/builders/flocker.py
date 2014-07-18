@@ -155,7 +155,16 @@ def _flockerCoverage():
                     branch, revision)),
             name="upload-coverage-html",
             ),
-        ]
+	ShellCommand(
+            command=[Interpolate(
+                path.join(VIRTUALENV_DIR, "bin/coveralls")),
+                "--coveralls_yaml",
+                Interpolate("%(prop:workdir)s/../coveralls.yml")],
+            description=[b"uploading", b"to", b"coveralls"],
+            descriptionDone=[b"upload", b"to", b"coveralls"],
+            name="coveralls-upload",
+            ),
+	]
     return steps
 
 
@@ -223,7 +232,12 @@ def makeLintFactory():
 
 
 def installCoverage():
-    return pip("coverage", ["coverage==3.7", "http://data.hybridcluster.net/python/coverage_reporter-0.01_hl0-py27-none-any.whl"])
+    return pip("coverage", [
+         "coverage==3.7",
+         "http://data.hybridcluster.net/python/coverage_reporter-0.01_hl0-py27-none-any.whl",
+         "python-coveralls==2.4.2",
+    ])
+
 
 
 def makeCoverageFactory():

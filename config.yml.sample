@@ -15,3 +15,5 @@ github:
     report_status: True
 buildmaster:
     host: build.clusterhq.com
+coveralls:
+    token: "<coveralls repo token>"

@@ -33,7 +33,9 @@ EOF
 
 # Set $HOME so that git has a config file to read.
 export HOME=/srv/buildslave
-echo "https://%(token)s:@github.com" >/srv/buildslave/.git-credentials
+echo "https://%(github_token)s:@github.com" >/srv/buildslave/.git-credentials
+
+echo -e "repo_token: %(coveralls_token)s\nservice_name: buildbot" >/srv/buildslave/coveralls.yml
 
 cp -r ~root/.pip $HOME/.pip
 
