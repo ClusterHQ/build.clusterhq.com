@@ -157,7 +157,9 @@ def _flockerCoverage():
             ),
 	ShellCommand(
             command=[Interpolate(
-                path.join(VIRTUALENV_DIR, "bin/coveralls")), "--coveralls_yaml", Interpolate("%(prop:workdir)s/../coveralls.yml")],
+                path.join(VIRTUALENV_DIR, "bin/coveralls")),
+                "--coveralls_yaml",
+                Interpolate("%(prop:workdir)s/../coveralls.yml")],
             description=[b"uploading", b"to", b"coveralls"],
             descriptionDone=[b"upload", b"to", b"coveralls"],
             name="coveralls-upload",
