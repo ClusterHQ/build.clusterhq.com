@@ -153,6 +153,8 @@ class FlockerWebStatus(html.WebStatus):
         docdev = File(docdevPath)
 
         File.contentTypes[".py,cover"] = "text/plain"
+        File.contentTypes[".svg"] = "image/svg+xml"
+
         # Historical name
         resultsPath = os.path.join(self.master.basedir, "private_html")
         results = File(resultsPath)
