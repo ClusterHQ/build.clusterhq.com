@@ -251,7 +251,7 @@ def makeCoverageFactory():
     return factory
 
 
-def sphinxBuild(builder, workdir=b"build/docs"):
+def sphinxBuild(builder, workdir=b"build/docs", logfiles={}):
     """
     Build sphinx documentation.
 
@@ -268,6 +268,7 @@ def sphinxBuild(builder, workdir=b"build/docs"):
                 '-d', "_build/doctree",
                 ],
         workdir=workdir,
+        logfiles=logfiles,
         defines={
             },
         env={
@@ -308,7 +309,7 @@ def makeInternalDocsFactory():
 
     factory = getFlockerFactory(python="python2.7")
     factory.addSteps(installDependencies())
-    factory.addStep(sphinxBuild("spelling", "build/docs"))
+    factory.addStep(sphinxBuild("spelling", "build/docs", logfiles='_build/spelling/output.txt'))
     factory.addStep(sphinxBuild("html", "build/docs"))
     factory.addStep(DirectoryUpload(
         b"docs/_build/html",
