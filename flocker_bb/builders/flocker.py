@@ -85,7 +85,8 @@ def _flockerCoverage():
                 [Interpolate(path.join(VIRTUALENV_DIR, "bin/coverage"))],
                 b"run",
                 b"--branch",
-                b"--source", "flocker",
+                b"--source", b"flocker",
+                b"--rcfile", b"../build/.coveragerc",
                 ]
             })
     # This needs to be before we delete the temporary directory.
