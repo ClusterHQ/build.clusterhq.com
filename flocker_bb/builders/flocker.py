@@ -308,6 +308,7 @@ def makeInternalDocsFactory():
 
     factory = getFlockerFactory(python="python2.7")
     factory.addSteps(installDependencies())
+    factory.addStep(sphinxBuild("spelling", "build/docs"))
     factory.addStep(sphinxBuild("html", "build/docs"))
     factory.addStep(DirectoryUpload(
         b"docs/_build/html",
