@@ -36,15 +36,11 @@ Install dependencies::
    $ pip install pyyaml
    $ pip install fabric
 
-Turn the directory into a Docker image and push it to the registry::
-
-   $ ./build-images
-
 Check if anyone has running builds at http://build.clusterhq.com/buildslaves.
 
 Announce on Zulip's Engineering > buildbot stream that Buildbot will be unavailable for a few minutes.
 
-Update the live Buildbot::
+Update the live Buildbot (this may take some time)::
 
    $ fab update
 
@@ -52,6 +48,9 @@ To view the logs::
 
    $ fab logs
 
+To restart the live Buildbot::
+
+   $ fab restart
 
 Staging changes
 ---------------
@@ -61,12 +60,24 @@ The docker registry will automatically build an image based on the staging branc
 
 Create an Ubuntu 14.04 spot instance on EC2 and note the IP of this instance.
 In the following example the IP is 54.191.9.106.
+Set the Security Group of this instance to allow inbound traffic as shown below.
+
+.. image:: security-group.png
+   :alt: Custom TCP Rule, TCP Protocol, Port Range 5000, Source Anywhere, 0.0.0.0/0
+         SSH, TCP Protocol, Port Range 22, Source Anywhere, 0.0.0.0/0
+         HTTP, TCP Protocol, Port Range 80, Source Anywhere, 0.0.0.0/0
+         Custom TCP Rule, TCP Protocol, Port Range 9989, Source Anywhere, 0.0.0.0/0
+         All ICMP, ICMP Protocol, Port Range 0-65535, Source Anywhere, 0.0.0.0/0
+
+The Security Group should allow all outbound traffic.
 
 Create staging.yml with the config.yml variables from LastPass.
 Change the buildmaster.host config option to the IP of the EC2 instance.
 Change the github.report_status config option to False.
 Add a buildmaster.docker_tag config option, with the value ``staging``.
 
+
+Follow the "Deploying changes" setup but there is no need to check for running builds or make an announcement on Zulip.
 
 To start a Buildbot slave on this machine run::
 
@@ -85,7 +96,7 @@ Wheelhouse
 
 There is a wheelhouse hosted on s3 (thus near the buildslaves).
 Credentials [1]_ for ``s3cmd`` can be configured using ``s3cmd --configure``.
-It can be updated by running the following commands::
+It can be updated to include available wheels of packages which are in flocker's ``setup.py`` by running the following commands::
 
    python setup.py sdist
    pip wheel -f dist "Flocker[doc,dev]==$(python setup.py --version)"
