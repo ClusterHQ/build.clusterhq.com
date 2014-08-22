@@ -1,9 +1,22 @@
-from fabric.api import sudo, task
+from fabric.api import sudo, task, env, execute
 from pipes import quote as shellQuote
 import yaml, json
 
+# We assume we are running on a ubuntu 14.04 AWS image.
+# These are setup with an `ubuntu` user, so hard code that.
+env.user = 'ubuntu'
+
 def loadConfig(configFile):
-    return json.dumps(yaml.safe_load(open(configFile)))
+    """
+    Load config.
+
+    Sets env.hosts, if not already set.
+    """
+    config = yaml.safe_load(open(configFile))
+    if not env.hosts:
+        env.hosts = [config['buildmaster']['host']]
+    return config
+
 
 def cmd(*args):
     return ' '.join(map(shellQuote, args))
@@ -27,7 +40,7 @@ def startBuildmaster(config, shouldPull=True):
         'docker.io', 'run', '-d',
         '--name', 'buildmaster',
         '-p', '80:80', '-p', '9989:9989',
-        '-e', 'BUILDBOT_CONFIG=%s' % (config,),
+        '-e', 'BUILDBOT_CONFIG=%s' % (json.dumps(config),),
         '--volumes-from', 'buildmaster-data',
         IMAGE))
     removeUntaggedImages()
@@ -64,9 +77,9 @@ def start(configFile="config.yml"):
     Start buildmaster on fresh host.
     """
     config = loadConfig(configFile)
-    bootstrap()
+    execute(bootstrap)
 
-    startBuildmaster(config)
+    execute(startBuildmaster, config)
 
 
 @task
@@ -75,7 +88,7 @@ def update(configFile="config.yml"):
     Update buildmaster to latest image.
     """
     config = loadConfig(configFile)
-    startBuildmaster(config)
+    execute(startBuildmaster, config)
 
 @task
 def restart(configFile="config.yml"):
@@ -83,14 +96,15 @@ def restart(configFile="config.yml"):
     Restart buildmaster with current image.
     """
     config = loadConfig(configFile)
-    startBuildmaster(config, shouldPull=False)
+    execute(startBuildmaster, config, shouldPull=False)
 
 @task
-def logs(follow=True):
+def logs(configFile="config.yml", follow=True):
     """
     Show logs.
     """
+    loadConfig(configFile)
     if follow:
-        sudo(cmd('docker.io', 'logs', '-f', 'buildmaster'))
+        execute(sudo, cmd('docker.io', 'logs', '-f', 'buildmaster'))
     else:
-        sudo(cmd('docker.io', 'logs', 'buildmaster'))
+        execute(sudo, cmd('docker.io', 'logs', 'buildmaster'))

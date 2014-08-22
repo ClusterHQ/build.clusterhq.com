@@ -45,11 +45,11 @@ Announce on Zulip's Engineering > buildbot stream that Buildbot will be unavaila
 
 Update the live Buildbot::
 
-   $ fab -H ubuntu@build.clusterhq.com update
+   $ fab update
 
 To view the logs::
 
-   $ fab -H ubuntu@build.clusterhq.com -- sudo docker.io logs -f buildmaster
+   $ fab logs
 
 
 Staging changes
@@ -66,11 +66,11 @@ Change the github.report_status config option to False.
 
 To start a Buildbot slave on this machine run::
 
-   $ fab -H ubuntu@54.191.9.106 start:staging.yml
+   $ fab start:staging.yml
 
 To update a slave on this machine, run::
 
-   $ fab -H ubuntu@54.191.9.106 update:staging.yml
+   $ fab update:staging.yml
 
 Log in to 54.191.9.106 with the credentials from the ``auth`` section of the config file.
 
