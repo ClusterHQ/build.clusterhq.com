@@ -45,8 +45,8 @@ def bootstrap():
     Install docker, and setup data volume.
     """
     sudo('apt-get update', pty=False)
-    sudo('apt-get -y upgrade', pty=False)
-    sudo('apt-get -y install docker.io', pty=False)
+    sudo('DEBIAN_FRONTEND=noninteractive apt-get -y upgrade', pty=False)
+    sudo('DEBIAN_FRONTEND=noninteractive apt-get -y install docker.io', pty=False)
 
     if not containerExists('buildmaster-data'):
         sudo('docker.io run --name buildmaster-data -v /srv/buildmaster/data busybox /bin/true')
