@@ -39,17 +39,26 @@ def removeUntaggedImages():
     if untagged:
         sudo(cmd('docker.io', 'rmi', *untagged))
 
-@task
-def start(configFile="config.yml"):
-    "Start buildmaster on fresh host."
-    config = loadConfig(configFile)
-    
+
+def bootstrap():
+    """
+    Install docker, and setup data volume.
+    """
     sudo('apt-get update', pty=False)
     sudo('apt-get -y upgrade', pty=False)
     sudo('apt-get -y install docker.io', pty=False)
 
     if not containerExists('buildmaster-data'):
         sudo('docker.io run --name buildmaster-data -v /srv/buildmaster/data busybox /bin/true')
+
+@task
+def start(configFile="config.yml"):
+    """
+    Start buildmaster on fresh host.
+    """
+    config = loadConfig(configFile)
+    bootstrap()
+
     startBuildmaster(config)
 
 
