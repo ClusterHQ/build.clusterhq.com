@@ -31,10 +31,20 @@ def removeContainer(name):
     if containerExists(name):
         sudo(cmd('docker.io', 'rm', '-f', name))
 
+def imageFromConfig(config, baseImage='clusterhq/build.clusterhq.com'):
+    """
+    Get the image to use from the configuration.
+
+    Uses buildmaster.docker_tag (with default 'latest').
+    """
+    docker_tag = config['buildmaster'].get('docker_tag', 'latest')
+    return '%s:%s' % (baseImage, docker_tag)
+
+
 def startBuildmaster(config, shouldPull=True):
-    IMAGE = 'registry.flocker.hybridcluster.net:5000/flocker/buildmaster'
+    image = imageFromConfig(config)
     if shouldPull:
-        pull(IMAGE)
+        pull(image)
     removeContainer('buildmaster')
     sudo(cmd(
         'docker.io', 'run', '-d',
@@ -42,7 +52,7 @@ def startBuildmaster(config, shouldPull=True):
         '-p', '80:80', '-p', '9989:9989',
         '-e', 'BUILDBOT_CONFIG=%s' % (json.dumps(config),),
         '--volumes-from', 'buildmaster-data',
-        IMAGE))
+        image))
     removeUntaggedImages()
 
 
