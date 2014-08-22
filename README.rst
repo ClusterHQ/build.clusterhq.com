@@ -1,6 +1,7 @@
 This is the configuration for ClusterHQ's `buildbot <http://buildbot.net/>`.
 
 The master is deployed on an EC2 instance running in eu-west, in a docker container.
+The docker image is stored on the docker registry, and is automatically updated when the master branch is updated.
 
 The slaves are EC2 latent slaves (spot instances) started by the master.
 They are based off the `fedora-buildslave-base` AMI in us-west-2.
@@ -56,6 +57,7 @@ Staging changes
 ---------------
 
 Buildbot changes can be tested on a staging machine.
+The docker registry will automatically build an image based on the staging branch, whenever it is updated.
 
 Create an Ubuntu 14.04 spot instance on EC2 and note the IP of this instance.
 In the following example the IP is 54.191.9.106.
@@ -63,6 +65,8 @@ In the following example the IP is 54.191.9.106.
 Create staging.yml with the config.yml variables from LastPass.
 Change the buildmaster.host config option to the IP of the EC2 instance.
 Change the github.report_status config option to False.
+Add a buildmaster.docker_tag config option, with the value ``staging``.
+
 
 To start a Buildbot slave on this machine run::
 
@@ -74,7 +78,7 @@ To update a slave on this machine, run::
 
 Log in to 54.191.9.106 with the credentials from the ``auth`` section of the config file.
 
-The staging setup is missing the ability to notice builds happening.
+The staging setup is missing the ability to trigger builds in response to commits happening.
 
 Wheelhouse
 ----------
