@@ -32,8 +32,15 @@ def startBuildmaster(config, shouldPull=True):
         IMAGE))
     removeUntaggedImages()
 
-@task
+
 def removeUntaggedImages():
+    """
+    Cleanup untagged docker images.
+
+    When pulling a new version of an image, docker keeps around the old layers,
+    which consume diskspace. This deletes all untagged leaf layers and their
+    unreferenced parents.
+    """
     images = [line.split() for line in sudo(cmd("docker.io", "images")).splitlines()]
     untagged = [image[2] for image in images if image[0] == '<none>']
     if untagged:
@@ -64,13 +71,17 @@ def start(configFile="config.yml"):
 
 @task
 def update(configFile="config.yml"):
-    "Update buildmaster to latest image."
+    """
+    Update buildmaster to latest image.
+    """
     config = loadConfig(configFile)
     startBuildmaster(config)
 
 @task
 def restart(configFile="config.yml"):
-    "Restart buildmaster with current image."
+    """
+    Restart buildmaster with current image.
+    """
     config = loadConfig(configFile)
     startBuildmaster(config, shouldPull=False)
 
