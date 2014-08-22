@@ -106,12 +106,13 @@ def _flockerCoverage():
                 '    flocker',
                 '    /*/site-packages/flocker',
                 '']),
-            '.coveragerc',
+            '.coveragerc-combine',
             name="download-coveragerc"),
         ShellCommand(
             command=[
                 Interpolate(path.join(VIRTUALENV_DIR, "bin/coverage")),
                 'combine',
+                '--rcfile=.coveragerc-combine',
                 ],
             name='rewrite-coverage',
             description=[b'Rewriting', b'coverage'],
