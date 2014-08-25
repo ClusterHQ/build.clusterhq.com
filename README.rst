@@ -1,7 +1,8 @@
 This is the configuration for ClusterHQ's `buildbot <http://buildbot.net/>`.
 
 The master is deployed on an EC2 instance running in eu-west, in a docker container.
-The docker image is stored on the docker registry, and is automatically updated when the master branch is updated.
+The docker image is stored on the docker registry, and is automatically updated when the master branch is updated
+(it takes about 10 minutes for the build to occur, the status is available `here <https://registry.hub.docker.com/u/clusterhq/build.clusterhq.com/builds_history/46090/>`).
 
 The slaves are EC2 latent slaves (spot instances) started by the master.
 They are based off the `fedora-buildslave-base` AMI in us-west-2.
