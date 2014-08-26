@@ -6,16 +6,13 @@ import sys
 sys.path.insert(0, dirname(__file__))
 del sys, dirname
 
-import os
-
 # This is the dictionary that the buildmaster pays attention to. We also use
 # a shorter alias to save typing.
 c = BuildmasterConfig = {}
 
 from twisted.python.filepath import FilePath
-import json
 
-privateData = json.loads(os.environ.get("BUILDBOT_CONFIG", "{}"))
+from flocker_bb import privateData
 # Some credentials
 USER = privateData['auth']['user'].encode("utf-8")
 PASSWORD = privateData['auth']['password'].encode("utf-8")
