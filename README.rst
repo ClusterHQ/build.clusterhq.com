@@ -22,6 +22,7 @@ The buildbot is deployed from the automated build of the master branch of https:
 It takes about 10 minutes for the build to occur, after pushing to master;
 the status is available `here <https://registry.hub.docker.com/u/clusterhq/build.clusterhq.com/builds_history/46090/>`).
 
+The production instance is accessed using a key from  `https://github.com/hybridlogic/HybridDeployment` (this repository is not publicly available).
 Add the HybridDeployment master key to your authentication agent::
 
    $ ssh-add /path/to/HybridDeployment/credentials/master_key
