@@ -1,8 +1,6 @@
 This is the configuration for ClusterHQ's `buildbot <http://buildbot.net/>`.
 
 The master is deployed on an EC2 instance running in eu-west, in a docker container.
-The docker image is stored on the docker registry, and is automatically updated when the master branch is updated
-(it takes about 10 minutes for the build to occur, the status is available `here <https://registry.hub.docker.com/u/clusterhq/build.clusterhq.com/builds_history/46090/>`).
 
 The slaves are EC2 latent slaves (spot instances) started by the master.
 They are based off the `fedora-buildslave-base` AMI in us-west-2.
@@ -20,13 +18,15 @@ There is a fabfile with commands ``start`` and ``update`` for deploying the buil
 Deploying changes
 -----------------
 
-Clone HybridDeployment https://github.com/ClusterHQ/build.clusterhq.com
+The buildbot is deployed from the automated build of the master branch of https://github.com/ClusterHQ/build.clusterhq.com on the docker registry.
+It takes about 10 minutes for the build to occur, after pushing to master;
+the status is available `here <https://registry.hub.docker.com/u/clusterhq/build.clusterhq.com/builds_history/46090/>`).
 
 Add the HybridDeployment master key to your authentication agent::
 
    $ ssh-add /path/to/HybridDeployment/credentials/master_key
 
-Go to a checkout of the build.clusterhq.com repository, with Docker running.
+Go to a checkout of the build.clusterhq.com repository.
 
 The secrets for the master must be stored in a file ``config.yml`` inside the checkout.
 These secrets can be found in the "FlockerBuildbot Credentials" file in LastPass.
