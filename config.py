@@ -94,18 +94,19 @@ def rebuild(module):
 
 rebuild('flocker_bb.steps')
 rebuild('flocker_bb.builders.flocker')
+rebuild('flocker_bb.builders.maint')
 
 
-from flocker_bb.builders import flocker
+from flocker_bb.builders import flocker, maint
 
-c['builders'] = flocker.getBuilders(FLOCKER_SLAVES)
+c['builders'] = flocker.getBuilders(FLOCKER_SLAVES) + maint.getBuilders(FLOCKER_SLAVES)
 
 ####### SCHEDULERS
 
 # Configure the Schedulers, which decide how to react to incoming changes.  In
 # this case, just kick off a 'runtests' build
 
-c['schedulers'] = flocker.getSchedulers()
+c['schedulers'] = flocker.getSchedulers() + maint.getSchedulers()
 
 ####### STATUS TARGETS
 
