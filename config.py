@@ -6,16 +6,13 @@ import sys
 sys.path.insert(0, dirname(__file__))
 del sys, dirname
 
-import os
-
 # This is the dictionary that the buildmaster pays attention to. We also use
 # a shorter alias to save typing.
 c = BuildmasterConfig = {}
 
 from twisted.python.filepath import FilePath
-import json
 
-privateData = json.loads(os.environ.get("BUILDBOT_CONFIG", "{}"))
+from flocker_bb import privateData
 # Some credentials
 USER = privateData['auth']['user'].encode("utf-8")
 PASSWORD = privateData['auth']['password'].encode("utf-8")
@@ -94,18 +91,19 @@ def rebuild(module):
 
 rebuild('flocker_bb.steps')
 rebuild('flocker_bb.builders.flocker')
+rebuild('flocker_bb.builders.maint')
 
 
-from flocker_bb.builders import flocker
+from flocker_bb.builders import flocker, maint
 
-c['builders'] = flocker.getBuilders(FLOCKER_SLAVES)
+c['builders'] = flocker.getBuilders(FLOCKER_SLAVES) + maint.getBuilders(FLOCKER_SLAVES)
 
 ####### SCHEDULERS
 
 # Configure the Schedulers, which decide how to react to incoming changes.  In
 # this case, just kick off a 'runtests' build
 
-c['schedulers'] = flocker.getSchedulers()
+c['schedulers'] = flocker.getSchedulers() + maint.getSchedulers()
 
 ####### STATUS TARGETS
 
@@ -115,12 +113,12 @@ c['schedulers'] = flocker.getSchedulers()
 
 c['status'] = []
 
+rebuild('flocker_bb.github')
 from flocker_bb.github import codebaseStatus
 if privateData['github']['report_status']:
     c['status'].append(codebaseStatus('flocker', token=privateData['github']['token']))
 
 rebuild('flocker_bb.boxes')
-rebuild('flocker_bb.github')
 
 from flocker_bb.boxes import FlockerWebStatus as WebStatus
 from buildbot.status.web import authz
