@@ -113,12 +113,12 @@ c['schedulers'] = flocker.getSchedulers() + maint.getSchedulers()
 
 c['status'] = []
 
+rebuild('flocker_bb.github')
 from flocker_bb.github import codebaseStatus
 if privateData['github']['report_status']:
     c['status'].append(codebaseStatus('flocker', token=privateData['github']['token']))
 
 rebuild('flocker_bb.boxes')
-rebuild('flocker_bb.github')
 
 from flocker_bb.boxes import FlockerWebStatus as WebStatus
 from buildbot.status.web import authz

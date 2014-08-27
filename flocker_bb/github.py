@@ -99,7 +99,6 @@ class GitHubStatus(object):
                 failed.append(builderName)
 
         if not request.has_key('sha'):
-            print revisions
             if len(revisions) == 1:
                 request['sha'] = revisions.pop()
             else:

@@ -39,5 +39,7 @@ def getSchedulers():
     return [
         Periodic(name='daily',
                  builderNames=['clean-old-builds'],
-                 periodicBuildTimer=24*3600),
+                 periodicBuildTimer=24*3600,
+                 # This is so the zulip reporter gives better message.
+                 codebases={'maint': {'branch': 'clean-old-builds'}}),
         ]
