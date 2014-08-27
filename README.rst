@@ -18,13 +18,16 @@ There is a fabfile with commands ``start`` and ``update`` for deploying the buil
 Deploying changes
 -----------------
 
-Clone HybridDeployment https://github.com/ClusterHQ/build.clusterhq.com
+The buildbot is deployed from the automated build of the master branch of https://github.com/ClusterHQ/build.clusterhq.com on the docker registry.
+It takes about 10 minutes for the build to occur, after pushing to master;
+the status is available `here <https://registry.hub.docker.com/u/clusterhq/build.clusterhq.com/builds_history/46090/>`).
 
+The production instance is accessed using a key from  `https://github.com/hybridlogic/HybridDeployment` (this repository is not publicly available).
 Add the HybridDeployment master key to your authentication agent::
 
    $ ssh-add /path/to/HybridDeployment/credentials/master_key
 
-Go to a checkout of the build.clusterhq.com repository, with Docker running.
+Go to a checkout of the build.clusterhq.com repository.
 
 The secrets for the master must be stored in a file ``config.yml`` inside the checkout.
 These secrets can be found in the "FlockerBuildbot Credentials" file in LastPass.
@@ -35,53 +38,67 @@ Install dependencies::
    $ pip install pyyaml
    $ pip install fabric
 
-Turn the directory into a Docker image and push it to the registry::
-
-   $ ./build-images
-
 Check if anyone has running builds at http://build.clusterhq.com/buildslaves.
 
 Announce on Zulip's Engineering > buildbot stream that Buildbot will be unavailable for a few minutes.
 
-Update the live Buildbot::
+Update the live Buildbot (this may take some time)::
 
-   $ fab -H ubuntu@build.clusterhq.com update
+   $ fab update
 
 To view the logs::
 
-   $ fab -H ubuntu@build.clusterhq.com -- sudo docker.io logs -f buildmaster
+   $ fab logs
 
+To restart the live Buildbot::
+
+   $ fab restart
 
 Staging changes
 ---------------
 
 Buildbot changes can be tested on a staging machine.
+The docker registry will automatically build an image based on the staging branch, whenever it is updated.
 
 Create an Ubuntu 14.04 spot instance on EC2 and note the IP of this instance.
 In the following example the IP is 54.191.9.106.
+Set the Security Group of this instance to allow inbound traffic as shown below.
+
+.. image:: security-group.png
+   :alt: Custom TCP Rule, TCP Protocol, Port Range 5000, Source Anywhere, 0.0.0.0/0
+         SSH, TCP Protocol, Port Range 22, Source Anywhere, 0.0.0.0/0
+         HTTP, TCP Protocol, Port Range 80, Source Anywhere, 0.0.0.0/0
+         Custom TCP Rule, TCP Protocol, Port Range 9989, Source Anywhere, 0.0.0.0/0
+         All ICMP, ICMP Protocol, Port Range 0-65535, Source Anywhere, 0.0.0.0/0
+
+The Security Group should allow all outbound traffic.
 
 Create staging.yml with the config.yml variables from LastPass.
 Change the buildmaster.host config option to the IP of the EC2 instance.
 Change the github.report_status config option to False.
+Add a buildmaster.docker_tag config option, with the value ``staging``.
+
+
+Follow the "Deploying changes" setup but there is no need to check for running builds or make an announcement on Zulip.
 
 To start a Buildbot slave on this machine run::
 
-   $ fab -H ubuntu@54.191.9.106 start:staging.yml
+   $ fab start:staging.yml
 
 To update a slave on this machine, run::
 
-   $ fab -H ubuntu@54.191.9.106 update:staging.yml
+   $ fab update:staging.yml
 
 Log in to 54.191.9.106 with the credentials from the ``auth`` section of the config file.
 
-The staging setup is missing the ability to notice builds happening.
+The staging setup is missing the ability to trigger builds in response to commits happening.
 
 Wheelhouse
 ----------
 
 There is a wheelhouse hosted on s3 (thus near the buildslaves).
 Credentials [1]_ for ``s3cmd`` can be configured using ``s3cmd --configure``.
-It can be updated by running the following commands::
+It can be updated to include available wheels of packages which are in flocker's ``setup.py`` by running the following commands::
 
    python setup.py sdist
    pip wheel -f dist "Flocker[doc,dev]==$(python setup.py --version)"
