@@ -1,4 +1,4 @@
-This is the configuration for ClusterHQ's `buildbot <http://buildbot.net/>`.
+This is the configuration for ClusterHQ's `buildbot <http://buildbot.net/>`_.
 
 The master is deployed on an EC2 instance running in eu-west, in a docker container.
 
