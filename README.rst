@@ -22,7 +22,7 @@ The buildbot is deployed from the automated build of the master branch of https:
 It takes about 10 minutes for the build to occur, after pushing to master;
 the status is available `here <https://registry.hub.docker.com/u/clusterhq/build.clusterhq.com/builds_history/46090/>`_).
 
-The production instance is accessed using a key from  `https://github.com/hybridlogic/HybridDeployment` (this repository is not publicly available).
+The production instance is accessed using a key from https://github.com/hybridlogic/HybridDeployment (this repository is not publicly available).
 Add the HybridDeployment master key to your authentication agent::
 
    $ ssh-add /path/to/HybridDeployment/credentials/master_key
@@ -90,7 +90,7 @@ To update a slave on this machine, run::
 
 Log in to 54.191.9.106 with the credentials from the ``auth`` section of the config file.
 
-The staging setup is missing the ability to trigger builds in response to commits happening.
+The staging setup is missing the ability to trigger builds in response to pushes happening.
 
 Wheelhouse
 ----------
