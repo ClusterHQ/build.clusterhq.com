@@ -42,7 +42,7 @@ Check if anyone has running builds at http://build.clusterhq.com/buildslaves.
 
 Announce on Zulip's Engineering > buildbot stream that Buildbot will be unavailable for a few minutes.
 
-Update the live Buildbot (this may take some time)::
+Update the live Buildbot to the latest image (this may take some time)::
 
    $ fab update
 
@@ -50,7 +50,7 @@ To view the logs::
 
    $ fab logs
 
-To restart the live Buildbot::
+To restart the live Buildbot with the current image::
 
    $ fab restart
 
@@ -77,7 +77,6 @@ Create staging.yml with the config.yml variables from LastPass.
 Change the buildmaster.host config option to the IP of the EC2 instance.
 Change the github.report_status config option to False.
 Add a buildmaster.docker_tag config option, with the value ``staging``.
-
 
 Follow the "Deploying changes" setup but there is no need to check for running builds or make an announcement on Zulip.
 
