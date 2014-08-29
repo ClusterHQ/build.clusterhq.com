@@ -1,4 +1,4 @@
-This is the configuration for ClusterHQ's `buildbot <http://buildbot.net/>`.
+This is the configuration for ClusterHQ's `buildbot <http://buildbot.net/>`_.
 
 The master is deployed on an EC2 instance running in eu-west, in a docker container.
 
@@ -20,9 +20,9 @@ Deploying changes
 
 The buildbot is deployed from the automated build of the master branch of https://github.com/ClusterHQ/build.clusterhq.com on the docker registry.
 It takes about 10 minutes for the build to occur, after pushing to master;
-the status is available `here <https://registry.hub.docker.com/u/clusterhq/build.clusterhq.com/builds_history/46090/>`).
+the status is available `here <https://registry.hub.docker.com/u/clusterhq/build.clusterhq.com/builds_history/46090/>`_).
 
-The production instance is accessed using a key from  `https://github.com/hybridlogic/HybridDeployment` (this repository is not publicly available).
+The production instance is accessed using a key from https://github.com/hybridlogic/HybridDeployment (this repository is not publicly available).
 Add the HybridDeployment master key to your authentication agent::
 
    $ ssh-add /path/to/HybridDeployment/credentials/master_key
@@ -42,7 +42,7 @@ Check if anyone has running builds at http://build.clusterhq.com/buildslaves.
 
 Announce on Zulip's Engineering > buildbot stream that Buildbot will be unavailable for a few minutes.
 
-Update the live Buildbot (this may take some time)::
+Update the live Buildbot to the latest image (this may take some time)::
 
    $ fab update
 
@@ -50,7 +50,7 @@ To view the logs::
 
    $ fab logs
 
-To restart the live Buildbot::
+To restart the live Buildbot with the current image::
 
    $ fab restart
 
@@ -78,7 +78,6 @@ Change the buildmaster.host config option to the IP of the EC2 instance.
 Change the github.report_status config option to False.
 Add a buildmaster.docker_tag config option, with the value ``staging``.
 
-
 Follow the "Deploying changes" setup but there is no need to check for running builds or make an announcement on Zulip.
 
 To start a Buildbot slave on this machine run::
@@ -91,7 +90,7 @@ To update a slave on this machine, run::
 
 Log in to 54.191.9.106 with the credentials from the ``auth`` section of the config file.
 
-The staging setup is missing the ability to trigger builds in response to commits happening.
+The staging setup is missing the ability to trigger builds in response to pushes happening.
 
 Wheelhouse
 ----------
