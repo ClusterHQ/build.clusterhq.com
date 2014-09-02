@@ -253,13 +253,15 @@ def makeCoverageFactory():
     return factory
 
 
-def sphinxBuild(builder, workdir=b"build/docs"):
+def sphinxBuild(builder, workdir=b"build/docs", **kwargs):
     """
     Build sphinx documentation.
 
     @param builder: Sphinx builder to use.
     @param path: Location of sphinx tree.
     """
+    extraArgs = {'flunkOnWarnings': True, 'haltOnFailure': True}
+    extraArgs.update(kwargs)
     return Sphinx(
         name="build-%s" % (builder,),
         description=["building", builder],
@@ -270,13 +272,10 @@ def sphinxBuild(builder, workdir=b"build/docs"):
                 '-d', "_build/doctree",
                 ],
         workdir=workdir,
-        defines={
-            },
         env={
             b"PATH": [Interpolate(path.join(VIRTUALENV_DIR, "bin")), "${PATH}"],
             },
-        flunkOnWarnings=True,
-        haltOnFailure=True)
+        **extraArgs)
 
 
 def isBranch(codebase, branchName, prefix=False):
@@ -310,6 +309,9 @@ def makeInternalDocsFactory():
 
     factory = getFlockerFactory(python="python2.7")
     factory.addSteps(installDependencies())
+    factory.addStep(sphinxBuild("spelling", "build/docs",
+                                logfiles={'errors': '_build/spelling/output.txt'},
+                                haltOnFailure=False))
     factory.addStep(sphinxBuild("html", "build/docs"))
     factory.addStep(DirectoryUpload(
         b"docs/_build/html",
