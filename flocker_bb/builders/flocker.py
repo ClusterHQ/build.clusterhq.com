@@ -76,7 +76,17 @@ def _flockerTests(kwargs, tests=None):
 def _flockerCoverage():
     branch = "%(src:flocker:branch)s"
     revision = "flocker-%(prop:buildnumber)s"
-    steps = _flockerTests({
+    steps = [
+        # http://nedbatchelder.com/code/coverage/subprocess.html
+        StringDownload(
+            '\n'.join([
+                'import coverage; coverage.process_startup()'
+                '']),
+            'coverage.pth',
+            workdir=Interpolate(path.join(VIRTUALENV_DIR, "lib/python2.7/site-packages")),
+            name="coverage.pth"),
+        ]
+    steps.extend(_flockerTests({
             'python': [
                 # Buildbot flattens this for us.
                 # Unfortunately, Trial assumes that 'python' is a list of strings,
@@ -88,7 +98,7 @@ def _flockerCoverage():
                 b"--source", b"flocker",
                 b"--rcfile", b"../build/.coveragerc",
                 ]
-            })
+            }))
     # This needs to be before we delete the temporary directory.
     steps.insert(len(steps)-1,
         ShellCommand(
