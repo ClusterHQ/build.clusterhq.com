@@ -312,8 +312,8 @@ def makeInternalDocsFactory():
     factory.addStep(sphinxBuild("spelling", "build/docs",
                                 logfiles={'errors': '_build/spelling/output.txt'},
                                 haltOnFailure=False))
-    factory.addStep(sphinxBuild("linkchecker", "build/docs",
-                                logfiles={'errors': '_build/linkchecker/output.txt'},
+    factory.addStep(sphinxBuild("linkcheck", "build/docs",
+                                logfiles={'errors': '_build/linkcheck/output.txt'},
                                 haltOnFailure=False))
     factory.addStep(sphinxBuild("html", "build/docs"))
     factory.addStep(DirectoryUpload(
