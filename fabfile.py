@@ -22,14 +22,14 @@ def cmd(*args):
     return ' '.join(map(shellQuote, args))
 
 def pull(image):
-    sudo(cmd('docker.io', 'pull', image), pty=False)
+    sudo(cmd('docker', 'pull', image), pty=False)
 
 def containerExists(name):
-    return sudo(cmd('docker.io', 'inspect', '-f', 'test', name), quiet=True).succeeded
+    return sudo(cmd('docker', 'inspect', '-f', 'test', name), quiet=True).succeeded
 
 def removeContainer(name):
     if containerExists(name):
-        sudo(cmd('docker.io', 'rm', '-f', name))
+        sudo(cmd('docker', 'rm', '-f', name))
 
 def imageFromConfig(config, baseImage='clusterhq/build.clusterhq.com'):
     """
@@ -47,7 +47,7 @@ def startBuildmaster(config, shouldPull=True):
         pull(image)
     removeContainer('buildmaster')
     sudo(cmd(
-        'docker.io', 'run', '-d',
+        'docker', 'run', '-d',
         '--name', 'buildmaster',
         '-p', '80:80', '-p', '9989:9989',
         '-e', 'BUILDBOT_CONFIG=%s' % (json.dumps(config),),
@@ -64,22 +64,21 @@ def removeUntaggedImages():
     which consume diskspace. This deletes all untagged leaf layers and their
     unreferenced parents.
     """
-    images = [line.split() for line in sudo(cmd("docker.io", "images")).splitlines()]
+    images = [line.split() for line in sudo(cmd("docker", "images")).splitlines()]
     untagged = [image[2] for image in images if image[0] == '<none>']
     if untagged:
-        sudo(cmd('docker.io', 'rmi', *untagged))
+        sudo(cmd('docker', 'rmi', *untagged))
 
 
 def bootstrap():
     """
     Install docker, and setup data volume.
     """
-    sudo('apt-get update', pty=False)
-    sudo('DEBIAN_FRONTEND=noninteractive apt-get -y upgrade', pty=False)
-    sudo('DEBIAN_FRONTEND=noninteractive apt-get -y install docker.io', pty=False)
+    sudo('yum update -y')
+    sudo('yum install -y docker-io')
 
     if not containerExists('buildmaster-data'):
-        sudo('docker.io run --name buildmaster-data -v /srv/buildmaster/data busybox /bin/true')
+        sudo('docker run --name buildmaster-data -v /srv/buildmaster/data busybox /bin/true')
 
 @task
 def start(configFile="config.yml"):
@@ -115,6 +114,6 @@ def logs(configFile="config.yml", follow=True):
     """
     loadConfig(configFile)
     if follow:
-        execute(sudo, cmd('docker.io', 'logs', '-f', 'buildmaster'))
+        execute(sudo, cmd('docker', 'logs', '-f', 'buildmaster'))
     else:
-        execute(sudo, cmd('docker.io', 'logs', 'buildmaster'))
+        execute(sudo, cmd('docker', 'logs', 'buildmaster'))
