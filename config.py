@@ -180,3 +180,7 @@ c['buildbotURL'] = "http://%s/" % (privateData['buildmaster']['host'],)
 # state.  You can leave this at its default for all but the largest
 # installations.
 c['db_url'] = "sqlite:///" + sibpath(__file__, "data/state.sqlite")
+
+
+# Cleanup old builds.
+c['buildHorizon'] = 1000
