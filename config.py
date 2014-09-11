@@ -182,5 +182,7 @@ c['buildbotURL'] = "http://%s/" % (privateData['buildmaster']['host'],)
 c['db_url'] = "sqlite:///" + sibpath(__file__, "data/state.sqlite")
 
 
+# Keep a bunch of build in memory rather than constantly re-reading them from disk.
+c['buildCacheSize'] = 1000
 # Cleanup old builds.
 c['buildHorizon'] = 1000
