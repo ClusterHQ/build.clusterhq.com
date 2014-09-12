@@ -2,9 +2,9 @@ from fabric.api import sudo, task, env, execute
 from pipes import quote as shellQuote
 import yaml, json
 
-# We assume we are running on a ubuntu 14.04 AWS image.
-# These are setup with an `ubuntu` user, so hard code that.
-env.user = 'ubuntu'
+# We assume we are running on a fedora 20 AWS image.
+# These are setup with an `fedora` user, so hard code that.
+env.user = 'fedora'
 
 def loadConfig(configFile):
     """
@@ -22,7 +22,7 @@ def cmd(*args):
     return ' '.join(map(shellQuote, args))
 
 def pull(image):
-    sudo(cmd('docker', 'pull', image), pty=False)
+    sudo(cmd('docker', 'pull', image))
 
 def containerExists(name):
     return sudo(cmd('docker', 'inspect', '-f', 'test', name), quiet=True).succeeded
@@ -76,6 +76,8 @@ def bootstrap():
     """
     sudo('yum update -y')
     sudo('yum install -y docker-io')
+    sudo('systemctl enable docker')
+    sudo('systemctl start docker')
 
     if not containerExists('buildmaster-data'):
         sudo('docker run --name buildmaster-data -v /srv/buildmaster/data busybox /bin/true')
