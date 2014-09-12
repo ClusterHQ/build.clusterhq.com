@@ -72,6 +72,7 @@ class GitHubStatus(object):
             'description': 'Starting build.'
             })
 
+        log.msg("github request %(request)s", request=request)
         d = self._sendStatus(request)
         d.addErrback(
             log.err,

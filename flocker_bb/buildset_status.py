@@ -22,6 +22,7 @@ class BuildsetStatusReceiver(StatusReceiverService):
         StatusReceiverService.startService(self)
         self.status = self.parent
         self.master = self.status.master
+        print self.status.getBuildbotURL()
 
         # Get builderAdded notification
         self.status.subscribe(self)
