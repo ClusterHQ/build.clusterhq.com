@@ -9,15 +9,7 @@ gpgcheck = 0
 enabled = 1
 EOF
 
-cat <<"EOF" >/etc/yum.repos.d/zfs.repo
-[zfs]
-name=ZFS Fedora 20
-failovermethod=priority
-baseurl=http://data.hybridcluster.net/zfs-fedora20/
-enabled=1
-gpgcheck=0
-metadata_expire=10
-EOF
+yum install -y http://archive.zfsonlinux.org/fedora/zfs-release$(rpm -E %dist).noarch.rpm
 
 yum upgrade -y
 yum install -y \
