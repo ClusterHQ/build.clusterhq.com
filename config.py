@@ -25,11 +25,9 @@ PASSWORD = privateData['auth']['password'].encode("utf-8")
 # --master option)
 c['slavePortnum'] = 9989
 
-from flocker_bb import password
+from flocker_bb.password import generate_password
 from flocker_bb.ec2_buildslave import EC2LatentBuildSlave
 
-slaves = [('slave-%d' % (i,), password.generate(32))
-          for i in range(3)]
 cloudInit = FilePath(__file__).sibling("slave").child("cloud-init.sh").getContent()
 
 c['slaves'] = []
@@ -39,7 +37,7 @@ for base, slaveConfig in privateData['slaves'].items():
     SLAVENAMES[base] = []
     for i in range(slaveConfig['slaves']):
         name = '%s-%d' % (base, i)
-        password = password.generate(32)
+        password = generate_password(32)
         ami = r'.*/%s' % (slaveConfig['ami'],)
 
         SLAVENAMES[base].append(name)
