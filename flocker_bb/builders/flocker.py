@@ -428,6 +428,12 @@ def getBuilders(slavenames):
                       factory=makeFactory(b'python2.7'),
                       locks=[functionalLock.access('counting')],
                       nextSlave=idleSlave),
+        BuilderConfig(name='flocker-zfs-head',
+                      slavenames=slavenames['fedora-zfs-head'],
+                      category='flocker',
+                      factory=makeFactory(b'python2.7'),
+                      locks=[functionalLock.access('counting')],
+                      nextSlave=idleSlave),
         BuilderConfig(name='flocker-twisted-trunk',
                       slavenames=slavenames['fedora'],
                       category='flocker',
@@ -464,6 +470,7 @@ BUILDERS = [
     'flocker-lint',
     'flocker-docs',
     'flocker-rpms',
+    'flocker-zfs-head',
     ]
 
 def getSchedulers():

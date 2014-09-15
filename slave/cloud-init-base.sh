@@ -21,12 +21,15 @@ yum install -y \
 	mock \
 	rpmdev \
 	rpmlint \
-	zfs \
 	rpm-build \
 	docker-io \
 	geard \
 	libffi-devel \
-	@buildsys-build
+	@buildsys-build \
+	kernel-headers \
+	kernel-devel
+# Install in a seperate step, so that kernel-devel will have been installed
+yum install -y zfs
 yum clean -y all
 
 systemctl enable docker
