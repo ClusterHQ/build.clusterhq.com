@@ -235,7 +235,7 @@ def makeLintFactory():
 
 def installCoverage():
     return pip("coverage", [
-         "coverage==3.7",
+         "coverage==3.7.1",
          "http://data.hybridcluster.net/python/coverage_reporter-0.01_hl0-py27-none-any.whl",
          "python-coveralls==2.4.2",
     ])
