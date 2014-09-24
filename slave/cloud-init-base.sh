@@ -31,7 +31,9 @@ yum install -y \
 	libffi-devel \
 	@buildsys-build \
 	kernel-headers \
-	kernel-devel
+	kernel-devel \
+	wget \
+	curl
 
 systemctl enable docker
 systemctl enable geard
