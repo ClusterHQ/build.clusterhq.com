@@ -11,6 +11,10 @@ EOF
 
 yum install -y http://archive.zfsonlinux.org/fedora/zfs-release$(rpm -E %dist).noarch.rpm
 
+# Enable debugging for ZFS modules
+echo SPL_DKMS_DISABLE_STRIP=y >> /etc/sysconfig/spl
+echo ZFS_DKMS_DISABLE_STRIP=y >> /etc/sysconfig/zfs
+
 yum upgrade -y
 yum install -y \
 	buildbot-slave \

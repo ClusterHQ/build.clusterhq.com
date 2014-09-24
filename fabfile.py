@@ -29,6 +29,7 @@ def containerExists(name):
 
 def removeContainer(name):
     if containerExists(name):
+        sudo(cmd('docker', 'stop', name))
         sudo(cmd('docker', 'rm', '-f', name))
 
 def imageFromConfig(config, baseImage='clusterhq/build.clusterhq.com'):
