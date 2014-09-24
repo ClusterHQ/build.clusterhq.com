@@ -3,9 +3,6 @@ This is the configuration for ClusterHQ's `buildbot <http://buildbot.net/>`_.
 The master is deployed on an EC2 instance running in us-west-2, in a docker container.
 
 The slaves are EC2 latent slaves (spot instances) started by the master.
-They are based off the `fedora-buildslave-base` AMI in us-west-2.
-The image is based on the offical fedora 20 image (`ami-cc8de6fc`) with `slave/cloud-init-base.sh`.
-Each image uses `slave/cloud-init.sh` with some substitutions as user-data, to start the buildbot.
 
 We use schedulers to start builds, triggered by each push of a commit to a branch and forced builds.
 After each commit is pushed, Buildbot waits a number of seconds before starting a build,
@@ -107,3 +104,21 @@ It can be updated to include available wheels of packages which are in flocker's
 The buildslave is constructed with a ``pip.conf`` file that points at https://s3-us-west-2.amazonaws.com/clusterhq-wheelhouse/fedora20-x86_64/index.
 
 .. [1] Create credentials at https://console.aws.amazon.com/iam/home#users.
+
+Slave AMIs
+----------
+
+There are two slave AMIs.
+The images are based on the offical fedora 20 image (`ami-cc8de6fc`) with `slave/cloud-init-base.sh`.
+Each image uses `slave/cloud-init.sh` with some substitutions as user-data, to start the buildbot.
+
+``fedora-buildslave``
+  is used for most builds, and has all the dependencies installed,
+  including the latest release of zfs (or a fixed prerelease, when there are relevant bug fixes).
+  The image is built by running :file:`slave/cloud-init-base.sh` and then installing zfs.
+``fedora-buildslave-zfs-head``
+  is used to test against the lastest version of zfs.
+  It has all the dependencies except zfs installed, and has the latest version of zfs installed when an
+  instance is created.  The image is built by running :file:`slave/cloud-init-base.sh`.
+
+Both images have :file:`salve/cloud-init.sh` run on them at instance creation time.
