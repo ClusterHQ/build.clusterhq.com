@@ -1,6 +1,6 @@
 This is the configuration for ClusterHQ's `buildbot <http://buildbot.net/>`_.
 
-The master is deployed on an EC2 instance running in eu-west, in a docker container.
+The master is deployed on an EC2 instance running in us-west-2, in a docker container.
 
 The slaves are EC2 latent slaves (spot instances) started by the master.
 They are based off the `fedora-buildslave-base` AMI in us-west-2.
