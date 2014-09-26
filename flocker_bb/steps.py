@@ -178,3 +178,43 @@ class MergeForward(Source):
                 return cmd.rc
         d.addCallback(lambda _: evaluateCommand(cmd))
         return d
+
+def pip(what, packages):
+    """
+    Installs a list of packages with pip, in the current virtualenv.
+
+    @param what: Description of the packages being installed.
+    @param packages: L{list} of packages to install
+    @returns: L{BuildStep}
+    """
+    return ShellCommand(
+        name="install-" + what,
+        description=["installing", what],
+        descriptionDone=["install", what],
+        command=[Interpolate(path.join(VIRTUALENV_DIR, "bin/pip")),
+                 "install",
+                 packages,
+                 ],
+        haltOnFailure=True)
+
+
+def isBranch(codebase, branchName, prefix=False):
+    """
+    Return C{doStepIf} function checking whether the built branch
+    matches the given branch.
+
+    @param codebase: Codebase to check
+    @param branchName: Target branch
+    @param prefix: L{bool} indicating whether to check against a prefix
+    """
+    def test(step):
+        sourcestamp = step.build.getSourceStamp(codebase)
+        branch = sourcestamp.branch
+        if prefix:
+            return branch.startswith(branchName)
+        else:
+            return branch == branchName
+    return test
+
+def isMasterBranch(codebase):
+    return isBranch(codebase, 'master')

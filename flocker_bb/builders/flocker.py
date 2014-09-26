@@ -4,7 +4,7 @@ from buildbot.steps.python import Sphinx
 from buildbot.steps.transfer import DirectoryUpload, StringDownload
 from buildbot.steps.master import MasterShellCommand
 from buildbot.steps.source.git import Git
-from buildbot.process.properties import Interpolate, renderer, Property
+from buildbot.process.properties import Interpolate, Property
 from buildbot.steps.package.rpm import RpmLint
 
 from os import path
@@ -14,6 +14,8 @@ from ..steps import (
         getFactory,
         GITHUB,
         TWISTED_GIT,
+        pip,
+        isMasterBranch,
         )
 
 from ..mock import MockBuildSRPM, MockRebuild
@@ -26,18 +28,6 @@ def getFlockerFactory(python):
     factory = getFactory("flocker", useSubmodules=False, mergeForward=True)
     factory.addSteps(buildVirtualEnv(python, useSystem=True))
     return factory
-
-
-def pip(what, packages):
-    return ShellCommand(
-        name="install-" + what,
-        description=["installing", what],
-        descriptionDone=["install", what],
-        command=[Interpolate(path.join(VIRTUALENV_DIR, "bin/pip")),
-                 "install",
-                 packages,
-                 ],
-        haltOnFailure=True)
 
 
 
@@ -278,29 +268,6 @@ def sphinxBuild(builder, workdir=b"build/docs", **kwargs):
         **extraArgs)
 
 
-def isBranch(codebase, branchName, prefix=False):
-    """
-    Return C{doStepIf} function checking whether the built branch
-    matches the given branch.
-
-    @param codebase: Codebase to check
-    @param branchName: Target branch
-    @param prefix: L{bool} indicating whether to check against a prefix
-    """
-    def test(step):
-        sourcestamp = step.build.getSourceStamp(codebase)
-        branch = sourcestamp.branch
-        if prefix:
-            return branch.startswith(branchName)
-        else:
-            return branch == branchName
-    return test
-
-def isReleaseBranch(codebase):
-    return isBranch(codebase, 'release-', prefix=True)
-
-def isMasterBranch(codebase):
-    return isBranch(codebase, 'master')
 
 
 def makeInternalDocsFactory():
@@ -340,9 +307,6 @@ def makeInternalDocsFactory():
     return factory
 
 
-@renderer
-def underscoreVersion(props):
-    return props.getProperty('version').replace('-', '_')
 
 def makeRPMFactory():
     branch = "%(src:flocker:branch)s"
