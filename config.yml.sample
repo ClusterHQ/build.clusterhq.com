@@ -14,6 +14,10 @@ github:
     token: "<github api token>"
     report_status: True
 buildmaster:
-    host: build.clusterhq.com
+    host: "build.clusterhq.com"
 coveralls:
     token: "<coveralls repo token>"
+slaves:
+    fedora:
+        ami: "fedora-buildslave-base"
+        slaves: 3

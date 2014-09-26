@@ -9,15 +9,11 @@ gpgcheck = 0
 enabled = 1
 EOF
 
-cat <<"EOF" >/etc/yum.repos.d/zfs.repo
-[zfs]
-name=ZFS Fedora 20
-failovermethod=priority
-baseurl=http://data.hybridcluster.net/zfs-fedora20/
-enabled=1
-gpgcheck=0
-metadata_expire=10
-EOF
+yum install -y http://archive.zfsonlinux.org/fedora/zfs-release$(rpm -E %dist).noarch.rpm
+
+# Enable debugging for ZFS modules
+echo SPL_DKMS_DISABLE_STRIP=y >> /etc/sysconfig/spl
+echo ZFS_DKMS_DISABLE_STRIP=y >> /etc/sysconfig/zfs
 
 yum upgrade -y
 yum install -y \
@@ -29,13 +25,15 @@ yum install -y \
 	mock \
 	rpmdev \
 	rpmlint \
-	zfs \
 	rpm-build \
 	docker-io \
 	geard \
 	libffi-devel \
-	@buildsys-build
-yum clean -y all
+	@buildsys-build \
+	kernel-headers \
+	kernel-devel \
+	wget \
+	curl
 
 systemctl enable docker
 systemctl enable geard

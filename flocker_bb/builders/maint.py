@@ -31,7 +31,7 @@ def getBuilders(slavenames):
             name='clean-old-builds',
             # FIXME: We shouldn't spin up a latent slave to run a command
             # on the master.
-            slavenames=slavenames,
+            slavenames=slavenames['fedora'],
             factory=makeCleanOldBuildsFactory()),
         ]
 

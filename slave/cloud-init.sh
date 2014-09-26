@@ -1,6 +1,10 @@
 #!/bin/sh
 setenforce 0
-modprobe zfs
+
+if [[ "%(base)s" == "fedora-zfs-head" ]]; then
+   yum install -y --enablerepo=zfs-testing zfs
+   systemctl restart zfs.target
+fi
 
 # Set umask, so mock can write rpms to dist directory
 buildslave create-slave --umask 002 /srv/buildslave %(buildmaster_host)s:%(buildmaster_port)d '%(name)s' '%(password)s'
@@ -20,14 +24,6 @@ baseurl = http://copr-be.cloud.fedoraproject.org/results/tomprince/hybridlogic/f
 skip_if_unavailable = True
 gpgcheck = 0
 enabled = 1
-
-[zfs]
-name=ZFS Fedora 20
-failovermethod=priority
-baseurl=http://data.hybridcluster.net/zfs-fedora20/
-enabled=1
-gpgcheck=0
-metadata_expire=10
 """
 EOF
 

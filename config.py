@@ -25,41 +25,47 @@ PASSWORD = privateData['auth']['password'].encode("utf-8")
 # --master option)
 c['slavePortnum'] = 9989
 
-from flocker_bb import password
+from flocker_bb.password import generate_password
 from flocker_bb.ec2_buildslave import EC2LatentBuildSlave
 
-slaves = [('slave-%d' % (i,), password.generate(32))
-          for i in range(3)]
 cloudInit = FilePath(__file__).sibling("slave").child("cloud-init.sh").getContent()
 
-c['slaves'] = [
-        EC2LatentBuildSlave(
-            name, password,
-            'c3.large',
-            build_wait_timeout=50*60,
-            valid_ami_owners=[121466501720],
-            valid_ami_location_regex=r'.*/fedora-buildslave-base',
-            region='us-west-2',
-            security_name='ssh',
-            keypair_name='hybrid-master',
-            identifier=privateData['aws']['identifier'],
-            secret_identifier=privateData['aws']['secret_identifier'],
-            user_data=cloudInit % {
-                "github_token": privateData['github']['token'],
-                "coveralls_token": privateData['coveralls']['token'],
-                "name": name,
-                "password": password,
-                'buildmaster_host': privateData['buildmaster']['host'],
-                'buildmaster_port': c['slavePortnum'],
-                },
-            spot_instance=True,
-            max_spot_price=0.10,
-            keepalive_interval=60,
-            )
-        for name, password in slaves]
+c['slaves'] = []
+SLAVENAMES = {}
 
+for base, slaveConfig in privateData['slaves'].items():
+    SLAVENAMES[base] = []
+    for i in range(slaveConfig['slaves']):
+        name = '%s-%d' % (base, i)
+        password = generate_password(32)
+        ami = r'.*/%s' % (slaveConfig['ami'],)
 
-FLOCKER_SLAVES = [name for name, password in slaves]
+        SLAVENAMES[base].append(name)
+        c['slaves'].append(
+            EC2LatentBuildSlave(
+                name, password,
+                'c3.large',
+                build_wait_timeout=50*60,
+                valid_ami_owners=[121466501720],
+                valid_ami_location_regex=ami,
+                region='us-west-2',
+                security_name='ssh',
+                keypair_name='hybrid-master',
+                identifier=privateData['aws']['identifier'],
+                secret_identifier=privateData['aws']['secret_identifier'],
+                user_data=cloudInit % {
+                    "github_token": privateData['github']['token'],
+                    "coveralls_token": privateData['coveralls']['token'],
+                    "name": name,
+                    "base": base,
+                    "password": password,
+                    'buildmaster_host': privateData['buildmaster']['host'],
+                    'buildmaster_port': c['slavePortnum'],
+                    },
+                spot_instance=True,
+                max_spot_price=0.10,
+                keepalive_interval=60,
+                ))
 
 
 
@@ -96,7 +102,7 @@ rebuild('flocker_bb.builders.maint')
 
 from flocker_bb.builders import flocker, maint
 
-c['builders'] = flocker.getBuilders(FLOCKER_SLAVES) + maint.getBuilders(FLOCKER_SLAVES)
+c['builders'] = flocker.getBuilders(SLAVENAMES) + maint.getBuilders(SLAVENAMES)
 
 ####### SCHEDULERS
 
