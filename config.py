@@ -102,12 +102,15 @@ def rebuild(module):
 
 rebuild('flocker_bb.steps')
 rebuild('flocker_bb.builders.flocker')
+rebuild('flocker_bb.builders.flocker_vagrant')
 rebuild('flocker_bb.builders.maint')
 
 
-from flocker_bb.builders import flocker, maint
+from flocker_bb.builders import flocker, maint, flocker_vagrant
 
-c['builders'] = flocker.getBuilders(SLAVENAMES) + maint.getBuilders(SLAVENAMES)
+from itertools import chain
+c['builders'] = list(chain(*map(lambda m: m.getBuilders(SLAVENAMES),
+                                [flocker, maint, flocker_vagrant])))
 
 ####### SCHEDULERS
 
