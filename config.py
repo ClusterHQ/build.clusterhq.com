@@ -27,6 +27,7 @@ c['slavePortnum'] = 9989
 
 from flocker_bb.password import generate_password
 from flocker_bb.ec2_buildslave import EC2LatentBuildSlave
+from buildbot.buildslave import BuildSlave
 
 cloudInit = FilePath(__file__).sibling("slave").child("cloud-init.sh").getContent()
 
@@ -35,37 +36,41 @@ SLAVENAMES = {}
 
 for base, slaveConfig in privateData['slaves'].items():
     SLAVENAMES[base] = []
-    for i in range(slaveConfig['slaves']):
-        name = '%s-%d' % (base, i)
-        password = generate_password(32)
-        ami = r'.*/%s' % (slaveConfig['ami'],)
+    if 'ami' in slaveConfig:
+        for i in range(slaveConfig['slaves']):
+            name = '%s-%d' % (base, i)
+            password = generate_password(32)
+            ami = r'.*/%s' % (slaveConfig['ami'],)
 
-        SLAVENAMES[base].append(name)
-        c['slaves'].append(
-            EC2LatentBuildSlave(
-                name, password,
-                'c3.large',
-                build_wait_timeout=50*60,
-                valid_ami_owners=[121466501720],
-                valid_ami_location_regex=ami,
-                region='us-west-2',
-                security_name='ssh',
-                keypair_name='hybrid-master',
-                identifier=privateData['aws']['identifier'],
-                secret_identifier=privateData['aws']['secret_identifier'],
-                user_data=cloudInit % {
-                    "github_token": privateData['github']['token'],
-                    "coveralls_token": privateData['coveralls']['token'],
-                    "name": name,
-                    "base": base,
-                    "password": password,
-                    'buildmaster_host': privateData['buildmaster']['host'],
-                    'buildmaster_port': c['slavePortnum'],
-                    },
-                spot_instance=True,
-                max_spot_price=0.10,
-                keepalive_interval=60,
-                ))
+            SLAVENAMES[base].append(name)
+            c['slaves'].append(
+                EC2LatentBuildSlave(
+                    name, password,
+                    'c3.large',
+                    build_wait_timeout=50*60,
+                    valid_ami_owners=[121466501720],
+                    valid_ami_location_regex=ami,
+                    region='us-west-2',
+                    security_name='ssh',
+                    keypair_name='hybrid-master',
+                    identifier=privateData['aws']['identifier'],
+                    secret_identifier=privateData['aws']['secret_identifier'],
+                    user_data=cloudInit % {
+                        "github_token": privateData['github']['token'],
+                        "coveralls_token": privateData['coveralls']['token'],
+                        "name": name,
+                        "base": base,
+                        "password": password,
+                        'buildmaster_host': privateData['buildmaster']['host'],
+                        'buildmaster_port': c['slavePortnum'],
+                        },
+                    spot_instance=True,
+                    max_spot_price=0.10,
+                    keepalive_interval=60,
+                    ))
+    else:
+        SLAVENAMES[base] = [base]
+        c['slaves'].append(BuildSlave(base, password=slaveConfig['password']))
 
 
 
