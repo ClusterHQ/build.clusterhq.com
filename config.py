@@ -108,16 +108,18 @@ rebuild('flocker_bb.builders.maint')
 
 from flocker_bb.builders import flocker, maint, flocker_vagrant
 
-from itertools import chain
-c['builders'] = list(chain(*map(lambda m: m.getBuilders(SLAVENAMES),
-                                [flocker, maint, flocker_vagrant])))
+c['builders'] = []
+c['schedulers'] = []
 
-####### SCHEDULERS
 
-# Configure the Schedulers, which decide how to react to incoming changes.  In
-# this case, just kick off a 'runtests' build
+def addBuilderModule(module):
+    c['builders'].extend(module.getBuilders(SLAVENAMES))
+    c['schedulers'].extend(module.getSchedulers())
 
-c['schedulers'] = flocker.getSchedulers() + maint.getSchedulers()
+addBuilderModule(flocker)
+addBuilderModule(flocker_vagrant)
+addBuilderModule(maint)
+
 
 ####### STATUS TARGETS
 

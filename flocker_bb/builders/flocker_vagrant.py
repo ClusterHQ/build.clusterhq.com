@@ -41,7 +41,7 @@ def buildVagrantBox(box, add=True):
     """
     boxPath = Interpolate(
         b"vagrant/%(kw:box)s/flocker-%(kw:box)s-%(kw:version)s.box",
-        box, version=underscoreVersion),
+        box=box, version=underscoreVersion),
     steps = [
         SetPropertyFromCommand(
             command=["python", "setup.py", "--version"],
@@ -169,12 +169,12 @@ def getBuilders(slavenames):
         BuilderConfig(name='flocker-vagrant-dev-box',
                       slavenames=slavenames['fedora-vagrant'],
                       category='flocker',
-                      factory=buildDevBox,
+                      factory=buildDevBox(),
                       nextSlave=idleSlave),
         BuilderConfig(name='flocker-vagrant-tutorial-box',
                       slavenames=slavenames['fedora-vagrant'],
                       category='flocker',
-                      factory=buildDevBox,
+                      factory=buildDevBox(),
                       nextSlave=idleSlave),
         ]
 
@@ -194,7 +194,7 @@ def getSchedulers():
                 "flocker": {"repository": GITHUB + b"/flocker"},
             },
             change_filter=ChangeFilter(
-                branch_re=r"(master|release/|[0-9]+\.[0-9]+\.[0-9]+((pre|dev)[0-9]+)?",
+                branch_re=r"(master|release/|[0-9]+\.[0-9]+\.[0-9]+((pre|dev)[0-9]+)?)",
                 )
         ),
         ForceScheduler(
