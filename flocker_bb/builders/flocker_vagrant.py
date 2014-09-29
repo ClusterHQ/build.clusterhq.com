@@ -1,6 +1,6 @@
 from buildbot.steps.shell import ShellCommand, SetPropertyFromCommand
 from buildbot.steps.transfer import FileUpload
-from buildbot.process.properties import Interpolate, renderer
+from buildbot.process.properties import Interpolate
 
 from ..steps import (
     # VIRTUALENV_DIR, buildVirtualEnv,
@@ -27,11 +27,6 @@ def installDependencies():
         ]
 
 
-@renderer
-def underscoreVersion(props):
-    return props.getProperty('version').replace('-', '_')
-
-
 def buildVagrantBox(box, add=True):
     """
     Build a flocker base box.
@@ -40,8 +35,7 @@ def buildVagrantBox(box, add=True):
     @param add: L{bool} indicating whether the box should be added locally.
     """
     boxPath = Interpolate(
-        b"vagrant/%(kw:box)s/flocker-%(kw:box)s-%(kw:version)s.box",
-        box=box, version=underscoreVersion),
+        b"vagrant/%(kw:box)s/flocker-%(kw:box)s.box", box=box),
     steps = [
         SetPropertyFromCommand(
             command=["python", "setup.py", "--version"],
@@ -54,15 +48,15 @@ def buildVagrantBox(box, add=True):
             name='build-base-box',
             description=['building', 'base', box, 'box'],
             descriptionDone=['build', 'base', box, 'box'],
-            command=['admin/build-vagrant-box', box],
+            command=['vagrant/%s/build', flockerBranch],
             haltOnFailure=True,
         ),
         FileUpload(
             boxPath,
-            Interpolate(b"private_html/%(kw:branch)s/", branch=flockerBranch),
+            Interpolate(b"private_html/%(kw:branch)s/flocker-%(kw:box)s-%(prop:version)s", box=box, branch=flockerBranch),
             url=Interpolate(
-                b"/results/%(kw:branch)s/flocker-%(kw:box)s-%(kw:version)s.box",
-                box=box, branch=flockerBranch, version=underscoreVersion),
+                b"/results/%(kw:branch)s/flocker-%(kw:box)s-%(prop:version)s.box",
+                box=box, branch=flockerBranch),
             name="upload-vagrant-box",
         ),
     ]
