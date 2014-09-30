@@ -34,8 +34,6 @@ def buildVagrantBox(box, add=True):
     @param box: Name of box to build.
     @param add: L{bool} indicating whether the box should be added locally.
     """
-    boxPath = Interpolate(
-        b"vagrant/%(kw:box)s/flocker-%(kw:box)s.box", box=box),
     steps = [
         SetPropertyFromCommand(
             command=["python", "setup.py", "--version"],
@@ -52,7 +50,7 @@ def buildVagrantBox(box, add=True):
             haltOnFailure=True,
         ),
         FileUpload(
-            boxPath,
+            Interpolate(b"vagrant/%(kw:box)s/flocker-%(kw:box)s.box", box=box),
             Interpolate(b"private_html/%(kw:branch)s/flocker-%(kw:box)s-%(prop:version)s", box=box, branch=flockerBranch),
             url=Interpolate(
                 b"/results/%(kw:branch)s/flocker-%(kw:box)s-%(prop:version)s.box",
