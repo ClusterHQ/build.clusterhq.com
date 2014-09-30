@@ -49,14 +49,14 @@ def buildVagrantBox(box, add=True):
             command=['vagrant/%s/build' % box, flockerBranch],
             haltOnFailure=True,
         ),
-        FileUpload(
-            Interpolate(b"vagrant/%(kw:box)s/flocker-%(kw:box)s.box", box=box),
-            Interpolate(b"private_html/%(kw:branch)s/flocker-%(kw:box)s-%(prop:version)s", box=box, branch=flockerBranch),
-            url=Interpolate(
-                b"/results/%(kw:branch)s/flocker-%(kw:box)s-%(prop:version)s.box",
-                box=box, branch=flockerBranch),
-            name="upload-vagrant-box",
-        ),
+        #FileUpload(
+        #    Interpolate(b"vagrant/%(kw:box)s/flocker-%(kw:box)s.box", box=box),
+        #    Interpolate(b"private_html/%(kw:branch)s/flocker-%(kw:box)s-%(prop:version)s", box=box, branch=flockerBranch),
+        #    url=Interpolate(
+        #        b"/results/%(kw:branch)s/flocker-%(kw:box)s-%(prop:version)s.box",
+        #        box=box, branch=flockerBranch),
+        #    name="upload-vagrant-box",
+        #),
     ]
 
     if add:
