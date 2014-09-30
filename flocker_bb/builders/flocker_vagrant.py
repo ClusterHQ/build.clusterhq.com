@@ -48,7 +48,7 @@ def buildVagrantBox(box, add=True):
             name='build-base-box',
             description=['building', 'base', box, 'box'],
             descriptionDone=['build', 'base', box, 'box'],
-            command=['vagrant/%s/build', flockerBranch],
+            command=['vagrant/%s/build' % box, flockerBranch],
             haltOnFailure=True,
         ),
         FileUpload(
