@@ -121,7 +121,7 @@ def buildDevBox():
 def buildTutorialBox():
     factory = getFlockerFactory()
 
-    factory.addSteps(buildVagrantBox('dev', add=True))
+    factory.addSteps(buildVagrantBox('tutorial', add=True))
 
     factory.addStep(ShellCommand(
         name='start-tutorial-box',
