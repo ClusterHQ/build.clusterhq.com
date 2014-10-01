@@ -163,7 +163,7 @@ def getBuilders(slavenames):
         BuilderConfig(name='flocker-vagrant-tutorial-box',
                       slavenames=slavenames['fedora-vagrant'],
                       category='flocker',
-                      factory=buildDevBox(),
+                      factory=buildTutorialBox(),
                       nextSlave=idleSlave),
         ]
 
