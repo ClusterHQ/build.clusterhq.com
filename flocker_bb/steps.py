@@ -8,6 +8,7 @@ from buildbot.steps.source.base import Source
 from buildbot.process.factory import BuildFactory
 from buildbot.status.results import SUCCESS
 from buildbot.process import buildstep
+from buildbot.process.properties import renderer
 
 from os import path
 import re
@@ -66,6 +67,12 @@ def getFactory(codebase, useSubmodules=True, mergeForward=False):
                          name="update-git-submodules"))
 
     return factory
+
+
+@renderer
+def buildbotURL(build):
+    return build.getBuild().build_status.master.getBuildbotURL()
+
 
 
 class URLShellCommand(ShellCommand):
