@@ -71,7 +71,7 @@ def getFactory(codebase, useSubmodules=True, mergeForward=False):
 
 @renderer
 def buildbotURL(build):
-    return build.getBuild().build_status.master.getBuildbotURL()
+    return build.getBuild().build_status.master.status.getBuildbotURL()
 
 
 
