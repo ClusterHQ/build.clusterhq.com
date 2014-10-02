@@ -174,7 +174,7 @@ class MergeForward(Source):
         self.setProperty("lint_revision", version.strip(), "merge-forward")
 
     def _getCommitDate(self, date):
-        return self._dovccmd(['log', '--format', '%ci', '-n', '1'])
+        return self._dovccmd(['log', '--format=%ci', '-n1'], collectStdout=True)
 
     def _dovccmd(self, command, abandonOnFailure=True, collectStdout=False, extra_args={}):
         cmd = buildstep.RemoteShellCommand(self.workdir, ['git'] + command,
