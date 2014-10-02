@@ -129,7 +129,8 @@ class MergeForward(Source):
         if not self._isMaster(branch):
             d.addCallback(lambda _: self._fetch())
         if not (self._isMaster(branch) or self._isRelease(branch)):
-            d.addCallback(lambda _: self._merge())
+            d.addCallback(self._getCommitDate)
+            d.addCallback(self._merge)
         if self._isMaster(branch):
             d.addCallback(lambda _: self._getPreviousVersion())
         else:
@@ -150,7 +151,13 @@ class MergeForward(Source):
     def _fetch(self):
         return self._dovccmd(['fetch', self.repourl, 'master'])
 
-    def _merge(self):
+    def _merge(self, date):
+        # We re-use the date of the latest commit from the branch
+        # to ensure that the commit hash is consistent.
+        self.env.update({
+            'GIT_AUTHOR_DATE': date,
+            'GIT_COMMITTER_DATE': date,
+        })
         return self._dovccmd(['merge',
                               '--no-ff', '--no-stat',
                               'FETCH_HEAD'])
@@ -166,6 +173,8 @@ class MergeForward(Source):
     def _setLintVersion(self, version):
         self.setProperty("lint_revision", version.strip(), "merge-forward")
 
+    def _getCommitDate(self, date):
+        return self._dovccmd(['log', '--format', '%ci', '-n', '1'])
 
     def _dovccmd(self, command, abandonOnFailure=True, collectStdout=False, extra_args={}):
         cmd = buildstep.RemoteShellCommand(self.workdir, ['git'] + command,
