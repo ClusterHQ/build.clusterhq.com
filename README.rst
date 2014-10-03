@@ -122,3 +122,13 @@ Each image uses `slave/cloud-init.sh` with some substitutions as user-data, to s
   instance is created.  The image is built by running :file:`slave/cloud-init-base.sh`.
 
 Both images have :file:`salve/cloud-init.sh` run on them at instance creation time.
+
+Google Storage
+--------------
+
+The vagrant builders upload the boxes to google cloud storage.
+The bucket (`gs://clusterhq-vagrant-buildbot/`) is set to expire objects after two weeks.
+The lifecycle configuration file is in :file:`vagrant/clusterhq-vagrant-buildbot.lifecycle.json`.
+It was configured by::
+
+  gsutil lifecycle set vagrant/clusterhq-vagrant-buildbot.lifecycle.json gs://clusterhq-vagrant-buildbot/
