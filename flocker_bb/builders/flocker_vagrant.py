@@ -7,6 +7,7 @@ from ..steps import (
     GITHUB,
     pip,
     buildbotURL,
+    URLShellCommand
     )
 
 # This is where temporary files associated with a build will be dumped.
@@ -55,6 +56,28 @@ def buildVagrantBox(box, add=True):
             haltOnFailure=True,
         ),
     ]
+
+    steps.append(URLShellCommand(
+        name='upload-base-box',
+        description=['uploaiding', 'base', box, 'box'],
+        descriptionDone=['upload', 'base', box, 'box'],
+        command=[
+            'gsutil', 'cp', '-a', 'public-read',
+            Interpolate(
+                'vagrant/%(kw:box)s/flocker-%(kw:box)s-%(prop:version)s.box',
+                box=box),
+            Interpolate(
+                'gs://clusterhq-vagrant-buildbot/%(kw:box)s/',
+                box=box),
+        ],
+        urls={
+            Interpolate('%(kw:box)s box', box=box):
+            Interpolate(
+                'https://storage.googleapis.com/clusterhq-vagrant-buildbot/'
+                '%(kw:box)s/flocker-%(kw:box)s-%(prop:version)s.box',
+                box=box),
+        }
+    ))
 
     if add:
         steps.append(ShellCommand(
