@@ -219,7 +219,7 @@ def makeFactory(python, tests=None, twistedTrunk=False):
 
 def makeAdminFactory():
     """
-    Make a new build factory which can do a admin build.
+    Make a new build factory which can do an admin build.
     """
     factory = getFlockerFactory(python=b"python2.7")
     factory.addSteps(installDependencies())
