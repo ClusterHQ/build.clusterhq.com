@@ -111,7 +111,7 @@ class MergeForward(Source):
 
     @staticmethod
     def _isRelease(branch):
-        return (branch.startswith('release/') or re.match('^[0-9]*\.[0-9]*\.[0-9]*$', branch))
+        return (branch.startswith('release/') or re.match('^[0-9]+\.[0-9]+\.[0-9]+(?:dev[0-9]+|pre[0-9]+)?$', branch))
 
 
     def startVC(self, branch, revision, patch):
