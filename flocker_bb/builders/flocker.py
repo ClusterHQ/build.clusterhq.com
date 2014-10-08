@@ -217,6 +217,27 @@ def makeFactory(python, tests=None, twistedTrunk=False):
     return factory
 
 
+def makeAdminFactory():
+    """
+    Make a new build factory which can do an admin build.
+    """
+    factory = getFlockerFactory(python=b"python2.7")
+    factory.addSteps(installDependencies())
+
+    factory.addStep(Trial(
+        trial=[Interpolate(path.join(VIRTUALENV_DIR, "bin/trial"))],
+        tests=[b'admin'],
+        testpath=None,
+        env={
+            b"PATH": [Interpolate(path.join(VIRTUALENV_DIR, "bin")),
+                      "${PATH}"],
+            },
+        ))
+
+    return factory
+
+
+
 def makeLintFactory():
     """
     Create and return a new build factory for linting the code.
@@ -461,6 +482,11 @@ def getBuilders(slavenames):
                       category='flocker',
                       factory=makeRPMFactory(),
                       nextSlave=idleSlave),
+        BuilderConfig(name='flocker-admin',
+                      slavenames=slavenames['fedora'],
+                      category='flocker',
+                      factory=makeAdminFactory(),
+                      nextSlave=idleSlave),
         ]
 
 BUILDERS = [
@@ -471,6 +497,7 @@ BUILDERS = [
     'flocker-docs',
     'flocker-rpms',
     'flocker-zfs-head',
+    'flocker-admin',
     ]
 
 def getSchedulers():
