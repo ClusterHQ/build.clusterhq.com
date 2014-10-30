@@ -1,8 +1,10 @@
 from buildbot.steps.shell import ShellCommand, SetPropertyFromCommand
 from buildbot.process.properties import Interpolate
 
+from os import path
+
 from ..steps import (
-    # VIRTUALENV_DIR, buildVirtualEnv,
+    VIRTUALENV_DIR, buildVirtualEnv,
     getFactory,
     GITHUB,
     pip,
@@ -18,6 +20,10 @@ flockerBranch = Interpolate("%(src:flocker:branch)s")
 
 def getFlockerFactory():
     factory = getFactory("flocker", useSubmodules=False, mergeForward=True)
+    factory.addSteps(buildVirtualEnv("python2.7", useSystem=True))
+    factory.addSteps([
+        pip("gsutil", ["gsutil"]),
+        ])
     return factory
 
 
@@ -62,7 +68,8 @@ def buildVagrantBox(box, add=True):
         description=['uploaiding', 'base', box, 'box'],
         descriptionDone=['upload', 'base', box, 'box'],
         command=[
-            'gsutil', 'cp', '-a', 'public-read',
+            Interpolate(path.join(VIRTUALENV_DIR, 'gsutil')),
+            'cp', '-a', 'public-read',
             Interpolate(
                 'vagrant/%(kw:box)s/flocker-%(kw:box)s-%(prop:version)s.box',
                 box=box),
