@@ -74,6 +74,9 @@ def buildbotURL(build):
     return build.getBuild().build_status.master.status.getBuildbotURL()
 
 
+def virtualenvBinary(command):
+    return Interpolate(path.join(VIRTUALENV_DIR, "bin", command))
+
 
 class URLShellCommand(ShellCommand):
     renderables = ["urls"]

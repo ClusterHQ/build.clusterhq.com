@@ -10,7 +10,7 @@ from buildbot.steps.package.rpm import RpmLint
 from os import path
 
 from ..steps import (
-        VIRTUALENV_DIR, buildVirtualEnv,
+        VIRTUALENV_DIR, buildVirtualEnv, virtualenvBinary,
         getFactory,
         GITHUB,
         TWISTED_GIT,
@@ -47,7 +47,7 @@ def _flockerTests(kwargs, tests=None):
                      descriptionDone=["create", "TMPDIR"],
                      name="create-TMPDIR"),
         Trial(
-            trial=[Interpolate(path.join(VIRTUALENV_DIR, "bin/trial"))],
+            trial=[virtualenvBinary('trial')],
             tests=tests,
             testpath=None,
             workdir=TMPDIR,
@@ -72,7 +72,7 @@ def _flockerCoverage():
                 # Unfortunately, Trial assumes that 'python' is a list of strings,
                 # and checks for spaces in them. Interpolate isn't iterable, so
                 # make it a list (which is, and doesn't have a " " in it.
-                [Interpolate(path.join(VIRTUALENV_DIR, "bin/coverage"))],
+                [virtualenvBinary('coverage')],
                 b"run",
                 b"--branch",
                 b"--source", b"flocker",
@@ -100,7 +100,7 @@ def _flockerCoverage():
             name="download-coveragerc"),
         ShellCommand(
             command=[
-                Interpolate(path.join(VIRTUALENV_DIR, "bin/coverage")),
+                virtualenvBinary('coverage'),
                 'combine',
                 '--rcfile=.coveragerc-combine',
                 ],
@@ -132,7 +132,7 @@ def _flockerCoverage():
             ),
         ShellCommand(
             command=[
-                Interpolate(path.join(VIRTUALENV_DIR, "bin/coverage")),
+                virtualenvBinary('coverage'),
                 b"html", b"-d", b"html-coverage",
                 ],
             description=[b"generating", b"html", b"report"],
@@ -148,8 +148,8 @@ def _flockerCoverage():
             name="upload-coverage-html",
             ),
 	ShellCommand(
-            command=[Interpolate(
-                path.join(VIRTUALENV_DIR, "bin/coveralls")),
+            command=[
+                virtualenvBinary('coveralls'),
                 "--coveralls_yaml",
                 Interpolate("%(prop:workdir)s/../coveralls.yml")],
             description=[b"uploading", b"to", b"coveralls"],
@@ -172,7 +172,7 @@ def installTwistedTrunk():
         name='install-twisted-trunk',
         description=['installing', 'twisted', 'trunk'],
         descriptionDone=['install', 'twisted', 'trunk'],
-        command=[Interpolate(path.join(VIRTUALENV_DIR, "bin/pip")),
+        command=[virtualenvBinary('pip'),
                  "install",
                  "--no-index", '--use-wheel',
                  "-f", "http://data.hybridcluster.net/python/",
@@ -258,7 +258,7 @@ def sphinxBuild(builder, workdir=b"build/docs", **kwargs):
         descriptionDone=["build", builder],
         sphinx_builder=builder,
         sphinx_builddir=path.join("_build", builder),
-        sphinx=[Interpolate(path.join(VIRTUALENV_DIR, "bin/sphinx-build")),
+        sphinx=[virtualenvBinary('sphinx-build'),
                 '-d', "_build/doctree",
                 ],
         workdir=workdir,
@@ -316,7 +316,7 @@ def makeRPMFactory():
         description=["building", "sdist"],
         descriptionDone=["build", "sdist"],
         command=[
-            Interpolate(path.join(VIRTUALENV_DIR, "bin/python")),
+            virtualenvBinary('python'),
             "setup.py", "sdist", "generate_spec",
             ],
         haltOnFailure=True))

@@ -1,10 +1,8 @@
 from buildbot.steps.shell import ShellCommand, SetPropertyFromCommand
 from buildbot.process.properties import Interpolate
 
-from os import path
-
 from ..steps import (
-    VIRTUALENV_DIR, buildVirtualEnv,
+    buildVirtualEnv, virtualenvBinary,
     getFactory,
     GITHUB,
     pip,
@@ -68,7 +66,7 @@ def buildVagrantBox(box, add=True):
         description=['uploaiding', 'base', box, 'box'],
         descriptionDone=['upload', 'base', box, 'box'],
         command=[
-            Interpolate(path.join(VIRTUALENV_DIR, 'gsutil')),
+            virtualenvBinary('gsutil'),
             'cp', '-a', 'public-read',
             Interpolate(
                 'vagrant/%(kw:box)s/flocker-%(kw:box)s-%(prop:version)s.box',
