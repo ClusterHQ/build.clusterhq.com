@@ -69,8 +69,10 @@ for base, slaveConfig in privateData['slaves'].items():
                     keepalive_interval=60,
                     ))
     else:
-        SLAVENAMES[base] = [base]
-        c['slaves'].append(BuildSlave(base, password=slaveConfig['password']))
+        for i, password in enumerate(slaveConfig['passwords']):
+            name = '%s-%d' % (base, i)
+            SLAVENAMES[base] = [name]
+            c['slaves'].append(BuildSlave(name, password=password))
 
 
 
