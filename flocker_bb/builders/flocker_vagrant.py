@@ -172,6 +172,7 @@ from buildbot.config import BuilderConfig
 from buildbot.schedulers.basic import AnyBranchScheduler
 from buildbot.schedulers.forcesched import (
     CodebaseParameter, StringParameter, ForceScheduler, FixedParameter)
+from buildbot.schedulers.triggerable import Triggerable
 from buildbot.changes.filter import ChangeFilter
 
 
@@ -206,7 +207,7 @@ def getSchedulers():
         AnyBranchScheduler(
             name="flocker-vagrant",
             treeStableTimer=5,
-            builderNames=BUILDERS,
+            builderNames=['flocker-vagrant-dev-box'],
             codebases={
                 "flocker": {"repository": GITHUB + b"/flocker"},
             },
@@ -214,6 +215,10 @@ def getSchedulers():
                 branch_re=r"(master|release/|[0-9]+\.[0-9]+\.[0-9]+((pre|dev)[0-9]+)?)",
                 )
         ),
+        Triggerable(
+            name='trigger-flocker-vagrant',
+            builderNames=['flocker-vagrant-tutorial-box'],
+            ),
         ForceScheduler(
             name="force-flocker-vagrant",
             codebases=[

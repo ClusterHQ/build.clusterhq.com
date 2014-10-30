@@ -6,6 +6,7 @@ from buildbot.steps.master import MasterShellCommand
 from buildbot.steps.source.git import Git
 from buildbot.process.properties import Interpolate, Property
 from buildbot.steps.package.rpm import RpmLint
+from buildbot.steps.trigger import Trigger
 
 from os import path
 
@@ -357,6 +358,12 @@ def makeRPMFactory():
             b"/results/fedora/20/x86_64/%s/" % (branch,),
             ),
         name="upload-repo",
+        ))
+    factory.addStep(Trigger(
+        name='trigger-flocker-vagrant',
+        schedulerNames=['trigger-flocker-vagrant'],
+        updateSourceStamp=True,
+        waitForFinish=False,
         ))
     factory.addStep(RpmLint([
             Property('srpm'),
