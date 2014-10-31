@@ -10,7 +10,7 @@ from ..steps import (
     )
 
 #FIXME
-from flocker_bb.builders.flocker import installDependencies
+from flocker_bb.builders.flocker import installDependencies, _flockerTests
 
 # This is where temporary files associated with a build will be dumped.
 TMPDIR = Interpolate(b"%(prop:workdir)s/tmp-%(prop:buildnumber)s")
@@ -151,6 +151,8 @@ def buildTutorialBox():
         workdir='build/docs/gettingstarted/tutorial',
         haltOnFailure=True,
         ))
+
+    factory.addSteps(_flockerTests(kwargs={}, tests=['flocker.acceptance']))
 
     factory.addStep(ShellCommand(
         name='destroy-tutorial-box',
