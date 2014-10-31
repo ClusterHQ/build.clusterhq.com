@@ -218,7 +218,10 @@ def getSchedulers():
         Triggerable(
             name='trigger-flocker-vagrant',
             builderNames=['flocker-vagrant-tutorial-box'],
-            ),
+            codebases={
+                "flocker": {"repository": GITHUB + b"/flocker"},
+            },
+        ),
         ForceScheduler(
             name="force-flocker-vagrant",
             codebases=[
