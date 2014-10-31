@@ -4,16 +4,19 @@ from buildbot.steps.python import Sphinx
 from buildbot.steps.transfer import DirectoryUpload, StringDownload
 from buildbot.steps.master import MasterShellCommand
 from buildbot.steps.source.git import Git
-from buildbot.process.properties import Interpolate, renderer, Property
+from buildbot.process.properties import Interpolate, Property
 from buildbot.steps.package.rpm import RpmLint
+from buildbot.steps.trigger import Trigger
 
 from os import path
 
 from ..steps import (
-        VIRTUALENV_DIR, buildVirtualEnv,
+        VIRTUALENV_DIR, buildVirtualEnv, virtualenvBinary,
         getFactory,
         GITHUB,
         TWISTED_GIT,
+        pip,
+        isMasterBranch,
         )
 
 from ..mock import MockBuildSRPM, MockRebuild
@@ -26,18 +29,6 @@ def getFlockerFactory(python):
     factory = getFactory("flocker", useSubmodules=False, mergeForward=True)
     factory.addSteps(buildVirtualEnv(python, useSystem=True))
     return factory
-
-
-def pip(what, packages):
-    return ShellCommand(
-        name="install-" + what,
-        description=["installing", what],
-        descriptionDone=["install", what],
-        command=[Interpolate(path.join(VIRTUALENV_DIR, "bin/pip")),
-                 "install",
-                 packages,
-                 ],
-        haltOnFailure=True)
 
 
 
@@ -57,7 +48,7 @@ def _flockerTests(kwargs, tests=None):
                      descriptionDone=["create", "TMPDIR"],
                      name="create-TMPDIR"),
         Trial(
-            trial=[Interpolate(path.join(VIRTUALENV_DIR, "bin/trial"))],
+            trial=[virtualenvBinary('trial')],
             tests=tests,
             testpath=None,
             workdir=TMPDIR,
@@ -82,7 +73,7 @@ def _flockerCoverage():
                 # Unfortunately, Trial assumes that 'python' is a list of strings,
                 # and checks for spaces in them. Interpolate isn't iterable, so
                 # make it a list (which is, and doesn't have a " " in it.
-                [Interpolate(path.join(VIRTUALENV_DIR, "bin/coverage"))],
+                [virtualenvBinary('coverage')],
                 b"run",
                 b"--branch",
                 b"--source", b"flocker",
@@ -110,7 +101,7 @@ def _flockerCoverage():
             name="download-coveragerc"),
         ShellCommand(
             command=[
-                Interpolate(path.join(VIRTUALENV_DIR, "bin/coverage")),
+                virtualenvBinary('coverage'),
                 'combine',
                 '--rcfile=.coveragerc-combine',
                 ],
@@ -142,7 +133,7 @@ def _flockerCoverage():
             ),
         ShellCommand(
             command=[
-                Interpolate(path.join(VIRTUALENV_DIR, "bin/coverage")),
+                virtualenvBinary('coverage'),
                 b"html", b"-d", b"html-coverage",
                 ],
             description=[b"generating", b"html", b"report"],
@@ -158,8 +149,8 @@ def _flockerCoverage():
             name="upload-coverage-html",
             ),
 	ShellCommand(
-            command=[Interpolate(
-                path.join(VIRTUALENV_DIR, "bin/coveralls")),
+            command=[
+                virtualenvBinary('coveralls'),
                 "--coveralls_yaml",
                 Interpolate("%(prop:workdir)s/../coveralls.yml")],
             description=[b"uploading", b"to", b"coveralls"],
@@ -182,7 +173,7 @@ def installTwistedTrunk():
         name='install-twisted-trunk',
         description=['installing', 'twisted', 'trunk'],
         descriptionDone=['install', 'twisted', 'trunk'],
-        command=[Interpolate(path.join(VIRTUALENV_DIR, "bin/pip")),
+        command=[virtualenvBinary('pip'),
                  "install",
                  "--no-index", '--use-wheel',
                  "-f", "http://data.hybridcluster.net/python/",
@@ -289,7 +280,7 @@ def sphinxBuild(builder, workdir=b"build/docs", **kwargs):
         descriptionDone=["build", builder],
         sphinx_builder=builder,
         sphinx_builddir=path.join("_build", builder),
-        sphinx=[Interpolate(path.join(VIRTUALENV_DIR, "bin/sphinx-build")),
+        sphinx=[virtualenvBinary('sphinx-build'),
                 '-d', "_build/doctree",
                 ],
         workdir=workdir,
@@ -299,29 +290,6 @@ def sphinxBuild(builder, workdir=b"build/docs", **kwargs):
         **extraArgs)
 
 
-def isBranch(codebase, branchName, prefix=False):
-    """
-    Return C{doStepIf} function checking whether the built branch
-    matches the given branch.
-
-    @param codebase: Codebase to check
-    @param branchName: Target branch
-    @param prefix: L{bool} indicating whether to check against a prefix
-    """
-    def test(step):
-        sourcestamp = step.build.getSourceStamp(codebase)
-        branch = sourcestamp.branch
-        if prefix:
-            return branch.startswith(branchName)
-        else:
-            return branch == branchName
-    return test
-
-def isReleaseBranch(codebase):
-    return isBranch(codebase, 'release-', prefix=True)
-
-def isMasterBranch(codebase):
-    return isBranch(codebase, 'master')
 
 
 def makeInternalDocsFactory():
@@ -361,9 +329,6 @@ def makeInternalDocsFactory():
     return factory
 
 
-@renderer
-def underscoreVersion(props):
-    return props.getProperty('version').replace('-', '_')
 
 def makeRPMFactory():
     branch = "%(src:flocker:branch)s"
@@ -373,7 +338,7 @@ def makeRPMFactory():
         description=["building", "sdist"],
         descriptionDone=["build", "sdist"],
         command=[
-            Interpolate(path.join(VIRTUALENV_DIR, "bin/python")),
+            virtualenvBinary('python'),
             "setup.py", "sdist", "generate_spec",
             ],
         haltOnFailure=True))
@@ -414,6 +379,12 @@ def makeRPMFactory():
             b"/results/fedora/20/x86_64/%s/" % (branch,),
             ),
         name="upload-repo",
+        ))
+    factory.addStep(Trigger(
+        name='trigger-flocker-vagrant',
+        schedulerNames=['trigger-flocker-vagrant'],
+        updateSourceStamp=True,
+        waitForFinish=False,
         ))
     factory.addStep(RpmLint([
             Property('srpm'),

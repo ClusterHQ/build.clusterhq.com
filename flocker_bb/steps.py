@@ -8,6 +8,7 @@ from buildbot.steps.source.base import Source
 from buildbot.process.factory import BuildFactory
 from buildbot.status.results import SUCCESS
 from buildbot.process import buildstep
+from buildbot.process.properties import renderer
 
 from os import path
 import re
@@ -68,6 +69,15 @@ def getFactory(codebase, useSubmodules=True, mergeForward=False):
     return factory
 
 
+@renderer
+def buildbotURL(build):
+    return build.getBuild().build_status.master.status.getBuildbotURL()
+
+
+def virtualenvBinary(command):
+    return Interpolate(path.join(VIRTUALENV_DIR, "bin", command))
+
+
 class URLShellCommand(ShellCommand):
     renderables = ["urls"]
 
@@ -122,7 +132,8 @@ class MergeForward(Source):
         if not self._isMaster(branch):
             d.addCallback(lambda _: self._fetch())
         if not (self._isMaster(branch) or self._isRelease(branch)):
-            d.addCallback(lambda _: self._merge())
+            d.addCallback(self._getCommitDate)
+            d.addCallback(self._merge)
         if self._isMaster(branch):
             d.addCallback(lambda _: self._getPreviousVersion())
         else:
@@ -143,7 +154,13 @@ class MergeForward(Source):
     def _fetch(self):
         return self._dovccmd(['fetch', self.repourl, 'master'])
 
-    def _merge(self):
+    def _merge(self, date):
+        # We re-use the date of the latest commit from the branch
+        # to ensure that the commit hash is consistent.
+        self.env.update({
+            'GIT_AUTHOR_DATE': date,
+            'GIT_COMMITTER_DATE': date,
+        })
         return self._dovccmd(['merge',
                               '--no-ff', '--no-stat',
                               'FETCH_HEAD'])
@@ -159,6 +176,8 @@ class MergeForward(Source):
     def _setLintVersion(self, version):
         self.setProperty("lint_revision", version.strip(), "merge-forward")
 
+    def _getCommitDate(self, date):
+        return self._dovccmd(['log', '--format=%ci', '-n1'], collectStdout=True)
 
     def _dovccmd(self, command, abandonOnFailure=True, collectStdout=False, extra_args={}):
         cmd = buildstep.RemoteShellCommand(self.workdir, ['git'] + command,
@@ -178,3 +197,43 @@ class MergeForward(Source):
                 return cmd.rc
         d.addCallback(lambda _: evaluateCommand(cmd))
         return d
+
+def pip(what, packages):
+    """
+    Installs a list of packages with pip, in the current virtualenv.
+
+    @param what: Description of the packages being installed.
+    @param packages: L{list} of packages to install
+    @returns: L{BuildStep}
+    """
+    return ShellCommand(
+        name="install-" + what,
+        description=["installing", what],
+        descriptionDone=["install", what],
+        command=[Interpolate(path.join(VIRTUALENV_DIR, "bin/pip")),
+                 "install",
+                 packages,
+                 ],
+        haltOnFailure=True)
+
+
+def isBranch(codebase, branchName, prefix=False):
+    """
+    Return C{doStepIf} function checking whether the built branch
+    matches the given branch.
+
+    @param codebase: Codebase to check
+    @param branchName: Target branch
+    @param prefix: L{bool} indicating whether to check against a prefix
+    """
+    def test(step):
+        sourcestamp = step.build.getSourceStamp(codebase)
+        branch = sourcestamp.branch
+        if prefix:
+            return branch.startswith(branchName)
+        else:
+            return branch == branchName
+    return test
+
+def isMasterBranch(codebase):
+    return isBranch(codebase, 'master')
