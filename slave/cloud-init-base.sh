@@ -35,6 +35,11 @@ yum install -y \
 	wget \
 	curl
 
+# Despite being a packaging tool, fpm isn't yet packaged for Fedora.
+# See https://github.com/jordansissel/fpm/issues/611
+sudo yum -y install ruby-devel
+gem install fpm
+
 systemctl enable docker
 systemctl enable geard
 
