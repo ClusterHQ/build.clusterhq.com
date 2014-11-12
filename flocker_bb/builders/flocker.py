@@ -7,6 +7,7 @@ from buildbot.steps.source.git import Git
 from buildbot.process.properties import Interpolate, Property
 from buildbot.steps.package.rpm import RpmLint
 from buildbot.steps.trigger import Trigger
+from buildbot.config import error
 
 from os import path
 
@@ -329,9 +330,34 @@ def makeInternalDocsFactory():
     return factory
 
 
-def makeOmnibusFactory(distribution):
-    factory = getFlockerFactory(python="python2.7")
+def createRepository(distribution):
+    steps = []
+    if distribution.startswith("fedora") or distribution.startswith("centos"):
+        steps.append(ShellCommand(
+            name='build-repo-metadata',
+            description=["building", "repo", "metadata"],
+            descriptionDone=["build", "repo", "metadata"],
+            command=["createrepo_c", "repo"],
+            haltOnFailure=True))
+    elif distribution.startswith("ubuntu") or distribution.startswith("debian"):
+        steps.append(ShellCommand(
+            name='build-repo-metadata',
+            description=["building", "repo", "metadata"],
+            descriptionDone=["build", "repo", "metadata"],
+            # FIXME: Don't use shell here.
+            command="dpkg-scanpackages . | gzip > Packages.gz",
+            workdir='build/repo',
+            haltOnFailure=True))
+    else:
+        error("Unkwown distritubtion %s in createRepository." % (distribution,))
 
+    return steps
+
+
+def makeOmnibusFactory(distribution):
+    branch = "%(src:flocker:branch)s"
+
+    factory = getFlockerFactory(python="python2.7")
     factory.addStep(SetPropertyFromCommand(
             command=["python", "setup.py", "--version"],
             name='check-version',
@@ -353,6 +379,7 @@ def makeOmnibusFactory(distribution):
         command=[
             virtualenvBinary('python'),
             'admin/build-package',
+            '--destination-path', 'repo',
             '--distribution', distribution,
             Interpolate('/flocker/dist/Flocker-%(prop:version)s.tar.gz'),
             ],
@@ -360,6 +387,15 @@ def makeOmnibusFactory(distribution):
         description=['building', 'package'],
         descriptionDone=['build', 'package'],
         haltOnFailure=True))
+    factory.addSteps(createRepository(distribution))
+    factory.addStep(DirectoryUpload(
+        Interpolate('repo'),
+        Interpolate(b"private_html/omnibus/%s/%s" % (branch, distribution)),
+        url=Interpolate(
+            b"/results/omnibus/%s/%s/" % (branch, distribution),
+            ),
+        name="upload-repo",
+        ))
 
     return factory
 
@@ -400,12 +436,7 @@ def makeNativeRPMFactory():
         command=["cp", "-t", "../repo", Property('srpm'), Property('rpm')],
         workdir='build/dist',
         haltOnFailure=True))
-    factory.addStep(ShellCommand(
-        name='build-repo-metadata',
-        description=["building", "repo", "metadata"],
-        descriptionDone=["build", "repo", "metadata"],
-        command=["createrepo_c", "repo"], # Fix this to use createrepo
-        haltOnFailure=True))
+    factory.addSteps(createRepository("fedora20"))
     factory.addStep(DirectoryUpload(
         Interpolate('repo'),
         Interpolate(b"private_html/fedora/20/x86_64/%s/" % (branch,)),
