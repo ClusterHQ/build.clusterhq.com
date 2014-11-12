@@ -339,6 +339,7 @@ def makeOmnibusFactory(distribution):
             descriptionDone=['checking', 'version'],
             property='version'
         ))
+    factory.addSteps(installDependencies())
     factory.addStep(ShellCommand(
         name='build-sdist',
         description=["building", "sdist"],
