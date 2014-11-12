@@ -1,4 +1,4 @@
-from buildbot.steps.shell import ShellCommand
+from buildbot.steps.shell import ShellCommand, SetPropertyFromCommand
 from buildbot.steps.python_twisted import Trial
 from buildbot.steps.python import Sphinx
 from buildbot.steps.transfer import DirectoryUpload, StringDownload
@@ -329,6 +329,38 @@ def makeInternalDocsFactory():
     return factory
 
 
+def makeOmnibusFactory(distribution):
+    factory = getFlockerFactory(python="python2.7")
+
+    factory.addStep(SetPropertyFromCommand(
+            command=["python", "setup.py", "--version"],
+            name='check-version',
+            description=['checking', 'version'],
+            descriptionDone=['checking', 'version'],
+            property='version'
+        ))
+    factory.addStep(ShellCommand(
+        name='build-sdist',
+        description=["building", "sdist"],
+        descriptionDone=["build", "sdist"],
+        command=[
+            virtualenvBinary('python'),
+            "setup.py", "sdist",
+            ],
+        haltOnFailure=True))
+    factory.addStep(ShellCommand(
+        command=[
+            virtualenvBinary('python'),
+            'admin/build-package',
+            '--distribution', distribution,
+            Interpolate('/flocker/dist/Flocker-%(prop:version)s.tar.gz'),
+            ],
+        name='build-package',
+        description=['building', 'package'],
+        descriptionDone=['build', 'package'],
+        haltOnFailure=True))
+
+    return factory
 
 
 def makeNativeRPMFactory():
@@ -414,7 +446,7 @@ def idleSlave(builder, slaves):
         return idle[0]
 
 def getBuilders(slavenames):
-    return [
+    builders = [
         BuilderConfig(name='flocker',
                       slavenames=slavenames['fedora'],
                       category='flocker',
@@ -461,6 +493,16 @@ def getBuilders(slavenames):
                       factory=makeAdminFactory(),
                       nextSlave=idleSlave),
         ]
+    for distribution in ['fedora20', 'ubuntu1404', 'centos7']:
+        builders.append(
+            BuilderConfig(
+                name='flocker-omnibus-%s' % (distribution,),
+                slavenames=slavenames['fedora'],
+                category='flocker',
+                factory=makeOmnibusFactory(distribution=distribution),
+                nextSlave=idleSlave,
+                ))
+    return builders
 
 BUILDERS = [
     'flocker',
@@ -471,6 +513,9 @@ BUILDERS = [
     'flocker-native-fedora20-rpms',
     'flocker-zfs-head',
     'flocker-admin',
+    'flocker-omnibus-fedora20',
+    'flocker-omnibus-centos7',
+    'flocker-omnibus-ubuntu1404',
     ]
 
 def getSchedulers():
