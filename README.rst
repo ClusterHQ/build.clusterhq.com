@@ -10,8 +10,6 @@ in case another commit comes in shortly afterwards.
 
 All builds are tested as merges against master.
 
-There is a fabfile with commands ``start`` and ``update`` for deploying the buildbot (currently written assuming a ubuntu trusty host).
-
 Deploying changes
 -----------------
 
@@ -26,14 +24,18 @@ Add the HybridDeployment master key to your authentication agent::
 
 Go to a checkout of the build.clusterhq.com repository.
 
-The secrets for the master must be stored in a file ``config.yml`` inside the checkout.
-These secrets can be found in the "FlockerBuildbot Credentials" file in LastPass.
-Fabric passes these variables to buildbot via a docker environment variable as JSON.
 
 Install dependencies::
 
    $ pip install pyyaml
    $ pip install fabric
+
+The secrets for the master must be stored in a file ``config.yml`` inside the checkout.
+Fabric passes these variables to buildbot via a docker environment variable as JSON.
+These secrets can be found in the "config@build.clusterhq.com" file in LastPass.
+If you have the lastpass command-line client installed, you can use fabric to download the current config::
+
+   $ fab getConfig
 
 Check if anyone has running builds at http://build.clusterhq.com/buildslaves.
 
