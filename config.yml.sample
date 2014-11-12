@@ -21,3 +21,8 @@ slaves:
     fedora:
         ami: "fedora-buildslave-base"
         slaves: 3
+    fedora-zfs-head:
+        ami: "fedora-buildslave-zfs-head"
+        slaves: 1
+    fedora-vagrant:
+        passwords: ['password']
