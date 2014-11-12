@@ -330,7 +330,8 @@ def makeInternalDocsFactory():
 
 
 
-def makeRPMFactory():
+
+def makeNativeRPMFactory():
     branch = "%(src:flocker:branch)s"
     factory = getFlockerFactory(python="python2.7")
     factory.addStep(ShellCommand(
@@ -448,10 +449,11 @@ def getBuilders(slavenames):
                       category='flocker',
                       factory=makeInternalDocsFactory(),
                       nextSlave=idleSlave),
-        BuilderConfig(name='flocker-rpms',
+        BuilderConfig(name='flocker-native-fedora20-rpms',
+                      builddir='flocker-rpms',
                       slavenames=slavenames['fedora'],
                       category='flocker',
-                      factory=makeRPMFactory(),
+                      factory=makeNativeRPMFactory(),
                       nextSlave=idleSlave),
         BuilderConfig(name='flocker-admin',
                       slavenames=slavenames['fedora'],
@@ -466,7 +468,7 @@ BUILDERS = [
     'flocker-coverage',
     'flocker-lint',
     'flocker-docs',
-    'flocker-rpms',
+    'flocker-native-fedora20-rpms',
     'flocker-zfs-head',
     'flocker-admin',
     ]
