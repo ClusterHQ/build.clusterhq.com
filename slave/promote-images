@@ -1,0 +1,22 @@
+#!/usr/bin/env python
+
+from common import aws_config, driver
+
+
+def get_image(name):
+    try:
+        return [s for s in driver.list_images(ex_owner="self") if s.name == name][0]
+    except IndexError:
+        raise ValueError("Unknown EC2 image.", name)
+
+def copy_image(source, destination):
+    image = driver.copy_image(
+            region=aws_config['region'],
+            image=get_image(source),
+            name=destination)
+
+    return image.id
+
+
+copy_image('staging-fedora-buildslave', 'fedora-buildslave')
+copy_image('staging-fedora-buildslave-zfs-head', 'fedora-buildslave-zfs-head')

@@ -2,20 +2,13 @@
 
 import sys
 
-import yaml
+from common import aws_config, driver
 from twisted.python.filepath import FilePath
 
-from libcloud.compute.providers import get_driver, Provider
 from libcloud.compute.base import NodeImage
 from libcloud.compute.deployment import ScriptDeployment
 
 
-aws_config = yaml.safe_load("aws.yml")
-
-driver = get_driver(Provider.EC2)(
-    key=aws_config['access_key'],
-    secret=aws_config['secret_access_token'],
-    region=aws_config['region'])
 
 def get_size(size_name):
     """

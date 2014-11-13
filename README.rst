@@ -111,8 +111,9 @@ Slave AMIs
 ----------
 
 There are two slave AMIs.
-The images are built by running ``admin/build-base``.
+The images are built by running ``slave/build-images``.
 This will generate images with ``staging-`` prefixes.
+These can be promoted by rnning ``slave/promote-images``.
 
 The images are based on the offical fedora 20 image (``ami-cc8de6fc``) with ``slave/cloud-init-base.sh``.
 Each image uses `slave/cloud-init.sh` with some substitutions as user-data, to start the buildbot.
