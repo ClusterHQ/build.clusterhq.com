@@ -1,5 +1,7 @@
 #!/usr/bin/env python
 
+import sys
+
 import yaml
 from twisted.python.filepath import FilePath
 
@@ -34,7 +36,7 @@ def deploy_node(name, base_ami, deploy, userdata=None,
 
     :param str name: The name of the node.
     :param str base_ami: The name of the ami to use.
-    :param Deployment deploy: The libcloud ``Deployment`` to run on the node.
+    :param Deployment deploy: The libcloud ``ScriptDeployment`` to run on the node.
     :param bytes userdata: User data to pass to the instance.
     :param bytes size: The name of the size to use.
     :param int disk_size: The size of disk to allocate.
@@ -56,6 +58,13 @@ def deploy_node(name, base_ami, deploy, userdata=None,
         deploy=deploy,
         ex_userdata=userdata,
     )
+    if deploy.exit_status:
+        print deploy.stdout
+        print deploy.stderr
+        print
+        print "Deploy failed."
+        driver.destroy_node(node)
+        sys.exit(1)
     return node
 
 def stop_node(node):
@@ -83,12 +92,14 @@ def build_image(name, base_ami, deploy, userdata=None,
          deploy=deploy,
          userdata=userdata,
     )
-    print "Stopping %(name)s-build." % dict(name=name)
-    stop_node(node)
-    print "Creating image %(name)s." % dict(name=name)
-    image = create_image(node, name)
-    print "Destroying %(name)s-build." % dict(name=name)
-    driver.destroy_node(node)
+    try:
+        print "Stopping %(name)s-build." % dict(name=name)
+        stop_node(node)
+        print "Creating image %(name)s." % dict(name=name)
+        image = create_image(node, name)
+    finally:
+        print "Destroying %(name)s-build." % dict(name=name)
+        driver.destroy_node(node)
 
     print "%(name)s: %(ami)s" % dict(name=name, ami=image.id)
     return image.id
