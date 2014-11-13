@@ -1,5 +1,13 @@
 #!/bin/sh
 
+# This script is run as a libcloud ScriptDeployment.
+# On fedora, this is run as the user fedora, so switch to root.
+if [ -z "$SUDO_COMMAND" ]
+then
+      sudo $0 $*
+      exit $?
+fi
+
 cat <<"EOF" >/etc/yum.repos.d/hybridlogic.repo
 [hybridlogic]
 name = Copr repo for hybridlogic

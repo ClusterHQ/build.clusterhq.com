@@ -1,9 +1,110 @@
-#!/bin/sh
-# Depends on awscli
-aws ec2 run-instances \
-	--image-id ami-cc8de6fc \
-	--instance-type m3.medium \
-	--key-name hybrid-master \
-	--security-groups ssh \
-	--user-data "$(<slave/cloud-init-base.sh)" \
-	--block-device-mappings '[{"DeviceName": "/dev/sda1","Ebs":{"VolumeSize":8, "DeleteOnTermination": true, "VolumeType": "gp2"}}]'
+#!/usr/bin/env python
+
+import yaml
+from twisted.python.filepath import FilePath
+
+from libcloud.compute.providers import get_driver, Provider
+from libcloud.compute.base import NodeImage
+from libcloud.compute.deployment import ScriptDeployment
+
+
+aws_config = yaml.safe_load("aws.yml")
+
+driver = get_driver(Provider.EC2)(
+    key=aws_config['access_key'],
+    secret=aws_config['secret_access_token'],
+    region=aws_config['region'])
+
+def get_size(size_name):
+    """
+    Return a ``NodeSize`` corresponding to the name of size.
+    """
+    try:
+        return [s for s in driver.list_sizes() if s.id == size_name][0]
+    except IndexError:
+        raise ValueError("Unknown EC2 size.", size_name)
+
+
+def deploy_node(name, base_ami, deploy, userdata=None,
+                size="t1.micro", disk_size=8,
+                private_key_file=aws_config['private_key_file'],
+                keyname=aws_config['keyname']):
+    """
+    Deploy a node.
+
+    :param str name: The name of the node.
+    :param str base_ami: The name of the ami to use.
+    :param Deployment deploy: The libcloud ``Deployment`` to run on the node.
+    :param bytes userdata: User data to pass to the instance.
+    :param bytes size: The name of the size to use.
+    :param int disk_size: The size of disk to allocate.
+    """
+    node = driver.deploy_node(
+        name=name,
+        image=NodeImage(id=base_ami, name=None, driver=driver),
+        size=get_size(size),
+
+        ex_keyname=keyname,
+        ex_security_groups=['ssh'],
+        ex_blockdevicemappings=[
+            {"DeviceName": "/dev/sda1", "Ebs": {"VolumeSize": disk_size, "DeleteOnTermination": True, "VolumeType": "gp2"}}
+        ],
+
+        ssh_key=private_key_file,
+        ssh_username='fedora',
+        # Deploy stuff
+        deploy=deploy,
+        ex_userdata=userdata,
+    )
+    return node
+
+def stop_node(node):
+    driver.ex_stop_node(node)
+    while driver.list_nodes(ex_node_ids=[node.id])[0].extra['status'] != 'stopped':
+        import time; time.sleep(1)
+
+def create_image(node, name):
+    image = driver.create_image(node, name)
+    while driver.get_image(image.id).extra['state'] != 'available':
+        import time; time.sleep(1)
+    return image
+
+def build_image(name, base_ami, deploy, userdata=None,
+                size="t1.micro", disk_size=8):
+    """
+    Build an image by deploying a node, and then snapshoting the image.
+
+    See deploy node for arguments.
+    """
+    print "Deploying %(name)s-build." % dict(name=name)
+    node = deploy_node(
+         name=name + "-build",
+         base_ami=base_ami,
+         deploy=deploy,
+         userdata=userdata,
+    )
+    print "Stopping %(name)s-build." % dict(name=name)
+    stop_node(node)
+    print "Creating image %(name)s." % dict(name=name)
+    image = create_image(node, name)
+    print "Destroying %(name)s-build." % dict(name=name)
+    driver.destroy_node(node)
+
+    print "%(name)s: %(ami)s" % dict(name=name, ami=image.id)
+    return image.id
+
+
+init = ScriptDeployment(FilePath(__file__).sibling('cloud-init-base.sh').getContent())
+zfs_head_ami = build_image(
+     name='staging-fedora-buildslave-zfs-head',
+     base_ami="ami-cc8de6fc",
+     deploy=init,
+     userdata="#!/bin/sh\nsed -i '/Defaults    requiretty/d' /etc/sudoers",
+)
+
+
+fedora_20_ami = build_image(
+     name='staging-fedora-buildslave',
+     base_ami=zfs_head_ami,
+     deploy=ScriptDeployment('sudo yum install -y zfs'),
+)
