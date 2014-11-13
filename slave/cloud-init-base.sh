@@ -8,6 +8,7 @@ then
       exit $?
 fi
 
+
 cat <<"EOF" >/etc/yum.repos.d/hybridlogic.repo
 [hybridlogic]
 name = Copr repo for hybridlogic
@@ -42,6 +43,14 @@ yum install -y \
 	kernel-devel \
 	wget \
 	curl
+
+# Install development headers for the currently running kernel.
+UNAME_R=$(uname -r)
+PV=${UNAME_R%.*}
+KV=${PV%%-*}
+SV=${PV##*-}
+ARCH=$(uname -m)
+yum install -y https://kojipkgs.fedoraproject.org//packages/kernel/${KV}/${SV}/${ARCH}/kernel-devel-${UNAME_R}.rpm
 
 systemctl enable docker
 systemctl enable geard
