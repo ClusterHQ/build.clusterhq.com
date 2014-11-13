@@ -98,11 +98,11 @@ def build_image(name, base_ami, deploy, userdata=None,
     return image.id
 
 
-init = ScriptDeployment(FilePath(__file__).sibling('cloud-init-base.sh').getContent())
 zfs_head_ami = build_image(
      name='staging-fedora-buildslave-zfs-head',
      base_ami="ami-cc8de6fc",
-     deploy=init,
+     deploy=ScriptDeployment(FilePath(__file__).sibling('cloud-init-base.sh').getContent()),
+     # Fedora 20 doesn't allow sudo without a terminal by default, so enable it.
      userdata="#!/bin/sh\nsed -i '/Defaults    requiretty/d' /etc/sudoers",
 )
 
