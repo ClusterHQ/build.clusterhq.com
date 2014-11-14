@@ -24,4 +24,4 @@ def copy_image(source, destination):
 
 
 copy_image('staging-buildslave-fedora-20', 'buildslave-fedora-20')
-copy_image('staging-buildslave-fedora-20-zfs-test', 'buildslave-fedora-20-zfs-test')
+copy_image('staging-buildslave-fedora-20-zfs-head', 'buildslave-fedora-20-zfs-head')
