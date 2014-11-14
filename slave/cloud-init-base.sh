@@ -25,6 +25,7 @@ DEFAULTKERNEL=kernel
 EOF
 
 yum install -y http://archive.zfsonlinux.org/fedora/zfs-release$(rpm -E %dist).noarch.rpm
+yum install -y https://storage.googleapis.com/archive.clusterhq.com/fedora/clusterhq-release$(rpm -E %dist).noarch.rpm
 
 # Enable debugging for ZFS modules
 echo SPL_DKMS_DISABLE_STRIP=y >> /etc/sysconfig/spl
