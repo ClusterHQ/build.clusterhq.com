@@ -1,0 +1,27 @@
+#!/usr/bin/env python
+
+from common import aws_config, driver, wait_for_image
+
+
+def get_images(name):
+    return [s for s in driver.list_images(ex_owner="self") if s.name == name]
+
+def copy_image(source, destination):
+    # Delete old images, before creating new one.
+    # We have to do this fisrt, since duplicate names confuse AWS.
+    old_images = get_images(destination)
+    for image in old_images:
+        driver.delete_image(image)
+
+    image = driver.copy_image(
+            source_region=aws_config['region'],
+            image=get_images(source)[0],
+            name=destination)
+
+    print "%s: %s" % (destination, image.id)
+    wait_for_image(image)
+    return image.id
+
+
+copy_image('staging-buildslave-fedora-20', 'buildslave-fedora-20')
+copy_image('staging-buildslave-fedora-20-zfs-head', 'buildslave-fedora-20-zfs-head')

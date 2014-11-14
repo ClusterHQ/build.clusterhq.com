@@ -40,7 +40,7 @@ for base, slaveConfig in privateData['slaves'].items():
         for i in range(slaveConfig['slaves']):
             name = '%s-%d' % (base, i)
             password = generate_password(32)
-            ami = r'.*/%s' % (slaveConfig['ami'],)
+            ami = r'.*/%s$' % (slaveConfig['ami'],)
 
             SLAVENAMES[base].append(name)
             c['slaves'].append(

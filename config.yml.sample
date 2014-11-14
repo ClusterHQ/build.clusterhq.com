@@ -19,10 +19,10 @@ coveralls:
     token: "<coveralls repo token>"
 slaves:
     fedora:
-        ami: "fedora-buildslave-base"
+        ami: "buildslave-fedora-20"
         slaves: 3
     fedora-zfs-head:
-        ami: "fedora-buildslave-zfs-head"
+        ami: "buildslave-fedora-20-zfs-head"
         slaves: 1
     fedora-vagrant:
         passwords: ['password']

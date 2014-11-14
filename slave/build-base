@@ -1,9 +1,0 @@
-#!/bin/sh
-# Depends on awscli
-aws ec2 run-instances \
-	--image-id ami-cc8de6fc \
-	--instance-type m3.medium \
-	--key-name hybrid-master \
-	--security-groups ssh \
-	--user-data "$(<slave/cloud-init-base.sh)" \
-	--block-device-mappings '[{"DeviceName": "/dev/sda1","Ebs":{"VolumeSize":8, "DeleteOnTermination": true, "VolumeType": "gp2"}}]'
