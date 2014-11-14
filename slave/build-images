@@ -2,7 +2,7 @@
 
 import sys
 
-from common import aws_config, driver
+from common import aws_config, driver, wait_for_image
 from twisted.python.filepath import FilePath
 
 from libcloud.compute.base import NodeImage
@@ -67,8 +67,7 @@ def stop_node(node):
 
 def create_image(node, name):
     image = driver.create_image(node, name)
-    while driver.get_image(image.id).extra['state'] != 'available':
-        import time; time.sleep(1)
+    wait_for_image(image)
     return image
 
 def build_image(name, base_ami, deploy, userdata=None,
