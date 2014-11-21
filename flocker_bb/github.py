@@ -70,6 +70,7 @@ class GitHubStatus(object):
     def buildsetStarted(self, (sourceStamps, buildRequests), status):
         if not self._shouldReportBuild(buildRequests):
             log.msg(format="Ignoring build because of github-status.")
+            return
 
         request, branch = self._getSourceStampData(sourceStamps)
 
@@ -82,7 +83,7 @@ class GitHubStatus(object):
             'description': 'Starting build.'
             })
 
-        log.msg("github request %(request)s", request=request)
+        log.msg(format="github request %(request)s", request=request)
         d = self._sendStatus(request)
         d.addErrback(
             log.err,
