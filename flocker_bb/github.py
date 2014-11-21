@@ -62,8 +62,9 @@ class GitHubStatus(object):
 
     def _shouldReportBuild(self, buildRequests):
         for buildRequest in buildRequests:
-            if not buildRequest['properties'].get('github-status', True):
-                return False
+            for prop, value, source in buildRequest['properties']:
+                if prop == 'github-status' and not value:
+                    return False
         return True
 
     def buildsetStarted(self, (sourceStamps, buildRequests), status):
