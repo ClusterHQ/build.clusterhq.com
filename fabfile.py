@@ -1,4 +1,4 @@
-from fabric.api import sudo, task, env, execute
+from fabric.api import sudo, task, env, execute, local
 from pipes import quote as shellQuote
 import yaml, json
 
@@ -120,3 +120,20 @@ def logs(configFile="config.yml", follow=True):
         execute(sudo, cmd('docker', 'logs', '-f', 'buildmaster'))
     else:
         execute(sudo, cmd('docker', 'logs', 'buildmaster'))
+
+
+@task
+def getConfig():
+    """
+    Get credentials from lastpass.
+    """
+    local(cmd('cp', 'config.yml', 'config.yml.bak'))
+    local('lpass show --notes "config@build.clusterhq.com" >config.yml')
+
+@task
+def saveConfig():
+    """
+    Put credentials in lastpass.
+    """
+    local('lpass show --notes "config@build.clusterhq.com" >config.yml.old')
+    local('lpass edit --non-interactive --notes "config@build.clusterhq.com" <config.yml')

@@ -1,4 +1,0 @@
-#!/bin/sh
-set -e
-docker build -t registry.flocker.hybridcluster.net:5000/flocker/buildmaster .
-docker push registry.flocker.hybridcluster.net:5000/flocker/buildmaster

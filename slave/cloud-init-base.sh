@@ -1,5 +1,14 @@
 #!/bin/sh
 
+# This script is run as a libcloud ScriptDeployment.
+# On fedora, this is run as the user fedora, so switch to root.
+if [ -z "$SUDO_COMMAND" ]
+then
+      sudo $0 $*
+      exit $?
+fi
+
+
 cat <<"EOF" >/etc/yum.repos.d/hybridlogic.repo
 [hybridlogic]
 name = Copr repo for hybridlogic
@@ -9,7 +18,14 @@ gpgcheck = 0
 enabled = 1
 EOF
 
+# Install development headers for the currently running kernel.
+cat <<"EOF" >/etc/sysconfig/kernel
+UPDATEDEFAULT=yes
+DEFAULTKERNEL=kernel
+EOF
+
 yum install -y http://archive.zfsonlinux.org/fedora/zfs-release$(rpm -E %dist).noarch.rpm
+yum install -y https://storage.googleapis.com/archive.clusterhq.com/fedora/clusterhq-release$(rpm -E %dist).noarch.rpm
 
 # Enable debugging for ZFS modules
 echo SPL_DKMS_DISABLE_STRIP=y >> /etc/sysconfig/spl

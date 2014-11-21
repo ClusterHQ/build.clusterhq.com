@@ -1,0 +1,113 @@
+#!/usr/bin/env python
+
+import sys
+
+from common import aws_config, driver, wait_for_image
+from twisted.python.filepath import FilePath
+
+from libcloud.compute.base import NodeImage
+from libcloud.compute.deployment import ScriptDeployment
+
+
+
+def get_size(size_name):
+    """
+    Return a ``NodeSize`` corresponding to the name of size.
+    """
+    try:
+        return [s for s in driver.list_sizes() if s.id == size_name][0]
+    except IndexError:
+        raise ValueError("Unknown EC2 size.", size_name)
+
+
+def deploy_node(name, base_ami, deploy, userdata=None,
+                size="t1.micro", disk_size=8,
+                private_key_file=aws_config['private_key_file'],
+                keyname=aws_config['keyname']):
+    """
+    Deploy a node.
+
+    :param str name: The name of the node.
+    :param str base_ami: The name of the ami to use.
+    :param Deployment deploy: The libcloud ``ScriptDeployment`` to run on the node.
+    :param bytes userdata: User data to pass to the instance.
+    :param bytes size: The name of the size to use.
+    :param int disk_size: The size of disk to allocate.
+    """
+    node = driver.deploy_node(
+        name=name,
+        image=NodeImage(id=base_ami, name=None, driver=driver),
+        size=get_size(size),
+
+        ex_keyname=keyname,
+        ex_security_groups=['ssh'],
+        ex_blockdevicemappings=[
+            {"DeviceName": "/dev/sda1", "Ebs": {"VolumeSize": disk_size, "DeleteOnTermination": True, "VolumeType": "gp2"}}
+        ],
+
+        ssh_key=private_key_file,
+        ssh_username='fedora',
+        # Deploy stuff
+        deploy=deploy,
+        ex_userdata=userdata,
+    )
+    if deploy.exit_status:
+        print deploy.stdout
+        print deploy.stderr
+        print
+        print "Deploy failed."
+        driver.destroy_node(node)
+        sys.exit(1)
+    return node
+
+def stop_node(node):
+    driver.ex_stop_node(node)
+    while driver.list_nodes(ex_node_ids=[node.id])[0].extra['status'] != 'stopped':
+        import time; time.sleep(1)
+
+def create_image(node, name):
+    image = driver.create_image(node, name)
+    wait_for_image(image)
+    return image
+
+def build_image(name, base_ami, deploy, userdata=None,
+                size="t1.micro", disk_size=8):
+    """
+    Build an image by deploying a node, and then snapshoting the image.
+
+    See deploy node for arguments.
+    """
+    print "Deploying %(name)s-build." % dict(name=name)
+    node = deploy_node(
+         name=name + "-build",
+         base_ami=base_ami,
+         deploy=deploy,
+         userdata=userdata,
+    )
+    try:
+        print "Stopping %(name)s-build." % dict(name=name)
+        stop_node(node)
+        print "Creating image %(name)s." % dict(name=name)
+        image = create_image(node, name)
+    finally:
+        print "Destroying %(name)s-build." % dict(name=name)
+        driver.destroy_node(node)
+
+    print "%(name)s: %(ami)s" % dict(name=name, ami=image.id)
+    return image.id
+
+
+zfs_head_ami = build_image(
+     name='staging-buildslave-fedora-20-zfs-head',
+     base_ami="ami-cc8de6fc",
+     deploy=ScriptDeployment(FilePath(__file__).sibling('cloud-init-base.sh').getContent()),
+     # Fedora 20 doesn't allow sudo without a terminal by default, so enable it.
+     userdata="#!/bin/sh\nsed -i '/Defaults    requiretty/d' /etc/sudoers",
+)
+
+
+fedora_20_ami = build_image(
+     name='staging-buildslave-fedora-20',
+     base_ami=zfs_head_ami,
+     deploy=ScriptDeployment('sudo yum install -y zfs'),
+)
