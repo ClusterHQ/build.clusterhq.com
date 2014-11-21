@@ -332,14 +332,15 @@ def makeInternalDocsFactory():
 
 def createRepository(distribution):
     steps = []
-    if distribution.startswith("fedora") or distribution.startswith("centos"):
+    flavour, version = distribution.split('-', 1)
+    if flavour in ("fedora", "centos"):
         steps.append(ShellCommand(
             name='build-repo-metadata',
             description=["building", "repo", "metadata"],
             descriptionDone=["build", "repo", "metadata"],
             command=["createrepo_c", "repo"],
             haltOnFailure=True))
-    elif distribution.startswith("ubuntu") or distribution.startswith("debian"):
+    elif flavour in ("ubuntu", "debian"):
         steps.append(ShellCommand(
             name='build-repo-metadata',
             description=["building", "repo", "metadata"],
@@ -436,7 +437,7 @@ def makeNativeRPMFactory():
         command=["cp", "-t", "../repo", Property('srpm'), Property('rpm')],
         workdir='build/dist',
         haltOnFailure=True))
-    factory.addSteps(createRepository("fedora20"))
+    factory.addSteps(createRepository("fedora-20"))
     factory.addStep(DirectoryUpload(
         Interpolate('repo'),
         Interpolate(b"private_html/fedora/20/x86_64/%s/" % (branch,)),
