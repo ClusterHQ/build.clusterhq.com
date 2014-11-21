@@ -513,7 +513,7 @@ def getBuilders(slavenames):
                       category='flocker',
                       factory=makeInternalDocsFactory(),
                       nextSlave=idleSlave),
-        BuilderConfig(name='flocker-native-fedora20-rpms',
+        BuilderConfig(name='flocker-native-rpm-fedora-20',
                       builddir='flocker-rpms',
                       slavenames=slavenames['fedora'],
                       category='flocker',
@@ -525,7 +525,7 @@ def getBuilders(slavenames):
                       factory=makeAdminFactory(),
                       nextSlave=idleSlave),
         ]
-    for distribution in ['fedora20', 'ubuntu1404', 'centos7']:
+    for distribution in ['fedora-20']:
         builders.append(
             BuilderConfig(
                 name='flocker-omnibus-%s' % (distribution,),
@@ -542,12 +542,10 @@ BUILDERS = [
     'flocker-coverage',
     'flocker-lint',
     'flocker-docs',
-    'flocker-native-fedora20-rpms',
+    'flocker-native-rpm-fedora-20',
     'flocker-zfs-head',
     'flocker-admin',
-    'flocker-omnibus-fedora20',
-    'flocker-omnibus-centos7',
-    'flocker-omnibus-ubuntu1404',
+    'flocker-omnibus-fedora-20',
     ]
 
 def getSchedulers():
