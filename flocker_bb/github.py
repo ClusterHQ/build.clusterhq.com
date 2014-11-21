@@ -60,7 +60,16 @@ class GitHubStatus(object):
         name = name.rpartition('flocker-')[2]
         return name
 
+    def _shouldReportBuild(self, buildRequests):
+        for buildRequest in buildRequests:
+            if not buildRequest['properties'].get('github-status', True):
+                return False
+        return True
+
     def buildsetStarted(self, (sourceStamps, buildRequests), status):
+        if not self._shouldReportBuild(buildRequests):
+            log.msg(format="Ignoring build because of github-status.")
+
         request, branch = self._getSourceStampData(sourceStamps)
 
         if not request.has_key('sha'):
@@ -84,8 +93,10 @@ class GitHubStatus(object):
 
 
     def buildsetFinished(self, (sourceStamps, buildRequests), status):
-        request, branch = self._getSourceStampData(sourceStamps)
+        if not self._shouldReportBuild(buildRequests):
+            log.msg(format="Ignoring build because of github-status.")
 
+        request, branch = self._getSourceStampData(sourceStamps)
 
         failed = []
         revisions = set()

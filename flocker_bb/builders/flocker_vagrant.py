@@ -211,6 +211,9 @@ def getSchedulers():
             codebases={
                 "flocker": {"repository": GITHUB + b"/flocker"},
             },
+            properties={
+                "github-status": False,
+            },
             change_filter=ChangeFilter(
                 branch_re=r"(master|release/|[0-9]+\.[0-9]+\.[0-9]+((pre|dev)[0-9]+)?)",
                 )
@@ -220,6 +223,9 @@ def getSchedulers():
             builderNames=['flocker-vagrant-tutorial-box'],
             codebases={
                 "flocker": {"repository": GITHUB + b"/flocker"},
+            },
+            properties={
+                "github-status": False,
             },
         ),
         ForceScheduler(
@@ -231,7 +237,7 @@ def getSchedulers():
                     repository=FixedParameter("repository", default=GITHUB + b"/flocker"),
                     ),
                 ],
-            properties=[],
+            properties=[FixedParameter("github-status", default=False)],
             builderNames=BUILDERS,
             ),
         ]
