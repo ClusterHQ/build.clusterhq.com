@@ -1,4 +1,4 @@
-from buildbot.steps.shell import ShellCommand
+from buildbot.steps.shell import ShellCommand, SetPropertyFromCommand
 from buildbot.steps.python_twisted import Trial
 from buildbot.steps.python import Sphinx
 from buildbot.steps.transfer import DirectoryUpload, StringDownload
@@ -7,6 +7,7 @@ from buildbot.steps.source.git import Git
 from buildbot.process.properties import Interpolate, Property
 from buildbot.steps.package.rpm import RpmLint
 from buildbot.steps.trigger import Trigger
+from buildbot.config import error
 
 from os import path
 
@@ -329,8 +330,78 @@ def makeInternalDocsFactory():
     return factory
 
 
+def createRepository(distribution):
+    steps = []
+    flavour, version = distribution.split('-', 1)
+    if flavour in ("fedora", "centos"):
+        steps.append(ShellCommand(
+            name='build-repo-metadata',
+            description=["building", "repo", "metadata"],
+            descriptionDone=["build", "repo", "metadata"],
+            command=["createrepo_c", "repo"],
+            haltOnFailure=True))
+    elif flavour in ("ubuntu", "debian"):
+        steps.append(ShellCommand(
+            name='build-repo-metadata',
+            description=["building", "repo", "metadata"],
+            descriptionDone=["build", "repo", "metadata"],
+            # FIXME: Don't use shell here.
+            command="dpkg-scanpackages . | gzip > Packages.gz",
+            workdir='build/repo',
+            haltOnFailure=True))
+    else:
+        error("Unkwown distritubtion %s in createRepository." % (distribution,))
 
-def makeRPMFactory():
+    return steps
+
+
+def makeOmnibusFactory(distribution):
+    branch = "%(src:flocker:branch)s"
+
+    factory = getFlockerFactory(python="python2.7")
+    factory.addStep(SetPropertyFromCommand(
+            command=["python", "setup.py", "--version"],
+            name='check-version',
+            description=['checking', 'version'],
+            descriptionDone=['checking', 'version'],
+            property='version'
+        ))
+    factory.addSteps(installDependencies())
+    factory.addStep(ShellCommand(
+        name='build-sdist',
+        description=["building", "sdist"],
+        descriptionDone=["build", "sdist"],
+        command=[
+            virtualenvBinary('python'),
+            "setup.py", "sdist",
+            ],
+        haltOnFailure=True))
+    factory.addStep(ShellCommand(
+        command=[
+            virtualenvBinary('python'),
+            'admin/build-package',
+            '--destination-path', 'repo',
+            '--distribution', distribution,
+            Interpolate('/flocker/dist/Flocker-%(prop:version)s.tar.gz'),
+            ],
+        name='build-package',
+        description=['building', 'package'],
+        descriptionDone=['build', 'package'],
+        haltOnFailure=True))
+    factory.addSteps(createRepository(distribution))
+    factory.addStep(DirectoryUpload(
+        Interpolate('repo'),
+        Interpolate(b"private_html/omnibus/%s/%s" % (branch, distribution)),
+        url=Interpolate(
+            b"/results/omnibus/%s/%s/" % (branch, distribution),
+            ),
+        name="upload-repo",
+        ))
+
+    return factory
+
+
+def makeNativeRPMFactory():
     branch = "%(src:flocker:branch)s"
     factory = getFlockerFactory(python="python2.7")
     factory.addStep(ShellCommand(
@@ -366,12 +437,7 @@ def makeRPMFactory():
         command=["cp", "-t", "../repo", Property('srpm'), Property('rpm')],
         workdir='build/dist',
         haltOnFailure=True))
-    factory.addStep(ShellCommand(
-        name='build-repo-metadata',
-        description=["building", "repo", "metadata"],
-        descriptionDone=["build", "repo", "metadata"],
-        command=["createrepo_c", "repo"], # Fix this to use createrepo
-        haltOnFailure=True))
+    factory.addSteps(createRepository("fedora-20"))
     factory.addStep(DirectoryUpload(
         Interpolate('repo'),
         Interpolate(b"private_html/fedora/20/x86_64/%s/" % (branch,)),
@@ -413,7 +479,7 @@ def idleSlave(builder, slaves):
         return idle[0]
 
 def getBuilders(slavenames):
-    return [
+    builders = [
         BuilderConfig(name='flocker',
                       slavenames=slavenames['fedora'],
                       category='flocker',
@@ -448,10 +514,11 @@ def getBuilders(slavenames):
                       category='flocker',
                       factory=makeInternalDocsFactory(),
                       nextSlave=idleSlave),
-        BuilderConfig(name='flocker-rpms',
+        BuilderConfig(name='flocker-native-rpm-fedora-20',
+                      builddir='flocker-rpms',
                       slavenames=slavenames['fedora'],
                       category='flocker',
-                      factory=makeRPMFactory(),
+                      factory=makeNativeRPMFactory(),
                       nextSlave=idleSlave),
         BuilderConfig(name='flocker-admin',
                       slavenames=slavenames['fedora'],
@@ -460,6 +527,16 @@ def getBuilders(slavenames):
                       locks=[functionalLock.access('counting')],
                       nextSlave=idleSlave),
         ]
+    for distribution in ['fedora-20']:
+        builders.append(
+            BuilderConfig(
+                name='flocker-omnibus-%s' % (distribution,),
+                slavenames=slavenames['fedora'],
+                category='flocker',
+                factory=makeOmnibusFactory(distribution=distribution),
+                nextSlave=idleSlave,
+                ))
+    return builders
 
 BUILDERS = [
     'flocker',
@@ -467,9 +544,10 @@ BUILDERS = [
     'flocker-coverage',
     'flocker-lint',
     'flocker-docs',
-    'flocker-rpms',
+    'flocker-native-rpm-fedora-20',
     'flocker-zfs-head',
     'flocker-admin',
+    'flocker-omnibus-fedora-20',
     ]
 
 def getSchedulers():
