@@ -152,7 +152,11 @@ def buildTutorialBox():
         haltOnFailure=True,
         ))
 
-    factory.addSteps(_flockerTests(kwargs={}, tests=['flocker.acceptance']))
+    factory.addSteps(_flockerTests(
+        kwargs={},
+        tests=['flocker.acceptance'],
+        env={"FLOCKER_ACCEPTANCE_NODES": "172.16.255.250 172.16.255.251"},
+        ))
 
     factory.addStep(ShellCommand(
         name='destroy-tutorial-box',
