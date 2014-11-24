@@ -97,6 +97,7 @@ class GitHubStatus(object):
     def buildsetFinished(self, (sourceStamps, buildRequests), status):
         if not self._shouldReportBuild(buildRequests):
             log.msg(format="Ignoring build because of github-status.")
+            return
 
         request, branch = self._getSourceStampData(sourceStamps)
 
