@@ -472,7 +472,7 @@ from buildbot.locks import SlaveLock
 # A lock to prevent multiple functional tests running at the same time
 functionalLock = SlaveLock('functional-tests')
 
-OMNIBUS_DISTRIBUTIONS = ['fedora-20']
+OMNIBUS_DISTRIBUTIONS = ['fedora-20', 'ubuntu-14.04']
 
 def idleSlave(builder, slaves):
     idle = [slave for slave in slaves if slave.isAvailable()]
