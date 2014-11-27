@@ -116,3 +116,21 @@ fedora_20_ami = build_image(
      deploy=ScriptDeployment('sudo yum install -y zfs'),
      username="fedora",
 )
+
+ubuntu_14_04_zfs_head_ami = build_image(
+     name='staging-buildslave-ubuntu-14.04-zfs-head',
+     base_ami="ami-818dd9b1",
+     deploy=ScriptDeployment(FilePath(__file__).sibling('ubuntu').child('cloud-init-base.sh').getContent()),
+     username="ubuntu",
+)
+
+ubuntu_14_04_ami = build_image(
+     name='staging-buildslave-ubuntu-14.04',
+     base_ami=ubuntu_14_04_zfs_head_ami,
+     # Specify --confold so that /etc/default/zfs is not overwritten (and dpkg doesn't hang). See
+     # - https://github.com/zfsonlinux/pkg-zfs/issues/133
+     # - http://raphaelhertzog.com/2010/09/21/debian-conffile-configuration-file-managed-by-dpkg/
+     deploy=ScriptDeployment('sudo env DEBIAN_FRONTEND=noninteractive apt-get -o Dpkg::Options::="--force-confdef" -o Dpkg::Options::="--force-confold" install -y zfsutils'),
+     username="ubuntu",
+     size="c3.large",
+)
