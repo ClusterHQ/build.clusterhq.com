@@ -6,6 +6,7 @@ from common import aws_config, driver, wait_for_image
 def get_images(name):
     return [s for s in driver.list_images(ex_owner="self") if s.name == name]
 
+
 def copy_image(source, destination):
     # Delete old images, before creating new one.
     # We have to do this fisrt, since duplicate names confuse AWS.
@@ -14,9 +15,9 @@ def copy_image(source, destination):
         driver.delete_image(image)
 
     image = driver.copy_image(
-            source_region=aws_config['region'],
-            image=get_images(source)[0],
-            name=destination)
+        source_region=aws_config['region'],
+        image=get_images(source)[0],
+        name=destination)
 
     print "%s: %s" % (destination, image.id)
     wait_for_image(image)
