@@ -152,10 +152,11 @@ def buildTutorialBox():
         haltOnFailure=True,
         ))
 
+    ACCEPTANCE_NODES = ["172.16.255.250", "172.16.255.251"]
     factory.addSteps(_flockerTests(
         kwargs={},
         tests=['flocker.acceptance'],
-        env={"FLOCKER_ACCEPTANCE_NODES": "172.16.255.250 172.16.255.251"},
+        env={"FLOCKER_ACCEPTANCE_NODES": ":".join(ACCEPTANCE_NODES)},
         ))
 
     factory.addStep(ShellCommand(
