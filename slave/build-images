@@ -3,6 +3,8 @@
 import sys
 import time
 
+import yaml
+
 from common import aws_config, driver, wait_for_image
 from twisted.python.filepath import FilePath
 
@@ -108,45 +110,34 @@ def build_image(name, base_ami, deploy, username,
     return image.id
 
 
-zfs_head_ami = build_image(
-    name='staging-buildslave-fedora-20-zfs-head',
-    base_ami="ami-cc8de6fc",
-    username="fedora",
-    deploy=ScriptDeployment(
-        FilePath(__file__).sibling('fedora-20')
-        .child('cloud-init-base.sh').getContent()),
-    # Fedora 20 doesn't allow sudo without a terminal by default, so enable it.
-    userdata="#!/bin/sh\nsed -i '/Defaults    requiretty/d' /etc/sudoers",
-)
+def process_image(args):
+    global amis
+    image_name = args.pop('name')
+    base_ami = args.pop('base-ami')
+    if not base_ami.startswith('ami-'):
+        base_ami = amis[base_ami]
+
+    step = args.pop('deploy')
+    if 'script' in step:
+        deploy = ScriptDeployment(step['script'])
+    elif 'file' in step:
+        deploy = ScriptDeployment(
+            base.child(step['file']).getContent())
+    else:
+        raise ValueError('Unknown deploy type.')
+
+    amis[image_name] = build_image(
+        name='staging-%s' % (image_name,),
+        base_ami=base_ami,
+        deploy=deploy,
+        **args
+    )
 
 
-fedora_20_ami = build_image(
-    name='staging-buildslave-fedora-20',
-    base_ami=zfs_head_ami,
-    deploy=ScriptDeployment('sudo yum install -y zfs'),
-    username="fedora",
-)
+DISTRO = sys.argv[1]
+base = FilePath(__file__).sibling(DISTRO)
+manifest = yaml.safe_load(base.child('manifest.yml').getContent())
 
-ubuntu_14_04_zfs_head_ami = build_image(
-    name='staging-buildslave-ubuntu-14.04-zfs-head',
-    base_ami="ami-818dd9b1",
-    deploy=ScriptDeployment(
-        FilePath(__file__).sibling('ubuntu-14.04')
-        .child('cloud-init-base.sh').getContent()),
-    username="ubuntu",
-)
-
-ubuntu_14_04_ami = build_image(
-    name='staging-buildslave-ubuntu-14.04',
-    base_ami=ubuntu_14_04_zfs_head_ami,
-    # Specify --confold so that /etc/default/zfs is not overwritten (and dpkg
-    # doesn't hang). See
-    # - https://github.com/zfsonlinux/pkg-zfs/issues/133
-    # - http://raphaelhertzog.com/2010/09/21/debian-conffile-configuration-file-managed-by-dpkg/ # noqa
-    deploy=ScriptDeployment(
-        'sudo env DEBIAN_FRONTEND=noninteractive '
-        'apt-get -o Dpkg::Options::="--force-confdef" '
-        '-o Dpkg::Options::="--force-confold" install -y zfsutils'),
-    username="ubuntu",
-    size="c3.large",
-)
+amis = {}
+for image in manifest['images']:
+    process_image(image)
