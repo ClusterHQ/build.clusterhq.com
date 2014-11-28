@@ -50,6 +50,7 @@ yum install -y \
 	@buildsys-build \
 	kernel-headers \
 	kernel-devel \
+	openssl-devel \
 	wget \
 	curl \
 	apt \

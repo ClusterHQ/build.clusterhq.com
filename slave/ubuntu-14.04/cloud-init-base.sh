@@ -39,6 +39,7 @@ apt-get install -y \
 	wget \
 	curl \
 	yum \
+	libssl-dev \
 	dpkg-dev
 
 # Maybe also linux-source
