@@ -104,7 +104,7 @@ zfs_head_ami = build_image(
      name='staging-buildslave-fedora-20-zfs-head',
      base_ami="ami-cc8de6fc",
      username="fedora",
-     deploy=ScriptDeployment(FilePath(__file__).sibling('cloud-init-base.sh').getContent()),
+     deploy=ScriptDeployment(FilePath(__file__).sibling('fedora-20').child('cloud-init-base.sh').getContent()),
      # Fedora 20 doesn't allow sudo without a terminal by default, so enable it.
      userdata="#!/bin/sh\nsed -i '/Defaults    requiretty/d' /etc/sudoers",
 )
@@ -120,7 +120,7 @@ fedora_20_ami = build_image(
 ubuntu_14_04_zfs_head_ami = build_image(
      name='staging-buildslave-ubuntu-14.04-zfs-head',
      base_ami="ami-818dd9b1",
-     deploy=ScriptDeployment(FilePath(__file__).sibling('ubuntu').child('cloud-init-base.sh').getContent()),
+     deploy=ScriptDeployment(FilePath(__file__).sibling('ubuntu-14.04').child('cloud-init-base.sh').getContent()),
      username="ubuntu",
 )
 
