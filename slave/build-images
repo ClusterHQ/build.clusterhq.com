@@ -1,13 +1,13 @@
 #!/usr/bin/env python
 
 import sys
+import time
 
 from common import aws_config, driver, wait_for_image
 from twisted.python.filepath import FilePath
 
 from libcloud.compute.base import NodeImage
 from libcloud.compute.deployment import ScriptDeployment
-
 
 
 def get_size(size_name):
@@ -29,7 +29,8 @@ def deploy_node(name, base_ami, deploy, username, userdata=None,
 
     :param str name: The name of the node.
     :param str base_ami: The name of the ami to use.
-    :param Deployment deploy: The libcloud ``ScriptDeployment`` to run on the node.
+    :param Deployment deploy: The libcloud ``ScriptDeployment`` to run on the
+        node.
     :param bytes userdata: User data to pass to the instance.
     :param bytes size: The name of the size to use.
     :param int disk_size: The size of disk to allocate.
@@ -42,7 +43,10 @@ def deploy_node(name, base_ami, deploy, username, userdata=None,
         ex_keyname=keyname,
         ex_security_groups=['ssh'],
         ex_blockdevicemappings=[
-            {"DeviceName": "/dev/sda1", "Ebs": {"VolumeSize": disk_size, "DeleteOnTermination": True, "VolumeType": "gp2"}}
+            {"DeviceName": "/dev/sda1",
+             "Ebs": {"VolumeSize": disk_size,
+                     "DeleteOnTermination": True,
+                     "VolumeType": "gp2"}}
         ],
 
         ssh_key=private_key_file,
@@ -60,15 +64,19 @@ def deploy_node(name, base_ami, deploy, username, userdata=None,
         sys.exit(1)
     return node
 
+
 def stop_node(node):
     driver.ex_stop_node(node)
-    while driver.list_nodes(ex_node_ids=[node.id])[0].extra['status'] != 'stopped':
-        import time; time.sleep(1)
+    while driver.list_nodes(
+            ex_node_ids=[node.id])[0].extra['status'] != 'stopped':
+        time.sleep(1)
+
 
 def create_image(node, name):
     image = driver.create_image(node, name)
     wait_for_image(image)
     return image
+
 
 def build_image(name, base_ami, deploy, username,
                 userdata=None, size="t1.micro", disk_size=8):
@@ -79,13 +87,13 @@ def build_image(name, base_ami, deploy, username,
     """
     print "Deploying %(name)s-build." % dict(name=name)
     node = deploy_node(
-         name=name + "-build",
-         base_ami=base_ami,
-         deploy=deploy,
-         userdata=userdata,
-         username=username,
-         size=size,
-         disk_size=disk_size,
+        name=name + "-build",
+        base_ami=base_ami,
+        deploy=deploy,
+        userdata=userdata,
+        username=username,
+        size=size,
+        disk_size=disk_size,
     )
     try:
         print "Stopping %(name)s-build." % dict(name=name)
@@ -101,36 +109,44 @@ def build_image(name, base_ami, deploy, username,
 
 
 zfs_head_ami = build_image(
-     name='staging-buildslave-fedora-20-zfs-head',
-     base_ami="ami-cc8de6fc",
-     username="fedora",
-     deploy=ScriptDeployment(FilePath(__file__).sibling('fedora-20').child('cloud-init-base.sh').getContent()),
-     # Fedora 20 doesn't allow sudo without a terminal by default, so enable it.
-     userdata="#!/bin/sh\nsed -i '/Defaults    requiretty/d' /etc/sudoers",
+    name='staging-buildslave-fedora-20-zfs-head',
+    base_ami="ami-cc8de6fc",
+    username="fedora",
+    deploy=ScriptDeployment(
+        FilePath(__file__).sibling('fedora-20')
+        .child('cloud-init-base.sh').getContent()),
+    # Fedora 20 doesn't allow sudo without a terminal by default, so enable it.
+    userdata="#!/bin/sh\nsed -i '/Defaults    requiretty/d' /etc/sudoers",
 )
 
 
 fedora_20_ami = build_image(
-     name='staging-buildslave-fedora-20',
-     base_ami=zfs_head_ami,
-     deploy=ScriptDeployment('sudo yum install -y zfs'),
-     username="fedora",
+    name='staging-buildslave-fedora-20',
+    base_ami=zfs_head_ami,
+    deploy=ScriptDeployment('sudo yum install -y zfs'),
+    username="fedora",
 )
 
 ubuntu_14_04_zfs_head_ami = build_image(
-     name='staging-buildslave-ubuntu-14.04-zfs-head',
-     base_ami="ami-818dd9b1",
-     deploy=ScriptDeployment(FilePath(__file__).sibling('ubuntu-14.04').child('cloud-init-base.sh').getContent()),
-     username="ubuntu",
+    name='staging-buildslave-ubuntu-14.04-zfs-head',
+    base_ami="ami-818dd9b1",
+    deploy=ScriptDeployment(
+        FilePath(__file__).sibling('ubuntu-14.04')
+        .child('cloud-init-base.sh').getContent()),
+    username="ubuntu",
 )
 
 ubuntu_14_04_ami = build_image(
-     name='staging-buildslave-ubuntu-14.04',
-     base_ami=ubuntu_14_04_zfs_head_ami,
-     # Specify --confold so that /etc/default/zfs is not overwritten (and dpkg doesn't hang). See
-     # - https://github.com/zfsonlinux/pkg-zfs/issues/133
-     # - http://raphaelhertzog.com/2010/09/21/debian-conffile-configuration-file-managed-by-dpkg/
-     deploy=ScriptDeployment('sudo env DEBIAN_FRONTEND=noninteractive apt-get -o Dpkg::Options::="--force-confdef" -o Dpkg::Options::="--force-confold" install -y zfsutils'),
-     username="ubuntu",
-     size="c3.large",
+    name='staging-buildslave-ubuntu-14.04',
+    base_ami=ubuntu_14_04_zfs_head_ami,
+    # Specify --confold so that /etc/default/zfs is not overwritten (and dpkg
+    # doesn't hang). See
+    # - https://github.com/zfsonlinux/pkg-zfs/issues/133
+    # - http://raphaelhertzog.com/2010/09/21/debian-conffile-configuration-file-managed-by-dpkg/ # noqa
+    deploy=ScriptDeployment(
+        'sudo env DEBIAN_FRONTEND=noninteractive '
+        'apt-get -o Dpkg::Options::="--force-confdef" '
+        '-o Dpkg::Options::="--force-confold" install -y zfsutils'),
+    username="ubuntu",
+    size="c3.large",
 )
