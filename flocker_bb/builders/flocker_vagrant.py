@@ -201,6 +201,8 @@ BUILDERS = [
     'flocker-vagrant-tutorial-box',
     ]
 
+MASTER_RELEASE_RE = r"(master|release/|[0-9]+\.[0-9]+\.[0-9]+((pre|dev)[0-9]+)?)"  # noqa
+
 
 def getSchedulers():
     return [
@@ -215,7 +217,7 @@ def getSchedulers():
                 "github-status": False,
             },
             change_filter=ChangeFilter(
-                branch_re=r"(master|release/|[0-9]+\.[0-9]+\.[0-9]+((pre|dev)[0-9]+)?)",
+                branch_re=MASTER_RELEASE_RE,
                 )
         ),
         Triggerable(
@@ -234,7 +236,8 @@ def getSchedulers():
                 CodebaseParameter(
                     "flocker",
                     branch=StringParameter("branch", default="master"),
-                    repository=FixedParameter("repository", default=GITHUB + b"/flocker"),
+                    repository=FixedParameter("repository",
+                                              default=GITHUB + b"/flocker"),
                     ),
                 ],
             properties=[FixedParameter("github-status", default=False)],
