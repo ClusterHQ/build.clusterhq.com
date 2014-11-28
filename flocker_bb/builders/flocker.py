@@ -36,11 +36,14 @@ def getFlockerFactory(python):
 def installDependencies():
     return [
         pip("dependencies", ["."]),
-        pip("extras", ["Flocker[doc,dev]"]),
+        pip("extras", ["Flocker[doc,dev,release]"]),
         ]
 
 
-def _flockerTests(kwargs, tests=None):
+def _flockerTests(kwargs, tests=None, env=None):
+    if env is None:
+        env = {}
+    env[b"PATH"] = [Interpolate(path.join(VIRTUALENV_DIR, "bin")), "${PATH}"]
     if tests is None:
         tests = [b"flocker"]
     return [
@@ -53,9 +56,7 @@ def _flockerTests(kwargs, tests=None):
             tests=tests,
             testpath=None,
             workdir=TMPDIR,
-            env={
-                b"PATH": [Interpolate(path.join(VIRTUALENV_DIR, "bin")), "${PATH}"],
-                },
+            env=env,
             **kwargs),
         ShellCommand(command=[b"rm", b"-rf", TMPDIR],
                      alwaysRun=True,

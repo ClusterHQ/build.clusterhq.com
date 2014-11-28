@@ -5,10 +5,12 @@ from ..steps import (
     buildVirtualEnv, virtualenvBinary,
     getFactory,
     GITHUB,
-    pip,
     buildbotURL,
     URLShellCommand
     )
+
+#FIXME
+from flocker_bb.builders.flocker import installDependencies, _flockerTests
 
 # This is where temporary files associated with a build will be dumped.
 TMPDIR = Interpolate(b"%(prop:workdir)s/tmp-%(prop:buildnumber)s")
@@ -19,17 +21,10 @@ flockerBranch = Interpolate("%(src:flocker:branch)s")
 def getFlockerFactory():
     factory = getFactory("flocker", useSubmodules=False, mergeForward=True)
     factory.addSteps(buildVirtualEnv("python2.7", useSystem=True))
-    factory.addSteps([
-        pip("gsutil", ["gsutil"]),
-        ])
+    factory.addSteps(installDependencies())
     return factory
 
 
-def installDependencies():
-    return [
-        pip("dependencies", ["."]),
-        pip("extras", ["Flocker[doc,dev]"]),
-        ]
 
 
 def buildVagrantBox(box, add=True):
@@ -155,6 +150,13 @@ def buildTutorialBox():
         command=['vagrant', 'up'],
         workdir='build/docs/gettingstarted/tutorial',
         haltOnFailure=True,
+        ))
+
+    ACCEPTANCE_NODES = ["172.16.255.250", "172.16.255.251"]
+    factory.addSteps(_flockerTests(
+        kwargs={},
+        tests=['flocker.acceptance'],
+        env={"FLOCKER_ACCEPTANCE_NODES": ":".join(ACCEPTANCE_NODES)},
         ))
 
     factory.addStep(ShellCommand(
