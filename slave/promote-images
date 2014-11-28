@@ -1,6 +1,7 @@
 #!/usr/bin/env python
 
-from common import aws_config, driver, wait_for_image
+import sys
+from common import aws_config, driver, wait_for_image, load_manifest
 
 
 def get_images(name):
@@ -23,6 +24,9 @@ def copy_image(source, destination):
     wait_for_image(image)
     return image.id
 
+DISTRO = sys.argv[1]
+base, manifest = load_manifest(DISTRO)
 
-copy_image('staging-buildslave-fedora-20', 'buildslave-fedora-20')
-copy_image('staging-buildslave-fedora-20-zfs-head', 'buildslave-fedora-20-zfs-head')
+for image in manifest['images']:
+    image_name = image['name']
+    copy_image('staging-%s' % (image_name,), image_name)

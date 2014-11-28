@@ -3,10 +3,7 @@
 import sys
 import time
 
-import yaml
-
-from common import aws_config, driver, wait_for_image
-from twisted.python.filepath import FilePath
+from common import aws_config, driver, wait_for_image, load_manifest
 
 from libcloud.compute.base import NodeImage
 from libcloud.compute.deployment import ScriptDeployment
@@ -135,8 +132,7 @@ def process_image(args):
 
 
 DISTRO = sys.argv[1]
-base = FilePath(__file__).sibling(DISTRO)
-manifest = yaml.safe_load(base.child('manifest.yml').getContent())
+base, manifest = load_manifest(DISTRO)
 
 amis = {}
 for image in manifest['images']:

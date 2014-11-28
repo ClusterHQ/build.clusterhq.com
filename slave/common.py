@@ -1,6 +1,7 @@
 import yaml
 import time
 from libcloud.compute.providers import get_driver, Provider
+from twisted.python.filepath import FilePath
 
 aws_config = yaml.safe_load(open("aws_config.yml"))
 
@@ -24,3 +25,15 @@ def wait_for_image(image):
             time.sleep(1)
         except:
             raise
+
+
+def load_manifest(name):
+    """
+    Load a manifest describing a set of images.
+
+    :return: A tuple of a FilePath for the context of the manifest,
+        and a dictionary with the manifest.
+    """
+    base = FilePath(__file__).sibling(name)
+    manifest = yaml.safe_load(base.child('manifest.yml').getContent())
+    return base, manifest
