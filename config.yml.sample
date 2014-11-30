@@ -1,5 +1,6 @@
 # The production config.yml, when updated, should also be updated in the
-# "FlockerBuildbot Credentials" note on LastPass
+# "config@build.clusterhq.com" note on LastPass
+# This is done by running "fab saveConfig"
 
 auth:
     user: "<web user>"
