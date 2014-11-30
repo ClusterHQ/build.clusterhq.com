@@ -24,5 +24,8 @@ slaves:
     fedora-zfs-head:
         ami: "buildslave-fedora-20-zfs-head"
         slaves: 1
+    ubuntu-14.04:
+        ami: "buildslave-ubuntu-14.04"
+        slaves: 1
     fedora-vagrant:
         passwords: ['password']
