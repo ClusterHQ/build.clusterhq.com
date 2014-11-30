@@ -1,5 +1,7 @@
 #!/bin/sh
 
+set -e
+
 # This script is run as a libcloud ScriptDeployment.
 # On fedora, this is run as the user fedora, so switch to root.
 if [ -z "$SUDO_COMMAND" ]
@@ -48,6 +50,7 @@ yum install -y \
 	@buildsys-build \
 	kernel-headers \
 	kernel-devel \
+	openssl-devel \
 	wget \
 	curl \
 	apt \
