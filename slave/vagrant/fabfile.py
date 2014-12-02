@@ -19,16 +19,16 @@ yum install -y https://kojipkgs.fedoraproject.org//packages/kernel/${KV}/${SV}/$
 
     run('yum install -y dkms')
     packages = [
-	"https://dl.bintray.com/mitchellh/vagrant/vagrant_1.6.5_x86_64.rpm",
-	"VirtualBox-4.3.x86_64",
-	"buildbot-slave",
-	"mongodb",
-	"git",
-	"libffi-devel",
-	"python",
-	"python-devel",
-	"python-virtualenv",
-	"openssl-devel",
+        "https://dl.bintray.com/mitchellh/vagrant/vagrant_1.6.5_x86_64.rpm",
+        "VirtualBox-4.3.x86_64",
+        "buildbot-slave",
+        "mongodb",
+        "git",
+        "libffi-devel",
+        "python",
+        "python-devel",
+        "python-virtualenv",
+        "openssl-devel",
     ]
     run("yum install -y " + " ".join(packages))
     run("useradd buildslave")
