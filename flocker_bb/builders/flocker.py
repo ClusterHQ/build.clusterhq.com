@@ -40,19 +40,21 @@ def installDependencies():
         ]
 
 
-def _flockerTests(kwargs, tests=None, env=None):
+def _flockerTests(kwargs, tests=None, env=None, trial=None):
     if env is None:
         env = {}
     env[b"PATH"] = [Interpolate(path.join(VIRTUALENV_DIR, "bin")), "${PATH}"]
     if tests is None:
         tests = [b"flocker"]
+    if trial is None:
+        trial = [virtualenvBinary('trial')],
     return [
         ShellCommand(command=[b"mkdir", TMPDIR],
                      description=["creating", "TMPDIR"],
                      descriptionDone=["create", "TMPDIR"],
                      name="create-TMPDIR"),
         Trial(
-            trial=[virtualenvBinary('trial')],
+            trial=trial,
             tests=tests,
             testpath=None,
             workdir=TMPDIR,

@@ -143,29 +143,10 @@ def buildTutorialBox():
 
     factory.addSteps(buildVagrantBox('tutorial', add=True))
 
-    factory.addStep(ShellCommand(
-        name='start-tutorial-box',
-        description=['starting', 'tutorial', 'box'],
-        descriptionDone=['start', 'tutorial', 'box'],
-        command=['vagrant', 'up'],
-        workdir='build/docs/gettingstarted/tutorial',
-        haltOnFailure=True,
-        ))
-
-    ACCEPTANCE_NODES = ["172.16.255.250", "172.16.255.251"]
     factory.addSteps(_flockerTests(
         kwargs={},
         tests=['flocker.acceptance'],
-        env={"FLOCKER_ACCEPTANCE_NODES": ":".join(ACCEPTANCE_NODES)},
-        ))
-
-    factory.addStep(ShellCommand(
-        name='destroy-tutorial-box',
-        description=['destroy', 'tutorial', 'box'],
-        descriptionDone=['destroy', 'tutorial', 'box'],
-        command=['vagrant', 'destroy', '-f'],
-        workdir='build/docs/gettingstarted/tutorial',
-        alwaysRun=True,
+        trial=['admin/run-acceptance-test', '--distribution', 'fedora-20'],
         ))
     return factory
 
