@@ -144,8 +144,11 @@ def buildTutorialBox():
     factory.addSteps(_flockerTests(
         kwargs={},
         tests=['flocker.acceptance'],
-        trial=['admin/run-acceptance-test', '--distribution', 'fedora-20'],
-        ))
+        trial=[
+            Interpolate('%(prop:builddir)s/build/admin/run-acceptance-tests'),
+            '--distribution', 'fedora-20'
+        ],
+    ))
     return factory
 
 
