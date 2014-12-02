@@ -9,7 +9,7 @@ from ..steps import (
     URLShellCommand
     )
 
-#FIXME
+# FIXME
 from flocker_bb.builders.flocker import installDependencies, _flockerTests
 
 # This is where temporary files associated with a build will be dumped.
@@ -23,8 +23,6 @@ def getFlockerFactory():
     factory.addSteps(buildVirtualEnv("python2.7", useSystem=True))
     factory.addSteps(installDependencies())
     return factory
-
-
 
 
 def buildVagrantBox(box, add=True):
