@@ -473,6 +473,7 @@ from buildbot.locks import SlaveLock
 # A lock to prevent multiple functional tests running at the same time
 functionalLock = SlaveLock('functional-tests')
 
+OMNIBUS_DISTRIBUTIONS = ['fedora-20', 'ubuntu-14.04']
 
 def idleSlave(builder, slaves):
     idle = [slave for slave in slaves if slave.isAvailable()]
@@ -534,7 +535,7 @@ def getBuilders(slavenames):
                       locks=[functionalLock.access('counting')],
                       nextSlave=idleSlave),
         ]
-    for distribution in ['fedora-20']:
+    for distribution in OMNIBUS_DISTRIBUTIONS:
         builders.append(
             BuilderConfig(
                 name='flocker-omnibus-%s' % (distribution,),
@@ -555,8 +556,9 @@ BUILDERS = [
     'flocker-native-rpm-fedora-20',
     'flocker-zfs-head',
     'flocker-admin',
-    'flocker-omnibus-fedora-20',
-    ]
+] + [
+    'flocker-omnibus-%s' % (dist,) for dist in OMNIBUS_DISTRIBUTIONS
+]
 
 def getSchedulers():
     return [
