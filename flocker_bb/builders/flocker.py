@@ -47,7 +47,7 @@ def _flockerTests(kwargs, tests=None, env=None, trial=None):
     if tests is None:
         tests = [b"flocker"]
     if trial is None:
-        trial = [virtualenvBinary('trial')],
+        trial = [virtualenvBinary('trial')]
     return [
         ShellCommand(command=[b"mkdir", TMPDIR],
                      description=["creating", "TMPDIR"],
