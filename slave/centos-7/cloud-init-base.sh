@@ -36,7 +36,8 @@ yum install -y \
 	kernel-devel \
 	openssl-devel \
 	wget \
-	curl
+	curl \
+	enchant
 
 yum -y install python-pip
 pip install buildbot-slave

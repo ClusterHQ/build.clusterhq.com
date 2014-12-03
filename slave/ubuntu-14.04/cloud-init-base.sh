@@ -40,7 +40,8 @@ apt-get install -y \
 	curl \
 	yum \
 	libssl-dev \
-	dpkg-dev
+	dpkg-dev \
+	enchant
 
 # Maybe also linux-source
 
