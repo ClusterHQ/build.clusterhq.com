@@ -373,6 +373,8 @@ class EC2LatentBuildSlave(AbstractLatentBuildSlave):
             placement=self.placement)
         request = self._wait_for_request(reservations[0])
         instance_id = request.instance_id
+        if len(self.tags) > 0:
+            self.conn.create_tags(instance_id, self.tags)
         reservations = self.conn.get_all_instances(instance_ids=[instance_id])
         self.instance = reservations[0].instances[0]
         return self._wait_for_instance(image)
