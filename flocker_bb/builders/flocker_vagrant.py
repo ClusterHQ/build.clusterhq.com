@@ -39,7 +39,6 @@ def buildVagrantBox(box, add=True):
     @param box: Name of box to build.
     @param add: L{bool} indicating whether the box should be added locally.
     """
-    branch = "%(src:flocker:branch)s"
     steps = [
         SetPropertyFromCommand(
             command=["python", "setup.py", "--version"],
@@ -81,8 +80,9 @@ def buildVagrantBox(box, add=True):
         name='write-base-box-metadata',
         description=['writing', 'base', box, 'box', 'metadta'],
         descriptionDone=['write', 'base', box, 'box', 'metadta'],
-        path=Interpolate(b"private_html/vagrant/%s/flocker-%s.json"
-                         % (branch, box)),
+        path=Interpolate(
+            b"private_html/vagrant/%(kw:branch)s/flocker-%(kw:box)s.json",
+            branch=flockerBranch, box=box),
         content=asJSON({
             "name": "clusterhq/flocker-%s" % (box,),
             "description": "Test clusterhq/flocker-%s box." % (box,),
@@ -99,8 +99,8 @@ def buildVagrantBox(box, add=True):
         }),
         urls={
             Interpolate('%(kw:box)s box', box=box):
-                Interpolate(b"/results/vagrant/%s/flocker-%s.json" % (
-                    branch, box)),
+            Interpolate(b"/results/vagrant/%(kw:branch)s/flocker-%(kw:box)s.json",  # noqa
+                branch=flockerBranch, box=box),
         }
     ))
 
