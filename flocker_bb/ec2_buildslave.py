@@ -277,11 +277,11 @@ class EC2LatentBuildSlave(AbstractLatentBuildSlave):
             instance_type=self.instance_type, user_data=self.user_data,
             placement=self.placement)
         self.instance = reservation.instances[0]
+        if len(self.tags) > 0:
+            self.instance.add_tags(self.tags)
         instance_id, image_id, start_time = self._wait_for_instance(
             reservation)
         if None not in [instance_id, image_id, start_time]:
-            if len(self.tags) > 0:
-                self.conn.create_tags(instance_id, self.tags)
             return [instance_id, image_id, start_time]
         else:
             log.msg('%s %s failed to start instance %s (%s)' %
@@ -371,12 +371,14 @@ class EC2LatentBuildSlave(AbstractLatentBuildSlave):
             instance_type=self.instance_type,
             user_data=self.user_data,
             placement=self.placement)
+        if len(self.tags) > 0:
+            reservations[0].add_tags(self.tags)
         request = self._wait_for_request(reservations[0])
         instance_id = request.instance_id
-        if len(self.tags) > 0:
-            self.conn.create_tags(instance_id, self.tags)
         reservations = self.conn.get_all_instances(instance_ids=[instance_id])
         self.instance = reservations[0].instances[0]
+        if len(self.tags) > 0:
+            self.instance.add_tags(self.tags)
         return self._wait_for_instance(image)
 
     def _wait_for_instance(self, image):
