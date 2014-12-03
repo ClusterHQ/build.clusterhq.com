@@ -1,12 +1,12 @@
 from buildbot.steps.shell import ShellCommand, SetPropertyFromCommand
-from buildbot.process.properties import Interpolate
+from buildbot.process.properties import Interpolate, Property
 
 from ..steps import (
     buildVirtualEnv, virtualenvBinary,
     getFactory,
     GITHUB,
     buildbotURL,
-    URLShellCommand
+    MasterWriteFile, asJSON
     )
 
 # FIXME
@@ -32,6 +32,7 @@ def buildVagrantBox(box, add=True):
     @param box: Name of box to build.
     @param add: L{bool} indicating whether the box should be added locally.
     """
+    branch = "%(src:flocker:branch)s"
     steps = [
         SetPropertyFromCommand(
             command=["python", "setup.py", "--version"],
@@ -54,9 +55,9 @@ def buildVagrantBox(box, add=True):
         ),
     ]
 
-    steps.append(URLShellCommand(
+    steps.append(ShellCommand(
         name='upload-base-box',
-        description=['uploaiding', 'base', box, 'box'],
+        description=['uploading', 'base', box, 'box'],
         descriptionDone=['upload', 'base', box, 'box'],
         command=[
             virtualenvBinary('gsutil'),
@@ -68,12 +69,31 @@ def buildVagrantBox(box, add=True):
                 'gs://clusterhq-vagrant-buildbot/%(kw:box)s/',
                 box=box),
         ],
+    ))
+    steps.append(MasterWriteFile(
+        name='write-base-box-metadata',
+        description=['writing', 'base', box, 'box', 'metadta'],
+        descriptionDone=['write', 'base', box, 'box', 'metadta'],
+        path=Interpolate(b"private_html/vagrant/%s/flocker-%s.json"
+                         % (branch, box)),
+        content=asJSON({
+            "name": "clusterhq/flocker-%s" % (box,),
+            "description": "Test clusterhq/flocker-%s box." % (box,),
+            'versions': [{
+                "version": Property('version'),
+                "providers": [{
+                    "name": "virtualbox",
+                    "url": Interpolate(
+                        'https://storage.googleapis.com/clusterhq-vagrant-buildbot/'  # noqa
+                        '%(kw:box)s/flocker-%(kw:box)s-%(prop:version)s.box',
+                        box=box),
+                }]
+            }]
+        }),
         urls={
             Interpolate('%(kw:box)s box', box=box):
-            Interpolate(
-                'https://storage.googleapis.com/clusterhq-vagrant-buildbot/'
-                '%(kw:box)s/flocker-%(kw:box)s-%(prop:version)s.box',
-                box=box),
+                Interpolate(b"/results/vagrant/%s/flocker-%s.json" % (
+                    branch, box)),
         }
     ))
 
