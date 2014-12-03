@@ -169,8 +169,8 @@ def buildTutorialBox():
     factory.addSteps(buildVagrantBox('tutorial', add=True))
 
     factory.addSteps(_flockerTests(
-        kwargs={},
-        tests=['flocker.acceptance'],
+        kwargs={'trialMode': []},
+        tests=[],
         trial=[
             Interpolate('%(prop:builddir)s/build/admin/run-acceptance-tests'),
             '--distribution', 'fedora-20'
