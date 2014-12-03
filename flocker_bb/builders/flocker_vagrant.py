@@ -1,5 +1,5 @@
 from buildbot.steps.shell import ShellCommand, SetPropertyFromCommand
-from buildbot.process.properties import Interpolate, Property
+from buildbot.process.properties import Interpolate, Property, renderer
 
 from ..steps import (
     buildVirtualEnv, virtualenvBinary,
@@ -80,7 +80,7 @@ def buildVagrantBox(box, add=True):
             "name": "clusterhq/flocker-%s" % (box,),
             "description": "Test clusterhq/flocker-%s box." % (box,),
             'versions': [{
-                "version": Property('version'),
+                "version": dotted_version(Property('version')),
                 "providers": [{
                     "name": "virtualbox",
                     "url": Interpolate(
