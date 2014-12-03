@@ -18,6 +18,13 @@ TMPDIR = Interpolate(b"%(prop:workdir)s/tmp-%(prop:buildnumber)s")
 flockerBranch = Interpolate("%(src:flocker:branch)s")
 
 
+def dotted_version(version):
+    @renderer
+    def render(props):
+        return props.render(version).addCallback(lambda v: v.replace('-', '.'))
+    return render
+
+
 def getFlockerFactory():
     factory = getFactory("flocker", useSubmodules=False, mergeForward=True)
     factory.addSteps(buildVirtualEnv("python2.7", useSystem=True))
