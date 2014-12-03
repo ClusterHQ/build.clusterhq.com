@@ -10,16 +10,23 @@ then
       exit $?
 fi
 
-yum install -y kernel-devel-$(uname -r)
-
 yum install -y http://archive.zfsonlinux.org/epel/zfs-release.el7.noarch.rpm
+
+# For updated kernel (?)
+yum install -y http://www.elrepo.org/elrepo-release-7.0-2.el7.elrepo.noarch.rpm
+yum-config-manager --disable elrepo
+yum-config-manager --enable elrepo-kernel
+sed -i s/DEFAULTKERNEL=kernel/DEFAULTKERNEL=kernel-ml/ /etc/sysconfig/kernel
+yum install -y kernel-ml-devel kernel-ml
+
+# For dkms and ... ?
+yum install -y epel-release
 
 # Enable debugging for ZFS modules
 echo SPL_DKMS_DISABLE_STRIP=y >> /etc/sysconfig/spl
 echo ZFS_DKMS_DISABLE_STRIP=y >> /etc/sysconfig/zfs
 
 yum upgrade -y
-yum install -y epel-release
 yum install -y \
 	git \
 	python-devel \
@@ -32,8 +39,6 @@ yum install -y \
 	docker-io \
 	libffi-devel \
 	@buildsys-build \
-	kernel-headers \
-	kernel-devel \
 	openssl-devel \
 	wget \
 	curl \
