@@ -67,6 +67,11 @@ for base, slaveConfig in privateData['slaves'].items():
                     spot_instance=True,
                     max_spot_price=0.10,
                     keepalive_interval=60,
+                    tags={
+                        u'Name': name,
+                        u'Image': slaveConfig['ami'],
+                        u'Class': base,
+                        },
                     ))
     else:
         for i, password in enumerate(slaveConfig['passwords']):
