@@ -112,6 +112,7 @@ class MasterWriteFile(buildstep.BuildStep):
         buildstep.BuildStep.__init__(self, **kwargs)
         self.content = content
         self.path = path
+        self.urls = urls
 
     def start(self):
         path = FilePath(self.path)
