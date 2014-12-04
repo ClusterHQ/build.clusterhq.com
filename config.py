@@ -71,6 +71,7 @@ for base, slaveConfig in privateData['slaves'].items():
                         u'Name': name,
                         u'Image': slaveConfig['ami'],
                         u'Class': base,
+                        u'BuildMaster': privateData['buildmaster']['host'],
                         },
                     ))
     else:
