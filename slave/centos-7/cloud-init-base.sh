@@ -26,6 +26,8 @@ yum install -y epel-release
 echo SPL_DKMS_DISABLE_STRIP=y >> /etc/sysconfig/spl
 echo ZFS_DKMS_DISABLE_STRIP=y >> /etc/sysconfig/zfs
 
+## TODO: update docker to >= 1.3
+
 yum upgrade -y
 yum install -y \
 	git \
