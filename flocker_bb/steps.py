@@ -116,7 +116,9 @@ class MasterWriteFile(buildstep.BuildStep):
 
     def start(self):
         path = FilePath(self.path)
-        path.parent().makedirs()
+        parent = path.parent()
+        if not parent.exists():
+            parent.makedirs()
         path.setContent(self.content)
         for name, url in self.urls.iteritems():
             self.addURL(name, url)
