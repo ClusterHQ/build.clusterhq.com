@@ -277,8 +277,6 @@ class EC2LatentBuildSlave(AbstractLatentBuildSlave):
             instance_type=self.instance_type, user_data=self.user_data,
             placement=self.placement)
         self.instance = reservation.instances[0]
-        if len(self.tags) > 0:
-            self.instance.add_tags(self.tags)
         instance_id, image_id, start_time = self._wait_for_instance(
             reservation)
         if None not in [instance_id, image_id, start_time]:
@@ -377,8 +375,6 @@ class EC2LatentBuildSlave(AbstractLatentBuildSlave):
         instance_id = request.instance_id
         reservations = self.conn.get_all_instances(instance_ids=[instance_id])
         self.instance = reservations[0].instances[0]
-        if len(self.tags) > 0:
-            self.instance.add_tags(self.tags)
         return self._wait_for_instance(image)
 
     def _wait_for_instance(self, image):
@@ -403,6 +399,8 @@ class EC2LatentBuildSlave(AbstractLatentBuildSlave):
                     (self.__class__.__name__, self.slavename,
                      self.instance.id, self.dns, minutes, seconds,
                      self.output.output))
+            if len(self.tags) > 0:
+                self.instance.add_tags(self.tags)
             if self.elastic_ip is not None:
                 self.instance.use_ip(self.elastic_ip)
             start_time = '%02d:%02d:%02d' % (
@@ -419,6 +417,7 @@ class EC2LatentBuildSlave(AbstractLatentBuildSlave):
                 request=reservation.id)
         duration = 0
         interval = self._poll_resolution
+        did_set_tags = False
         try:
             requests = self.conn.get_all_spot_instance_requests(
                 request_ids=[reservation.id])
@@ -438,6 +437,9 @@ class EC2LatentBuildSlave(AbstractLatentBuildSlave):
                     request_ids=[reservation.id])
                 request = requests[0]
                 request_status = request.status.code
+                if not did_set_tags and len(self.tags) > 0:
+                    reservation.add_tags(self.tags)
+                    did_set_tags = True
             except boto.exception.EC2ResponseError:
                 request_status = SPOT_REQUEST_PENDING_STATES[0]
         if request_status == FULFILLED:
