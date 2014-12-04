@@ -369,8 +369,6 @@ class EC2LatentBuildSlave(AbstractLatentBuildSlave):
             instance_type=self.instance_type,
             user_data=self.user_data,
             placement=self.placement)
-        if len(self.tags) > 0:
-            reservations[0].add_tags(self.tags)
         request = self._wait_for_request(reservations[0])
         instance_id = request.instance_id
         reservations = self.conn.get_all_instances(instance_ids=[instance_id])
