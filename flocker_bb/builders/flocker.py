@@ -12,13 +12,13 @@ from buildbot.config import error
 from os import path
 
 from ..steps import (
-        VIRTUALENV_DIR, buildVirtualEnv, virtualenvBinary,
-        getFactory,
-        GITHUB,
-        TWISTED_GIT,
-        pip,
-        isMasterBranch,
-        )
+    VIRTUALENV_DIR, buildVirtualEnv, virtualenvBinary,
+    getFactory,
+    GITHUB,
+    TWISTED_GIT,
+    pip,
+    isMasterBranch,
+    )
 
 from ..mock import MockBuildSRPM, MockRebuild
 
@@ -30,7 +30,6 @@ def getFlockerFactory(python):
     factory = getFactory("flocker", useSubmodules=False, mergeForward=True)
     factory.addSteps(buildVirtualEnv(python, useSystem=True))
     return factory
-
 
 
 def installDependencies():
@@ -70,21 +69,21 @@ def _flockerCoverage():
     branch = "%(src:flocker:branch)s"
     revision = "flocker-%(prop:buildnumber)s"
     steps = _flockerTests({
-            'python': [
-                # Buildbot flattens this for us.
-                # Unfortunately, Trial assumes that 'python' is a list of strings,
-                # and checks for spaces in them. Interpolate isn't iterable, so
-                # make it a list (which is, and doesn't have a " " in it.
-                [virtualenvBinary('coverage')],
-                b"run",
-                b"--branch",
-                b"--source", b"flocker",
-                b"--rcfile", b"../build/.coveragerc",
-                ]
-            })
+        'python': [
+            # Buildbot flattens this for us.
+            # Unfortunately, Trial assumes that 'python' is a list of strings,
+            # and checks for spaces in them. Interpolate isn't iterable, so
+            # make it a list (which is, and doesn't have a " " in it.
+            [virtualenvBinary('coverage')],
+            b"run",
+            b"--branch",
+            b"--source", b"flocker",
+            b"--rcfile", b"../build/.coveragerc",
+            ]
+        })
     # This needs to be before we delete the temporary directory.
     steps.insert(len(steps)-1,
-        ShellCommand(
+        ShellCommand(  # noqa
             name='move-coverage',
             description=["moving", "coverage"],
             descriptionDone=["move", "coverage"],
@@ -150,7 +149,7 @@ def _flockerCoverage():
                     branch, revision)),
             name="upload-coverage-html",
             ),
-	ShellCommand(
+        ShellCommand(
             command=[
                 virtualenvBinary('coveralls'),
                 "--coveralls_yaml",
@@ -159,7 +158,7 @@ def _flockerCoverage():
             descriptionDone=[b"upload", b"to", b"coveralls"],
             name="coveralls-upload",
             ),
-	]
+        ]
     return steps
 
 
@@ -184,7 +183,6 @@ def installTwistedTrunk():
         workdir='Twisted',
         haltOnFailure=True))
     return steps
-
 
 
 def makeFactory(python, tests=None, twistedTrunk=False):
@@ -230,7 +228,6 @@ def makeAdminFactory():
     return factory
 
 
-
 def makeLintFactory():
     """
     Create and return a new build factory for linting the code.
@@ -250,10 +247,9 @@ def makeLintFactory():
 def installCoverage():
     return pip("coverage", [
          "coverage==3.7.1",
-         "http://data.hybridcluster.net/python/coverage_reporter-0.01_hl0-py27-none-any.whl",
+         "http://data.hybridcluster.net/python/coverage_reporter-0.01_hl0-py27-none-any.whl",  # noqa
          "python-coveralls==2.4.2",
     ])
-
 
 
 def makeCoverageFactory():
@@ -287,11 +283,10 @@ def sphinxBuild(builder, workdir=b"build/docs", **kwargs):
                 ],
         workdir=workdir,
         env={
-            b"PATH": [Interpolate(path.join(VIRTUALENV_DIR, "bin")), "${PATH}"],
+            b"PATH": [Interpolate(path.join(VIRTUALENV_DIR, "bin")),
+                      "${PATH}"],
             },
         **extraArgs)
-
-
 
 
 def makeInternalDocsFactory():
@@ -300,12 +295,14 @@ def makeInternalDocsFactory():
 
     factory = getFlockerFactory(python="python2.7")
     factory.addSteps(installDependencies())
-    factory.addStep(sphinxBuild("spelling", "build/docs",
-                                logfiles={'errors': '_build/spelling/output.txt'},
-                                haltOnFailure=False))
-    factory.addStep(sphinxBuild("linkcheck", "build/docs",
-                                logfiles={'errors': '_build/linkcheck/output.txt'},
-                                haltOnFailure=False))
+    factory.addStep(sphinxBuild(
+        "spelling", "build/docs",
+        logfiles={'errors': '_build/spelling/output.txt'},
+        haltOnFailure=False))
+    factory.addStep(sphinxBuild(
+        "linkcheck", "build/docs",
+        logfiles={'errors': '_build/linkcheck/output.txt'},
+        haltOnFailure=False))
     factory.addStep(sphinxBuild("html", "build/docs"))
     factory.addStep(DirectoryUpload(
         b"docs/_build/html",
@@ -351,7 +348,8 @@ def createRepository(distribution):
             workdir='build/repo',
             haltOnFailure=True))
     else:
-        error("Unkwown distritubtion %s in createRepository." % (distribution,))
+        error("Unknown distritubtion %s in createRepository."
+              % (distribution,))
 
     return steps
 
@@ -361,12 +359,12 @@ def makeOmnibusFactory(distribution):
 
     factory = getFlockerFactory(python="python2.7")
     factory.addStep(SetPropertyFromCommand(
-            command=["python", "setup.py", "--version"],
-            name='check-version',
-            description=['checking', 'version'],
-            descriptionDone=['checking', 'version'],
-            property='version'
-        ))
+        command=["python", "setup.py", "--version"],
+        name='check-version',
+        description=['checking', 'version'],
+        descriptionDone=['checking', 'version'],
+        property='version'
+    ))
     factory.addSteps(installDependencies())
     factory.addStep(ShellCommand(
         name='build-sdist',
@@ -453,15 +451,12 @@ def makeNativeRPMFactory():
         updateSourceStamp=True,
         waitForFinish=False,
         ))
-    factory.addStep(RpmLint([
-            Property('srpm'),
-            Property('rpm'),
-            ],
+    factory.addStep(RpmLint(
+        [Property('srpm'), Property('rpm')],
         workdir="build/dist",
-        ))
+    ))
 
     return factory
-
 
 
 from buildbot.config import BuilderConfig
@@ -475,10 +470,12 @@ functionalLock = SlaveLock('functional-tests')
 
 OMNIBUS_DISTRIBUTIONS = ['fedora-20', 'ubuntu-14.04', 'centos-7']
 
+
 def idleSlave(builder, slaves):
     idle = [slave for slave in slaves if slave.isAvailable()]
     if idle:
         return idle[0]
+
 
 def getBuilders(slavenames):
     builders = [
@@ -560,6 +557,7 @@ BUILDERS = [
     'flocker-omnibus-%s' % (dist,) for dist in OMNIBUS_DISTRIBUTIONS
 ]
 
+
 def getSchedulers():
     return [
         AnyBranchScheduler(
@@ -576,7 +574,8 @@ def getSchedulers():
                 CodebaseParameter(
                     "flocker",
                     branch=StringParameter("branch", default="master"),
-                    repository=FixedParameter("repository", default=GITHUB + b"/flocker"),
+                    repository=FixedParameter(
+                        "repository", default=GITHUB + b"/flocker"),
                     ),
                 ],
             properties=[],
