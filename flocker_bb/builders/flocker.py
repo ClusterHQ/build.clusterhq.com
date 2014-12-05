@@ -354,7 +354,7 @@ def createRepository(distribution):
     return steps
 
 
-def makeOmnibusFactory(distribution):
+def makeOmnibusFactory(distribution, triggerSchedulers=()):
     branch = "%(src:flocker:branch)s"
 
     factory = getFlockerFactory(python="python2.7")
@@ -396,6 +396,13 @@ def makeOmnibusFactory(distribution):
             ),
         name="upload-repo",
         ))
+    if triggerSchedulers:
+        factory.addStep(Trigger(
+            name='trigger-flocker-vagrant',
+            schedulerNames=triggerSchedulers,
+            updateSourceStamp=True,
+            waitForFinish=False,
+            ))
 
     return factory
 
@@ -445,12 +452,6 @@ def makeNativeRPMFactory():
             ),
         name="upload-repo",
         ))
-    factory.addStep(Trigger(
-        name='trigger-flocker-vagrant',
-        schedulerNames=['trigger-flocker-vagrant'],
-        updateSourceStamp=True,
-        waitForFinish=False,
-        ))
     factory.addStep(RpmLint(
         [Property('srpm'), Property('rpm')],
         workdir="build/dist",
@@ -468,7 +469,13 @@ from buildbot.locks import SlaveLock
 # A lock to prevent multiple functional tests running at the same time
 functionalLock = SlaveLock('functional-tests')
 
-OMNIBUS_DISTRIBUTIONS = ['fedora-20', 'ubuntu-14.04', 'centos-7']
+OMNIBUS_DISTRIBUTIONS = {
+    'fedora-20': {
+        'triggers': ['trigger-flocker-vagrant'],
+    },
+    'ubuntu-14.04': {},
+    'centos-7': {}
+}
 
 
 def idleSlave(builder, slaves):
@@ -532,13 +539,16 @@ def getBuilders(slavenames):
                       locks=[functionalLock.access('counting')],
                       nextSlave=idleSlave),
         ]
-    for distribution in OMNIBUS_DISTRIBUTIONS:
+    for distribution, config in OMNIBUS_DISTRIBUTIONS.items():
         builders.append(
             BuilderConfig(
                 name='flocker-omnibus-%s' % (distribution,),
                 slavenames=slavenames['fedora'],
                 category='flocker',
-                factory=makeOmnibusFactory(distribution=distribution),
+                factory=makeOmnibusFactory(
+                    distribution=distribution,
+                    triggerSchedulers=config.get('triggers'),
+                ),
                 nextSlave=idleSlave,
                 ))
     return builders
@@ -554,7 +564,7 @@ BUILDERS = [
     'flocker-zfs-head',
     'flocker-admin',
 ] + [
-    'flocker-omnibus-%s' % (dist,) for dist in OMNIBUS_DISTRIBUTIONS
+    'flocker-omnibus-%s' % (dist,) for dist in OMNIBUS_DISTRIBUTIONS.keys()
 ]
 
 
