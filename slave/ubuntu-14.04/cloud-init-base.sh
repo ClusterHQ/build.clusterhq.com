@@ -50,8 +50,9 @@ sudo apt-get -y install ruby-dev
 gem install fpm
 
 # Pre-cache docker images
-docker pull busybox
-docker pull openshift/busybox-http-app
+docker pull busybox:latest
+docker pull openshift/busybox-http-app:latest
+docker pull python:2.7-slim
 
 # Configure pip wheelhouse and cache
 mkdir ~root/.pip
