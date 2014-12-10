@@ -1,5 +1,6 @@
 from twisted.internet import defer
 from twisted.python import log
+from twisted.python.filepath import FilePath
 
 from buildbot.process.properties import Interpolate
 from buildbot.steps.shell import ShellCommand
@@ -12,6 +13,7 @@ from buildbot.process.properties import renderer
 
 from os import path
 import re
+import json
 
 VIRTUALENV_DIR = '%(prop:workdir)s/venv'
 
@@ -78,6 +80,15 @@ def virtualenvBinary(command):
     return Interpolate(path.join(VIRTUALENV_DIR, "bin", command))
 
 
+def asJSON(data):
+    @renderer
+    def render(props):
+        return (props.render(data)
+                .addCallback(json.dumps, indent=2, separators=(',', ': ')))
+    return render
+
+
+
 class URLShellCommand(ShellCommand):
     renderables = ["urls"]
 
@@ -89,6 +100,34 @@ class URLShellCommand(ShellCommand):
         ShellCommand.createSummary(self, log)
         for name, url in self.urls.iteritems():
             self.addURL(name, url)
+
+
+class MasterWriteFile(buildstep.BuildStep):
+    """
+    Write a rendered string to a file on the master.
+    """
+    name = 'MasterWriteFile'
+    description = ['writing']
+    descriptionDone = ['write']
+    renderables = ['content', 'path', 'urls']
+
+    def __init__(self, path, content, urls, **kwargs):
+        buildstep.BuildStep.__init__(self, **kwargs)
+        self.content = content
+        self.path = path
+        self.urls = urls
+
+    def start(self):
+        path = FilePath(self.path)
+        parent = path.parent()
+        if not parent.exists():
+            parent.makedirs()
+        path.setContent(self.content)
+        for name, url in self.urls.iteritems():
+            self.addURL(name, url)
+        self.step_status.setText(self.describe(done=True))
+        self.finished(SUCCESS)
+
 
 
 class MergeForward(Source):
