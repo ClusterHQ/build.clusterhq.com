@@ -1,0 +1,13 @@
+images:
+- name: buildslave-fedora-21-zfs-head
+  base-ami: ami-c9f0a7f9
+  username: fedora
+  deploy:
+    file: cloud-init-base.sh
+
+- name: buildslave-fedora-21
+  base-ami: buildslave-fedora-21-zfs-head
+  deploy:
+    script: >-
+      sudo yum install -y zfs
+  username: fedora
