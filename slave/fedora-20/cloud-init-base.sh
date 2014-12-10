@@ -74,8 +74,14 @@ mock --init --root fedora-20-x86_64
 
 # Pre-cache docker images
 systemctl start docker
-docker pull busybox
-docker pull openshift/busybox-http-app
+docker pull busybox:latest
+docker pull openshift/busybox-http-app:latest
+docker pull python:2.7-slim
+# For omnibus builds
+docker pull fedora:20
+docker pull fedora:21
+docker pull ubuntu:14.04
+docker pull centos:centos7
 
 
 # Configure pip wheelhouse and cache
