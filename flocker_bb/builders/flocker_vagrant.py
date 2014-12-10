@@ -78,8 +78,8 @@ def buildVagrantBox(box, add=True):
     ))
     steps.append(MasterWriteFile(
         name='write-base-box-metadata',
-        description=['writing', 'base', box, 'box', 'metadta'],
-        descriptionDone=['write', 'base', box, 'box', 'metadta'],
+        description=['writing', 'base', box, 'box', 'metadata'],
+        descriptionDone=['write', 'base', box, 'box', 'metadata'],
         path=Interpolate(
             b"private_html/vagrant/%(kw:branch)s/flocker-%(kw:box)s.json",
             branch=flockerBranch, box=box),
