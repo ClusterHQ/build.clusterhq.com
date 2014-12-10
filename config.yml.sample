@@ -11,6 +11,9 @@ zulip:
 aws:
     identifier: "<aws user>"
     secret_identifier: "<aws password>"
+    # In cents per hour.
+    # See http://docs.aws.amazon.com/AWSEC2/latest/UserGuide/using-spot-instances-history.html
+    max_spot_price: "4"
 github:
     token: "<github api token>"
     report_status: True
