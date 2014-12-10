@@ -103,6 +103,9 @@ class URLShellCommand(ShellCommand):
 
 
 class MasterWriteFile(buildstep.BuildStep):
+    """
+    Write a rendered string to a file on the master.
+    """
     name = 'MasterWriteFile'
     description = ['writing']
     descriptionDone = ['write']
