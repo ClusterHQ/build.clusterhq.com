@@ -64,8 +64,8 @@ for base, slaveConfig in privateData['slaves'].items():
                         'buildmaster_host': privateData['buildmaster']['host'],
                         'buildmaster_port': c['slavePortnum'],
                         },
-                    spot_instance=True,
-                    max_spot_price=privateData['aws']['max_spot_price'],
+                    spot_instance='max_spot_price' in slaveConfig,
+                    max_spot_price=slaveConfig['max_spot_price'],
                     keepalive_interval=60,
                     tags={
                         u'Name': name,

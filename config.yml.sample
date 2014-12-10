@@ -11,9 +11,6 @@ zulip:
 aws:
     identifier: "<aws user>"
     secret_identifier: "<aws password>"
-    # In cents per hour.
-    # See http://docs.aws.amazon.com/AWSEC2/latest/UserGuide/using-spot-instances-history.html
-    max_spot_price: 4.0
 github:
     token: "<github api token>"
     report_status: True
@@ -25,11 +22,15 @@ slaves:
     fedora:
         ami: "buildslave-fedora-20"
         slaves: 3
+	# In dollars per hour.
+	max_spot_price: 0.10
     fedora-zfs-head:
         ami: "buildslave-fedora-20-zfs-head"
         slaves: 1
+	max_spot_price: 0.10
     ubuntu-14.04:
         ami: "buildslave-ubuntu-14.04"
         slaves: 1
+	max_spot_price: 0.10
     fedora-vagrant:
         passwords: ['password']
