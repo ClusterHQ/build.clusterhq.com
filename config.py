@@ -46,7 +46,7 @@ for base, slaveConfig in privateData['slaves'].items():
             c['slaves'].append(
                 EC2LatentBuildSlave(
                     name, password,
-                    'c3.large',
+                    instance_type=slaveConfig['instance_type'],
                     build_wait_timeout=50*60,
                     valid_ami_owners=[121466501720],
                     valid_ami_location_regex=ami,
