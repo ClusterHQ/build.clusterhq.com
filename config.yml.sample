@@ -22,11 +22,18 @@ slaves:
     fedora:
         ami: "buildslave-fedora-20"
         slaves: 3
+	instance_type: "c3.large"
+	# In dollars per hour.
+	max_spot_price: 0.10
     fedora-zfs-head:
         ami: "buildslave-fedora-20-zfs-head"
         slaves: 1
+	instance_type: "c3.large"
+	max_spot_price: 0.10
     ubuntu-14.04:
         ami: "buildslave-ubuntu-14.04"
         slaves: 1
+	instance_type: "c3.large"
+	max_spot_price: 0.10
     fedora-vagrant:
         passwords: ['password']
