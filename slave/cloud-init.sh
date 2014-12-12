@@ -1,7 +1,7 @@
-#!/bin/sh
+#!/bin/bash
 setenforce 0
 
-if [[ "%(base)s" == "fedora-zfs-head" ]]; then
+if [[ "%(base)s" =~ (fedora|centos)-zfs-head ]]; then
    yum install -y --enablerepo=zfs-testing zfs
    systemctl restart zfs.target
 fi

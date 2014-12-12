@@ -55,7 +55,8 @@ yum install -y \
 	curl \
 	apt \
 	dpkg \
-	dpkg-dev
+	dpkg-dev \
+	enchant
 
 # Despite being a packaging tool, fpm isn't yet packaged for Fedora.
 # See https://github.com/jordansissel/fpm/issues/611
