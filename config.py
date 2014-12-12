@@ -46,7 +46,7 @@ for base, slaveConfig in privateData['slaves'].items():
             c['slaves'].append(
                 EC2LatentBuildSlave(
                     name, password,
-                    'c3.large',
+                    instance_type=slaveConfig['instance_type'],
                     build_wait_timeout=50*60,
                     valid_ami_owners=[121466501720],
                     valid_ami_location_regex=ami,
@@ -64,9 +64,15 @@ for base, slaveConfig in privateData['slaves'].items():
                         'buildmaster_host': privateData['buildmaster']['host'],
                         'buildmaster_port': c['slavePortnum'],
                         },
-                    spot_instance=True,
-                    max_spot_price=0.10,
+                    spot_instance='max_spot_price' in slaveConfig,
+                    max_spot_price=slaveConfig['max_spot_price'],
                     keepalive_interval=60,
+                    tags={
+                        u'Name': name,
+                        u'Image': slaveConfig['ami'],
+                        u'Class': base,
+                        u'BuildMaster': privateData['buildmaster']['host'],
+                        },
                     ))
     else:
         for i, password in enumerate(slaveConfig['passwords']):

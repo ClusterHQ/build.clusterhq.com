@@ -1,15 +1,15 @@
 from buildbot.steps.shell import ShellCommand, SetPropertyFromCommand
-from buildbot.process.properties import Interpolate
+from buildbot.process.properties import Interpolate, Property, renderer
 
 from ..steps import (
     buildVirtualEnv, virtualenvBinary,
     getFactory,
     GITHUB,
     buildbotURL,
-    URLShellCommand
+    MasterWriteFile, asJSON
     )
 
-#FIXME
+# FIXME
 from flocker_bb.builders.flocker import installDependencies, _flockerTests
 
 # This is where temporary files associated with a build will be dumped.
@@ -18,13 +18,18 @@ TMPDIR = Interpolate(b"%(prop:workdir)s/tmp-%(prop:buildnumber)s")
 flockerBranch = Interpolate("%(src:flocker:branch)s")
 
 
+def dotted_version(version):
+    @renderer
+    def render(props):
+        return props.render(version).addCallback(lambda v: v.replace('-', '.'))
+    return render
+
+
 def getFlockerFactory():
     factory = getFactory("flocker", useSubmodules=False, mergeForward=True)
     factory.addSteps(buildVirtualEnv("python2.7", useSystem=True))
     factory.addSteps(installDependencies())
     return factory
-
-
 
 
 def buildVagrantBox(box, add=True):
@@ -56,9 +61,9 @@ def buildVagrantBox(box, add=True):
         ),
     ]
 
-    steps.append(URLShellCommand(
+    steps.append(ShellCommand(
         name='upload-base-box',
-        description=['uploaiding', 'base', box, 'box'],
+        description=['uploading', 'base', box, 'box'],
         descriptionDone=['upload', 'base', box, 'box'],
         command=[
             virtualenvBinary('gsutil'),
@@ -70,12 +75,32 @@ def buildVagrantBox(box, add=True):
                 'gs://clusterhq-vagrant-buildbot/%(kw:box)s/',
                 box=box),
         ],
+    ))
+    steps.append(MasterWriteFile(
+        name='write-base-box-metadata',
+        description=['writing', 'base', box, 'box', 'metadata'],
+        descriptionDone=['write', 'base', box, 'box', 'metadata'],
+        path=Interpolate(
+            b"private_html/vagrant/%(kw:branch)s/flocker-%(kw:box)s.json",
+            branch=flockerBranch, box=box),
+        content=asJSON({
+            "name": "clusterhq/flocker-%s" % (box,),
+            "description": "Test clusterhq/flocker-%s box." % (box,),
+            'versions': [{
+                "version": dotted_version(Property('version')),
+                "providers": [{
+                    "name": "virtualbox",
+                    "url": Interpolate(
+                        'https://storage.googleapis.com/clusterhq-vagrant-buildbot/'  # noqa
+                        '%(kw:box)s/flocker-%(kw:box)s-%(prop:version)s.box',
+                        box=box),
+                }]
+            }]
+        }),
         urls={
             Interpolate('%(kw:box)s box', box=box):
-            Interpolate(
-                'https://storage.googleapis.com/clusterhq-vagrant-buildbot/'
-                '%(kw:box)s/flocker-%(kw:box)s-%(prop:version)s.box',
-                box=box),
+            Interpolate(b"/results/vagrant/%(kw:branch)s/flocker-%(kw:box)s.json",  # noqa
+                branch=flockerBranch, box=box),
         }
     ))
 
@@ -143,30 +168,14 @@ def buildTutorialBox():
 
     factory.addSteps(buildVagrantBox('tutorial', add=True))
 
-    factory.addStep(ShellCommand(
-        name='start-tutorial-box',
-        description=['starting', 'tutorial', 'box'],
-        descriptionDone=['start', 'tutorial', 'box'],
-        command=['vagrant', 'up'],
-        workdir='build/docs/gettingstarted/tutorial',
-        haltOnFailure=True,
-        ))
-
-    ACCEPTANCE_NODES = ["172.16.255.250", "172.16.255.251"]
     factory.addSteps(_flockerTests(
-        kwargs={},
-        tests=['flocker.acceptance'],
-        env={"FLOCKER_ACCEPTANCE_NODES": ":".join(ACCEPTANCE_NODES)},
-        ))
-
-    factory.addStep(ShellCommand(
-        name='destroy-tutorial-box',
-        description=['destroy', 'tutorial', 'box'],
-        descriptionDone=['destroy', 'tutorial', 'box'],
-        command=['vagrant', 'destroy', '-f'],
-        workdir='build/docs/gettingstarted/tutorial',
-        alwaysRun=True,
-        ))
+        kwargs={'trialMode': []},
+        tests=[],
+        trial=[
+            Interpolate('%(prop:builddir)s/build/admin/run-acceptance-tests'),
+            '--distribution', 'fedora-20'
+        ],
+    ))
     return factory
 
 
