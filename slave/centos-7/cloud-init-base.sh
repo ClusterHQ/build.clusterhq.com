@@ -60,6 +60,7 @@ systemctl enable docker
 systemctl start docker
 docker pull busybox
 docker pull openshift/busybox-http-app
+docker pull python:2.7-slim
 
 
 # Configure pip wheelhouse and cache
