@@ -214,7 +214,7 @@ def test_installed_package(box):
         haltOnFailure=True,
         ))
     factory.addStep(Trial(
-        trial=['vagrant', 'ssh', '--', '/opt/flocker/bin/trial'],
+        trial=['vagrant', 'ssh', '--', 'sudo', '/opt/flocker/bin/trial'],
         # Set lazylogfiles, so that trial.log isn't captured
         # Trial is being run remotely, so it isn't available
         lazylogfiles=True,
