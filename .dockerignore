@@ -1,5 +1,4 @@
 vagrant
-slave
 *.yml
 fabfile.py
 config.yml.sample
