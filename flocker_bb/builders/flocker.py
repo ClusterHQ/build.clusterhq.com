@@ -400,7 +400,7 @@ def makeOmnibusFactory(distribution, triggerSchedulers=()):
         ))
     if triggerSchedulers:
         factory.addStep(Trigger(
-            name='trigger/build-rpms',
+            name='trigger/built-rpms',
             schedulerNames=triggerSchedulers,
             updateSourceStamp=True,
             waitForFinish=False,
