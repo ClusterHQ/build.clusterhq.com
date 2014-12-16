@@ -403,7 +403,7 @@ def makeOmnibusFactory(distribution, triggerSchedulers=()):
         ))
     if triggerSchedulers:
         factory.addStep(Trigger(
-            name='trigger-flocker-vagrant',
+            name='trigger/built-rpms',
             schedulerNames=triggerSchedulers,
             updateSourceStamp=True,
             waitForFinish=False,
@@ -476,7 +476,7 @@ functionalLock = SlaveLock('functional-tests')
 
 OMNIBUS_DISTRIBUTIONS = {
     'fedora-20': {
-        'triggers': ['trigger-flocker-vagrant'],
+        'triggers': ['trigger/built-rpms/fedora-20'],
     },
     'ubuntu-14.04': {},
     'centos-7': {}
