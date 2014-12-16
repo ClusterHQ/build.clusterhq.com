@@ -1,3 +1,5 @@
+import random
+from collections import Counter
 from buildbot.steps.shell import ShellCommand, SetPropertyFromCommand
 from buildbot.steps.python_twisted import Trial
 from buildbot.steps.python import Sphinx
@@ -480,10 +482,27 @@ OMNIBUS_DISTRIBUTIONS = {
 }
 
 
-def idleSlave(builder, slaves):
-    idle = [slave for slave in slaves if slave.isAvailable()]
+def idleSlave(builder, slavebuilders):
+    # Count the builds on each slave
+    builds = Counter([
+        slavebuilder
+        for slavebuilder in slavebuilders
+        for sb in slavebuilder.slave.slavebuilders.values()
+        if sb.isBusy()
+    ])
+
+    if not builds:
+        # If there are no builds, then everything is idle.
+        idle = slavebuilders
+    else:
+        min_builds = min(builds.values())
+        idle = [
+            slavebuilder
+            for slavebuilder in slavebuilders
+            if builds[slavebuilder] == min_builds
+        ]
     if idle:
-        return idle[0]
+        return random.choice(idle)
 
 
 def getBuilders(slavenames):
