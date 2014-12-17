@@ -1,8 +1,8 @@
 from buildbot.steps.shell import ShellCommand, SetPropertyFromCommand
 from buildbot.process.properties import Interpolate, Property, renderer
-from buildbot.process.factory import BuildFactory
 from buildbot.steps.python_twisted import Trial
 from buildbot.steps.trigger import Trigger
+from buildbot.steps.transfer import StringDownload
 
 from ..steps import (
     buildVirtualEnv, virtualenvBinary,
@@ -193,24 +193,54 @@ def run_acceptance_tests(distribution, provider):
     return factory
 
 
+VAGRANTFILE_TEMPLATE = """\
+# -*- mode: ruby -*-
+# vi: set ft=ruby :
+
+# This requires Vagrant 1.6.2 or newer (earlier versions can't reliably
+# configure the Fedora 20 network stack).
+Vagrant.require_version ">= 1.6.2"
+
+
+# Vagrantfile API/syntax version. Don't touch unless you know what you're doing
+VAGRANTFILE_API_VERSION = "2"
+
+Vagrant.configure(VAGRANTFILE_API_VERSION) do |config|
+  config.vm.box = "clusterhq/flocker-%(kw:box)s"
+  config.vm.box_version = "= %(kw:version)s"
+  config.vm.box_url = "%(kw:buildbotURL)sresults/vagrant/%(kw:branch)s/flocker-%(kw:box)s.json"  # noqa
+end
+"""
+
+
 def test_installed_package(box):
-    factory = BuildFactory()
-    factory.addStep(ShellCommand(
+    factory = getFlockerFactory()
+    factory.addStep(SetPropertyFromCommand(
+        command=["python", "setup.py", "--version"],
+        name='check-version',
+        description=['checking', 'version'],
+        descriptionDone=['checking', 'version'],
+        property='version'
+    ))
+    factory.addStep(StringDownload(
+        Interpolate(
+            VAGRANTFILE_TEMPLATE,
+            version=dotted_version(Property('version')),
+            buildbotURL=buildbotURL, branch=flockerBranch, box=box),
+        'Vagrantfile',
+        workdir='test',
         name='init-%s-box' % (box,),
         description=['initializing', box, 'box'],
         descriptionDone=['initialize', box, 'box'],
-        command=[
-            'vagrant', 'init', '--minimal', '--force',
-            Interpolate(b'clusterhq/flocker-%(kw:box)s', box=box),
-            # URL
-            Interpolate(b"%(kw:buildbotURL)s/results/vagrant/%(kw:branch)s/flocker-%(kw:box)s.json",  # noqa
-                buildbotURL=buildbotURL, branch=flockerBranch, box=box),
-        ]))
+        ))
+    # There is no need to destroy the box, since the .vagrant directory
+    # got destroyed.
     factory.addStep(ShellCommand(
         name='start-tutorial-box',
         description=['starting', box, 'box'],
         descriptionDone=['start', box, 'box'],
         command=['vagrant', 'up'],
+        workdir='test',
         haltOnFailure=True,
         ))
     factory.addStep(Trial(
@@ -220,12 +250,14 @@ def test_installed_package(box):
         lazylogfiles=True,
         testpath=None,
         tests='flocker',
+        workdir='test',
     ))
     factory.addStep(ShellCommand(
         name='destroy-%s-box' % (box,),
         description=['destroy', box, 'box'],
         descriptionDone=['destroy', box, 'box'],
         command=['vagrant', 'destroy', '-f'],
+        workdir='test',
         alwaysRun=True,
         ))
     return factory
