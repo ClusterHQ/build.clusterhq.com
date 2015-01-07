@@ -174,7 +174,7 @@ def buildTutorialBox():
         name='trigger-vagrant-tests',
         schedulerNames=['trigger/built-vagrant-box/flocker-tutorial'],
         updateSourceStamp=True,
-        waitForFinish=True,
+        waitForFinish=False,
         ))
     return factory
 
