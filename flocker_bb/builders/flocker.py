@@ -20,7 +20,7 @@ from ..steps import (
     GITHUB,
     TWISTED_GIT,
     pip,
-    isMasterBranch,
+    isMasterBranch, isReleaseBranch
     )
 
 from ..mock import MockBuildSRPM, MockRebuild
@@ -299,6 +299,13 @@ def makeInternalDocsFactory():
     revision = "flocker-%(prop:buildnumber)s"
 
     factory = getFlockerFactory(python="python2.7")
+    factory.addStep(SetPropertyFromCommand(
+        command=["python", "setup.py", "--version"],
+        name='check-version',
+        description=['checking', 'version'],
+        descriptionDone=['checking', 'version'],
+        property='version'
+    ))
     factory.addSteps(installDependencies())
     factory.addStep(sphinxBuild(
         "spelling", "build/docs",
@@ -327,9 +334,20 @@ def makeInternalDocsFactory():
             'docs',
             ],
         path="private_html",
-        haltOnFailure=True,
         doStepIf=isMasterBranch('flocker'),
         ))
+    factory.addStep(MasterShellCommand(
+        name='upload-release-documentation',
+        description=["uploading", "release", "documentation"],
+        descriptionDone=["upload", "release", "documentation"],
+        command=[
+            "s3cmd", "sync",
+            Interpolate('%s/%s/docs' % (branch, revision)),
+            Interpolate("s3://staging-docs/%(prop:version)s/"),
+        ],
+        path="private_html",
+        doStepIf=isReleaseBranch('flocker'),
+    ))
     return factory
 
 
