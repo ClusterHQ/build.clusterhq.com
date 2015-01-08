@@ -342,7 +342,8 @@ def makeInternalDocsFactory():
         descriptionDone=["upload", "release", "documentation"],
         command=[
             "s3cmd", "sync",
-            Interpolate('%s/%s/docs' % (branch, revision)),
+            '--delete-removed',
+            Interpolate('%s/%s/docs/' % (branch, revision)),
             Interpolate("s3://staging-docs/%(prop:version)s/"),
         ],
         path="private_html",
