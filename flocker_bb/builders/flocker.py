@@ -25,6 +25,8 @@ from ..steps import (
 
 from ..mock import MockBuildSRPM, MockRebuild
 
+from .. import privateData
+
 # This is where temporary files associated with a build will be dumped.
 TMPDIR = Interpolate(b"%(prop:workdir)s/tmp-%(prop:buildnumber)s")
 
@@ -344,7 +346,10 @@ def makeInternalDocsFactory():
             "s3cmd", "sync",
             '--delete-removed',
             Interpolate('%s/%s/docs/' % (branch, revision)),
-            Interpolate("s3://staging-docs/%(prop:version)s/"),
+            Interpolate(
+                "s3://%(kw:bucket)s/%(prop:version)s/",
+                bucket=privateData['docs']['s3_bucket'],
+            ),
         ],
         path="private_html",
         doStepIf=isReleaseBranch('flocker'),
