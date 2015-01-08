@@ -344,7 +344,9 @@ def makeInternalDocsFactory():
         descriptionDone=["upload", "release", "documentation"],
         command=[
             "s3cmd", "sync",
+            '--verbose',
             '--delete-removed',
+            '--no-preserve',
             Interpolate('%s/%s/docs/' % (branch, revision)),
             Interpolate(
                 "s3://%(kw:bucket)s/%(prop:version)s/",
