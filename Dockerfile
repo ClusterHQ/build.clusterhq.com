@@ -14,6 +14,6 @@ ADD slave/cloud-init.sh /srv/buildmaster/slave/cloud-init.sh
 ADD config.py /srv/buildmaster/
 
 EXPOSE 80 9989
-CMD ["twistd", "--pidfile", "/var/run/buildbot.pid", "-ny", "/srv/buildmaster/buildbot.tac"]
+CMD ["twistd", "--syslog", "--prefix", "buildmaster", "--pidfile", "/var/run/buildbot.pid", "-ny", "/srv/buildmaster/buildbot.tac"]
 WORKDIR /srv/buildmaster/data
 VOLUME ["/srv/buildmaster/data"]
