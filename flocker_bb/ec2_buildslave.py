@@ -31,19 +31,6 @@ from buildbot.buildslave.base import BuildSlave
 from flocker_bb.ec2 import EC2
 
 
-def patch():
-    from buildbot.process.slavebuilder import AbstractSlaveBuilder
-    old = AbstractSlaveBuilder.buildStarted
-
-    def new(self):
-        old(self)
-        if self.slave:
-            self.slave.buildStarted(self)
-    AbstractSlaveBuilder.buildStarted = new
-patch()
-del patch
-
-
 class EC2BuildSlave(BuildSlave):
 
     instance = image = None

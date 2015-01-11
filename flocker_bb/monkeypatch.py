@@ -59,6 +59,15 @@ def botmaster_maybeStartBuildsForSlave(self, slave_name):
     reactor.callLater(10, do_start)
 
 
+from buildbot.process.slavebuilder import AbstractSlaveBuilder
+
+
+def slavebuilder_buildStarted(self):
+    AbstractSlaveBuilder.buildStarted(self)
+    if self.slave and hasattr(self.slave, 'buildStarted'):
+        self.slave.buildStarted(self)
+
+
 def apply_patches():
     log.msg("Apply flocker_bb.monkeypatch.")
     from buildbot.process.buildrequestdistributor import (
@@ -66,3 +75,5 @@ def apply_patches():
     BuildRequestDistributor._activityLoop = brd_activityLoop
     from buildbot.process.botmaster import BotMaster
     BotMaster.maybeStartBuildsForSlave = botmaster_maybeStartBuildsForSlave
+    from buildbot.process.slavebuilder import SlaveBuilder
+    SlaveBuilder.buildStarted = slavebuilder_buildStarted
