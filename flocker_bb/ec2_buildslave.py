@@ -25,7 +25,6 @@ Tested with Python boto 1.5c
 from twisted.application.internet import TimerService
 from twisted.internet import defer
 from twisted.internet import reactor
-from twisted.python import log
 
 from buildbot.buildslave.base import BuildSlave
 
@@ -130,7 +129,6 @@ class EC2BuildSlave(BuildSlave):
 
     @defer.inlineCallbacks
     def periodic(self):
-        log.msg("Checking for builds")
         build_reqs = yield self.master.db.buildrequests.getBuildRequests(
             claimed=False)
         pending_builders = set([
