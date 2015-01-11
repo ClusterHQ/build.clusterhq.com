@@ -23,9 +23,10 @@ RESULT_SYMBOLS = {
     RETRY: "repeat",
 }
 
+
 class _Zulip(object):
     _POST_HEADERS = Headers({
-            b"content-type": [b"application/x-www-form-urlencoded"]})
+        b"content-type": [b"application/x-www-form-urlencoded"]})
     _MESSAGES = b"https://api.zulip.com/v1/messages"
 
     def __init__(self, bot, key, agent):
@@ -47,8 +48,6 @@ class _Zulip(object):
         self._headers.setRawHeaders(
             b"authorization",
             [b"Basic " + b64encode(self.bot + b":" + self.key)])
-
-
 
     def send(self, type, content, to, subject):
         """
@@ -80,24 +79,24 @@ class _Zulip(object):
             return value
 
         body = urlencode([
-                (b"type", encode(type)),
-                (b"content", encode(content)),
-                (b"to", encode(to)),
-                (b"subject", encode(subject)),
-                ])
+            (b"type", encode(type)),
+            (b"content", encode(content)),
+            (b"to", encode(to)),
+            (b"subject", encode(subject)),
+        ])
         producer = FileBodyProducer(StringIO(body))
         msg(format="_Zulip.send requesting %(url)s with body %(body)s",
             url=self._MESSAGES, body=body)
 
         requesting = self.agent.request(
             b"POST", self._MESSAGES, self._headers, producer)
+
         def requested(response):
             msg(format="_Zulip.send received response, code = %(code)d",
                 code=response.code)
             return readBody(response)
         requesting.addCallback(requested)
         return requesting
-
 
 
 class _ZulipWriteOnlyStatus(object):
@@ -116,12 +115,10 @@ class _ZulipWriteOnlyStatus(object):
         self.zulip = zulip
         self._builders = []
 
-
     @staticmethod
     def _simplifyBuilderName(name):
         name = name.rpartition('flocker-')[2]
         return name
-
 
     def _composeMessage(self, (sourceStamps, buildRequests), status):
         message = "**Build Complete**\n"
@@ -131,23 +128,29 @@ class _ZulipWriteOnlyStatus(object):
             template = u"%(codebase)s : %(branch)s"
             subjects += [template % sourceStamp]
             if sourceStamp['revision']:
-                template += u": [%(revision)s](https://github.com/ClusterHQ/%(codebase)s/commit/%(revision)s)"
+                template += (u": [%(revision)s]"
+                             u"(https://github.com/ClusterHQ/%(codebase)s/"
+                             u"commit/%(revision)s)")
                 message += template % sourceStamp + u"\n"
 
         success = []
         other = []
         for buildRequest in buildRequests:
-            build = max(buildRequest['builds'], key=lambda build: build['number'])
+            build = max(buildRequest['builds'],
+                        key=lambda build: build['number'])
             builderName = self._simplifyBuilderName(build['builderName'])
-            buildURL = status.getURLForBuild(build['builderName'], build['number'])
+            buildURL = status.getURLForBuild(
+                build['builderName'], build['number'])
 
             if build['results'] == SUCCESS:
                 template = u"[%(builderName)s](%(url)s)"
-                success.append(template % {'builderName': builderName, "url": buildURL})
+                success.append(template % {'builderName': builderName,
+                                           "url": buildURL})
             else:
                 template = (
-                    u":%(result_symbol)s: build [#%(buildNumber)d](%(url)s) of %(builderName)s: %(text)s"
-                    )
+                    u":%(result_symbol)s: build [#%(buildNumber)d](%(url)s) "
+                    u"of %(builderName)s: %(text)s"
+                )
                 other.append(template % {
                     'buildNumber': build['number'],
                     'builderName': builderName,
@@ -165,7 +168,6 @@ class _ZulipWriteOnlyStatus(object):
             message += u'\n'.join(other)
 
         return subjects, message
-
 
     def _sendMessage(self, (subjects, message)):
         """
@@ -192,14 +194,13 @@ class _ZulipWriteOnlyStatus(object):
                 content=message,
                 to=u"BuildBot",
                 subject=subject)
-            d.addCallback(lambda ignored: msg("_ZulipWriteOnlyStatus send success"))
+            d.addCallback(
+                lambda ignored: msg("_ZulipWriteOnlyStatus send success"))
             d.addErrback(err, "_ZulipWriteOnlyStatus send failed")
-
 
     def buildsetFinished(self, data, status):
         message = self._composeMessage(data, status)
         self._sendMessage(message)
-
 
 
 def createZulipStatus(reactor, bot, key):
