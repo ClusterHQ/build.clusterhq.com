@@ -17,6 +17,16 @@ from flocker_bb import privateData
 USER = privateData['auth']['user'].encode("utf-8")
 PASSWORD = privateData['auth']['password'].encode("utf-8")
 
+from flocker_bb.zulip import createZulip, ZulipLogger
+from twisted.internet import reactor
+
+if 'zulip' in privateData:
+    ZULIP_BOT = privateData['zulip']['user']
+    ZULIP_KEY = privateData['zulip']['password']
+    zulip = createZulip(reactor, ZULIP_BOT, ZULIP_KEY)
+
+    ZulipLogger(zulip=zulip, stream="BuildBot - Operation").start()
+
 
 ####### BUILDSLAVES
 
@@ -103,17 +113,6 @@ c['change_source'] = []
 
 ####### BUILDERS
 
-def rebuild(module):
-    # Specify fromlist, so that __import__ returns the module, not the
-    # top-level package
-    reload(__import__(module, fromlist=['__path__']))
-
-rebuild('flocker_bb.steps')
-rebuild('flocker_bb.builders.flocker')
-rebuild('flocker_bb.builders.flocker_vagrant')
-rebuild('flocker_bb.builders.maint')
-
-
 from flocker_bb.builders import flocker, maint, flocker_vagrant
 
 c['builders'] = []
@@ -137,12 +136,9 @@ addBuilderModule(maint)
 
 c['status'] = []
 
-rebuild('flocker_bb.github')
 from flocker_bb.github import codebaseStatus
 if privateData['github']['report_status']:
     c['status'].append(codebaseStatus('flocker', token=privateData['github']['token']))
-
-rebuild('flocker_bb.boxes')
 
 from flocker_bb.boxes import FlockerWebStatus as WebStatus
 from buildbot.status.web import authz
@@ -172,14 +168,11 @@ c['status'].append(WebStatus(
     jinja_loaders=[jinja2.FileSystemLoader(sibpath(__file__, 'templates'))],
     change_hook_dialects={'github': True}))
 
-rebuild('flocker_bb.zulip_status')
-from flocker_bb.zulip_status import createZulipStatus
-from twisted.internet import reactor
 
+from flocker_bb.zulip_status import createZulipStatus
 if 'zulip' in privateData:
-    ZULIP_BOT = privateData['zulip']['user']
-    ZULIP_KEY = privateData['zulip']['password']
-    c['status'].append(createZulipStatus(reactor, ZULIP_BOT, ZULIP_KEY))
+    ZULIP_STREAM = privateData['zulip'].get('stream', u"BuildBot")
+    c['status'].append(createZulipStatus(zulip, ZULIP_STREAM))
 
 ####### PROJECT IDENTITY
 
