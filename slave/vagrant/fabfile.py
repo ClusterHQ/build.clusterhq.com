@@ -3,6 +3,8 @@ from twisted.python.filepath import FilePath
 from StringIO import StringIO
 import yaml
 
+# WARNING: Although this code has been tested to produce a working slave
+# the production slave wasn't configured with this code.
 
 def configure_gsutil():
     boto_config = FilePath(__file__).sibling('boto-config.in').getContent()
