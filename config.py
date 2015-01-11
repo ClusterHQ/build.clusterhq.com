@@ -17,6 +17,14 @@ from flocker_bb import privateData
 USER = privateData['auth']['user'].encode("utf-8")
 PASSWORD = privateData['auth']['password'].encode("utf-8")
 
+from flocker_bb.zulip import createZulip
+from twisted.internet import reactor
+
+if 'zulip' in privateData:
+    ZULIP_BOT = privateData['zulip']['user']
+    ZULIP_KEY = privateData['zulip']['password']
+    zulip = createZulip(reactor, ZULIP_BOT, ZULIP_KEY)
+
 
 ####### BUILDSLAVES
 
@@ -158,14 +166,11 @@ c['status'].append(WebStatus(
     jinja_loaders=[jinja2.FileSystemLoader(sibpath(__file__, 'templates'))],
     change_hook_dialects={'github': True}))
 
-from flocker_bb.zulip_status import createZulipStatus
-from twisted.internet import reactor
 
+from flocker_bb.zulip_status import createZulipStatus
 if 'zulip' in privateData:
-    ZULIP_BOT = privateData['zulip']['user']
-    ZULIP_KEY = privateData['zulip']['password']
     ZULIP_STREAM = privateData['zulip'].get('stream', u"BuildBot")
-    c['status'].append(createZulipStatus(reactor, ZULIP_BOT, ZULIP_KEY, ZULIP_STREAM))
+    c['status'].append(createZulipStatus(zulip, ZULIP_STREAM))
 
 ####### PROJECT IDENTITY
 
