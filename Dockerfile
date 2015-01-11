@@ -3,7 +3,7 @@ FROM fedora:20
 ADD tomprince-hybridlogic-fedora-20-x86_64.repo /etc/yum.repos.d/
 #RUN yum upgrade -y
 RUN yum install -y python-devel python-pip gcc libffi-devel openssl-devel
-RUN pip install buildbot==0.8.9 txgithub boto service_identity
+RUN pip install buildbot==0.8.9 txgithub machinist apache-libcloud service_identity
 
 
 ADD buildbot.tac /srv/buildmaster/
