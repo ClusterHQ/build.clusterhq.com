@@ -7,8 +7,9 @@ from machinist import (
     trivialInput, constructFiniteStateMachine, Transition)
 
 from twisted.python.log import msg
-from eliot import add_destination
-add_destination(msg)
+from eliot import addDestination
+addDestination(msg)
+del msg, addDestination
 
 
 class Input(Names):
