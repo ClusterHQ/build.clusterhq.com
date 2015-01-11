@@ -14,6 +14,8 @@ from buildbot.status.results import (
 
 from flocker_bb.buildset_status import BuildsetStatusReceiver
 
+from characteristic import attributes
+
 
 RESULT_SYMBOLS = {
     SUCCESS: "white_check_mark",
@@ -99,6 +101,7 @@ class _Zulip(object):
         return requesting
 
 
+@attributes(['zulip', 'stream'])
 class _ZulipWriteOnlyStatus(object):
     """
     BuildBot status hook-up object.
@@ -107,12 +110,11 @@ class _ZulipWriteOnlyStatus(object):
 
     @ivar _builders: List of builders we are subscribed to.
     """
-    def __init__(self, zulip):
+    def __init__(self):
         """
         @param zulip: A zulip client to use to send messages.
         @type zulip: L{_Zulip}
         """
-        self.zulip = zulip
         self._builders = []
 
     @staticmethod
@@ -192,7 +194,7 @@ class _ZulipWriteOnlyStatus(object):
             d = self.zulip.send(
                 type=u"stream",
                 content=message,
-                to=u"BuildBot",
+                to=self.stream,
                 subject=subject)
             d.addCallback(
                 lambda ignored: msg("_ZulipWriteOnlyStatus send success"))
@@ -203,9 +205,9 @@ class _ZulipWriteOnlyStatus(object):
         self._sendMessage(message)
 
 
-def createZulipStatus(reactor, bot, key):
+def createZulipStatus(reactor, bot, key, stream):
     agent = Agent(reactor)
     zulip = _Zulip(bot, key, agent)
-    writer = _ZulipWriteOnlyStatus(zulip)
+    writer = _ZulipWriteOnlyStatus(zulip=zulip, stream=stream)
     status = BuildsetStatusReceiver(finished=writer.buildsetFinished)
     return status

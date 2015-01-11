@@ -179,7 +179,8 @@ from twisted.internet import reactor
 if 'zulip' in privateData:
     ZULIP_BOT = privateData['zulip']['user']
     ZULIP_KEY = privateData['zulip']['password']
-    c['status'].append(createZulipStatus(reactor, ZULIP_BOT, ZULIP_KEY))
+    ZULIP_STREAM = privateData['zulip'].get('stream', u"BuildBot")
+    c['status'].append(createZulipStatus(reactor, ZULIP_BOT, ZULIP_KEY, ZULIP_STREAM))
 
 ####### PROJECT IDENTITY
 
