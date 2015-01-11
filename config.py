@@ -103,17 +103,6 @@ c['change_source'] = []
 
 ####### BUILDERS
 
-def rebuild(module):
-    # Specify fromlist, so that __import__ returns the module, not the
-    # top-level package
-    reload(__import__(module, fromlist=['__path__']))
-
-rebuild('flocker_bb.steps')
-rebuild('flocker_bb.builders.flocker')
-rebuild('flocker_bb.builders.flocker_vagrant')
-rebuild('flocker_bb.builders.maint')
-
-
 from flocker_bb.builders import flocker, maint, flocker_vagrant
 
 c['builders'] = []
@@ -137,12 +126,9 @@ addBuilderModule(maint)
 
 c['status'] = []
 
-rebuild('flocker_bb.github')
 from flocker_bb.github import codebaseStatus
 if privateData['github']['report_status']:
     c['status'].append(codebaseStatus('flocker', token=privateData['github']['token']))
-
-rebuild('flocker_bb.boxes')
 
 from flocker_bb.boxes import FlockerWebStatus as WebStatus
 from buildbot.status.web import authz
@@ -172,7 +158,6 @@ c['status'].append(WebStatus(
     jinja_loaders=[jinja2.FileSystemLoader(sibpath(__file__, 'templates'))],
     change_hook_dialects={'github': True}))
 
-rebuild('flocker_bb.zulip_status')
 from flocker_bb.zulip_status import createZulipStatus
 from twisted.internet import reactor
 
