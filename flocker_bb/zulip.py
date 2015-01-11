@@ -1,10 +1,12 @@
+from __future__ import print_function
 from StringIO import StringIO
 from urllib import urlencode
 from base64 import b64encode
 from twisted.web.client import FileBodyProducer, Agent, readBody
 from twisted.web.http_headers import Headers
 
-from twisted.python.log import msg
+from twisted.python.log import msg, addObserver, removeObserver
+from characteristic import attributes
 
 
 class _Zulip(object):
@@ -86,3 +88,30 @@ def createZulip(reactor, bot, key):
     agent = Agent(reactor)
     zulip = _Zulip(bot, key, agent)
     return zulip
+
+
+@attributes(['zulip', 'stream'])
+class ZulipLogger(object):
+    def _emit(self, eventDict):
+        if eventDict["isError"]:
+            if 'failure' in eventDict:
+                subject = eventDict.get('why') or 'Unhandled Error'
+                text = "``` pytb\n%s\n```" % (
+                    eventDict['failure'].getTraceback())
+            else:
+                subject = 'Error'
+                text = " ".join([str(m) for m in eventDict["message"]]) + "\n"
+
+            d = self.zulip.send(
+                type=u"stream",
+                content=text,
+                to=self.stream,
+                subject=subject)
+            # Swallow errors sending errors.
+            d.addErrback(lambda _: None)
+
+    def start(self):
+        addObserver(self._emit)
+
+    def stop(self):
+        removeObserver(self._emit)

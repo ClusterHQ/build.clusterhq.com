@@ -17,13 +17,15 @@ from flocker_bb import privateData
 USER = privateData['auth']['user'].encode("utf-8")
 PASSWORD = privateData['auth']['password'].encode("utf-8")
 
-from flocker_bb.zulip import createZulip
+from flocker_bb.zulip import createZulip, ZulipLogger
 from twisted.internet import reactor
 
 if 'zulip' in privateData:
     ZULIP_BOT = privateData['zulip']['user']
     ZULIP_KEY = privateData['zulip']['password']
     zulip = createZulip(reactor, ZULIP_BOT, ZULIP_KEY)
+
+    ZulipLogger(zulip=zulip, stream="BuildBot - Operation").start()
 
 
 ####### BUILDSLAVES
