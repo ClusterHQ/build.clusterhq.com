@@ -171,6 +171,7 @@ def get_image(driver, image_name):
     :param driver: The libcloud driver to query for images.
     """
     try:
-        return [s for s in driver.list_images() if s.name == image_name][0]
+        return [s for s in driver.list_images(ex_owner="self")
+                if s.name == image_name][0]
     except IndexError:
         raise ValueError("Unknown image.", image_name)
