@@ -13,13 +13,50 @@
 # Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
 #
 # Portions Copyright Buildbot Team Members
-
-from __future__ import with_statement
 # Portions Copyright Canonical Ltd. 2009
 
-"""A LatentSlave that uses EC2 to instantiate the slaves on demand.
+from __future__ import with_statement
 
-Tested with Python boto 1.5c
+"""
+Fake latent slave implementation for AWS EC2.
+
+Buiildbot's latent slave implementation has some issues. It will often get into
+a state where where it doesn't try to start a slave. I'm not sure exactly why
+this is but it is related to the fact that the state is spread out over 4
+objects and 6 classes
+- buildbot.buildslave.base.AbstractLatentBuildSlave
+  - buildbot.buildslave.base.AbstractBuildSlave
+- buildbot.process.slavebuilder.LatentSlaveBuilder
+  - buildbot.process.slavebuilder.AbstractSlaveBuilder
+- buildbot.process.builder.Builder
+- buildbot.process.botmaster.BotMaster
+
+This implements a simpler scheme, which acts like a regular slave, but watches
+buildbots state to start and stop the slave.
+- When a build request comes in for a builder the slave is allocated to,
+  start this slave.
+- Poll for existing requests for builders the slave is allocated to.
+  (This catches the case where there are existing requests, and probably
+  also the case where a build failed).
+- Keep track of the builders using this slave, and stop the slave
+  after it has been idle for a specified amount of time.
+
+The starting and stopping of the node is handled in flocker_bb.ec2,
+using an explicit state machine.
+
+
+A few other changes are required to make this work well.
+
+- Since buildbot doesn't know these slaves are latent, it will schedule all
+  builds on the first slave to connect. To handle this, we monkeypatch
+  ``BotMaster.maybeStartBuildsForSlave`` to wait 10s before starting builds on
+  a newly connected slave.
+- Only latent slaves receive a ``buildStarted`` call. We monkeypatch
+  ``SlaveBuilder.buildStarted`` to call ``buildStarted`` if it exists.
+- Since buildbot doesn't know these slaves are latent, the builders page
+  doesn't show force build options if no slaves are connected. An updated
+  template is included that always shows the force build forms.
+
 """
 
 from twisted.application.internet import TimerService
