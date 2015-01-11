@@ -6,6 +6,7 @@ import yaml
 # WARNING: Although this code has been tested to produce a working slave
 # the production slave wasn't configured with this code.
 
+
 def configure_gsutil():
     boto_config = FilePath(__file__).sibling('boto-config.in').getContent()
     output = local('lpass show --notes "google-cert@build.clusterhq.com"',
@@ -32,7 +33,7 @@ yum install -y https://kojipkgs.fedoraproject.org//packages/kernel/${KV}/${SV}/$
     packages = [
         "https://dl.bintray.com/mitchellh/vagrant/vagrant_1.6.5_x86_64.rpm",
         "VirtualBox-4.3.x86_64",
-        "buildbot-slave",
+        "https://kojipkgs.fedoraproject.org//packages/buildbot/0.8.10/1.fc22/noarch/buildbot-slave-0.8.10-1.fc22.noarch.rpm",
         "mongodb",
         "git",
         "libffi-devel",
