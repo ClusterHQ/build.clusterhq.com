@@ -6,6 +6,9 @@ sys.path.insert(0, os.path.dirname(__file__))
 from flocker_bb.monkeypatch import apply_patches
 apply_patches()
 
+from flocker_bb.eliot import eliot_to_twisted_logging
+eliot_to_twisted_logging()
+
 from twisted.application import service
 from buildbot.master import BuildMaster
 

@@ -6,11 +6,6 @@ from machinist import (
     TransitionTable, MethodSuffixOutputer,
     trivialInput, constructFiniteStateMachine, Transition)
 
-from twisted.python.log import msg
-from eliot import addDestination
-addDestination(msg)
-del msg, addDestination
-
 
 class Input(Names):
     REQUEST_START = NamedConstant()
