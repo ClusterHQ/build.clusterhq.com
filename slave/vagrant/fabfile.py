@@ -1,12 +1,21 @@
-from fabric.api import run, task, sudo, put
+from fabric.api import run, task, sudo, put, local
 from twisted.python.filepath import FilePath
+from StringIO import StringIO
+import yaml
 
 
-## TODO: google credentials
+def configure_gsutil():
+    boto_config = FilePath(__file__).sibling('boto-config.in').getContent()
+    output = local('lpass show --notes "google-cert@build.clusterhq.com"',
+                   capture=True)
+    cert = yaml.safe_load(output.stdout)
+    put(StringIO(boto_config % cert), '/home/buildslave/.boto')
+    put(StringIO(cert['certificate']), '/home/buildslave/google.p12')
+
 
 @task
 def install(index, password):
-    run( "wget -O /etc/yum.repos.d/virtualbox.repo http://download.virtualbox.org/virtualbox/rpm/fedora/virtualbox.repo")
+    run("wget -O /etc/yum.repos.d/virtualbox.repo http://download.virtualbox.org/virtualbox/rpm/fedora/virtualbox.repo")
 
     run("""
 UNAME_R=$(uname -r)
@@ -36,7 +45,10 @@ yum install -y https://kojipkgs.fedoraproject.org//packages/kernel/${KV}/${SV}/$
     sudo('mkdir ~/.ssh', user='buildslave')
     sudo('ln -s ~/.vagrant.d/insecure_private_key ~/.ssh/id_rsa', user='buildslave')
 
-    put(FilePath(__file__).sibling('fedora-vagrant-slave.service').path, '/etc/systemd/system/fedora-vagrant-slave.service')
+    put(FilePath(__file__).sibling('fedora-vagrant-slave.service').path,
+        '/etc/systemd/system/fedora-vagrant-slave.service')
+
+    configure_gsutil()
 
     run('systemctl start fedora-vagrant-slave')
     run('systemctl enable fedora-vagrant-slave')
