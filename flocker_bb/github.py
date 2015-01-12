@@ -115,6 +115,8 @@ class GitHubStatus(BuildsetStatusReceiver):
                 branch = sourceStamp['branch']
 
                 break
+        else:
+            return {}, ''
 
         return request, branch
 
