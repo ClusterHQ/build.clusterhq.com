@@ -1,0 +1,4 @@
+vagrant
+*.yml
+fabfile.py
+config.yml.sample

@@ -13,3 +13,4 @@ images:
     script: >-
       sudo yum install -y zfs
   username: fedora
+  disk_size: 20

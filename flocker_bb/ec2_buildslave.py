@@ -61,7 +61,7 @@ class EC2LatentBuildSlave(AbstractLatentBuildSlave):
                  build_wait_timeout=60 * 10, properties={}, locks=None,
                  keepalive_interval=None,
                  spot_instance=False, max_spot_price=1.6, volumes=[],
-                 placement=None, price_multiplier=1.2, tags={}):
+                 placement=None, tags={}):
 
         AbstractLatentBuildSlave.__init__(
             self, name, password, max_builds, notify_on_missing,
@@ -102,7 +102,6 @@ class EC2LatentBuildSlave(AbstractLatentBuildSlave):
         self.spot_instance = spot_instance
         self.max_spot_price = max_spot_price
         self.volumes = volumes
-        self.price_multiplier = price_multiplier
         if None not in [placement, region]:
             self.placement = '%s%s' % (region, placement)
         else:
@@ -280,8 +279,6 @@ class EC2LatentBuildSlave(AbstractLatentBuildSlave):
         instance_id, image_id, start_time = self._wait_for_instance(
             reservation)
         if None not in [instance_id, image_id, start_time]:
-            if len(self.tags) > 0:
-                self.conn.create_tags(instance_id, self.tags)
             return [instance_id, image_id, start_time]
         else:
             log.msg('%s %s failed to start instance %s (%s)' %
@@ -338,34 +335,8 @@ class EC2LatentBuildSlave(AbstractLatentBuildSlave):
 
     def _request_spot_instance(self):
         image = self.get_image()
-        timestamp_yesterday = time.gmtime(int(time.time() - 86400))
-        spot_history_starttime = time.strftime(
-            '%Y-%m-%dT%H:%M:%SZ', timestamp_yesterday)
-        spot_prices = self.conn.get_spot_price_history(
-            start_time=spot_history_starttime,
-            product_description='Linux/UNIX (Amazon VPC)',
-            availability_zone=self.placement)
-        price_sum = 0.0
-        price_count = 0
-        for price in spot_prices:
-            if price.instance_type == self.instance_type:
-                price_sum += price.price
-                price_count += 1
-        if price_count == 0:
-            target_price = 0.02
-        else:
-            target_price = (price_sum / price_count) * self.price_multiplier
-        if target_price > self.max_spot_price:
-            log.msg('%s %s calculated spot price %0.2f exceeds '
-                    'configured maximum of %0.2f' %
-                    (self.__class__.__name__, self.slavename,
-                     target_price, self.max_spot_price))
-            raise interfaces.LatentBuildSlaveFailedToSubstantiate()
-        else:
-            log.msg('%s %s requesting spot instance with price %0.2f.' %
-                    (self.__class__.__name__, self.slavename, target_price))
         reservations = self.conn.request_spot_instances(
-            target_price, image.id, key_name=self.keypair_name,
+            self.max_spot_price, image.id, key_name=self.keypair_name,
             security_groups=[
                 self.security_name],
             instance_type=self.instance_type,
@@ -399,6 +370,8 @@ class EC2LatentBuildSlave(AbstractLatentBuildSlave):
                     (self.__class__.__name__, self.slavename,
                      self.instance.id, self.dns, minutes, seconds,
                      self.output.output))
+            if len(self.tags) > 0:
+                self.instance.add_tags(self.tags)
             if self.elastic_ip is not None:
                 self.instance.use_ip(self.elastic_ip)
             start_time = '%02d:%02d:%02d' % (
@@ -415,6 +388,7 @@ class EC2LatentBuildSlave(AbstractLatentBuildSlave):
                 request=reservation.id)
         duration = 0
         interval = self._poll_resolution
+        did_set_tags = False
         try:
             requests = self.conn.get_all_spot_instance_requests(
                 request_ids=[reservation.id])
@@ -434,6 +408,9 @@ class EC2LatentBuildSlave(AbstractLatentBuildSlave):
                     request_ids=[reservation.id])
                 request = requests[0]
                 request_status = request.status.code
+                if not did_set_tags and len(self.tags) > 0:
+                    reservation.add_tags(self.tags)
+                    did_set_tags = True
             except boto.exception.EC2ResponseError:
                 request_status = SPOT_REQUEST_PENDING_STATES[0]
         if request_status == FULFILLED:

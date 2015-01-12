@@ -40,7 +40,8 @@ apt-get install -y \
 	curl \
 	yum \
 	libssl-dev \
-	dpkg-dev
+	dpkg-dev \
+	enchant
 
 # Maybe also linux-source
 
@@ -50,15 +51,14 @@ sudo apt-get -y install ruby-dev
 gem install fpm
 
 # Pre-cache docker images
-docker pull busybox
-docker pull openshift/busybox-http-app
+docker pull busybox:latest
+docker pull openshift/busybox-http-app:latest
+docker pull python:2.7-slim
 
 # Configure pip wheelhouse and cache
 mkdir ~root/.pip
 cat > ~root/.pip/pip.conf <<EOF
 [global]
-#find-links = https://s3-us-west-2.amazonaws.com/clusterhq-wheelhouse/fedora20-x86_64/index
 find-links = file:///var/cache/wheelhouse
 EOF
 mkdir /var/cache/wheelhouse
-#wget -r -nd -P /var/cache/wheelhouse https://s3-us-west-2.amazonaws.com/clusterhq-wheelhouse/fedora20-x86_64/index

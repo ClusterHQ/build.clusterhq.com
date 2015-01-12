@@ -52,6 +52,7 @@ def startBuildmaster(config, shouldPull=True):
         '--name', 'buildmaster',
         '-p', '80:80', '-p', '9989:9989',
         '-e', 'BUILDBOT_CONFIG=%s' % (json.dumps(config),),
+        '-v', '/dev/log:/dev/log',
         '--volumes-from', 'buildmaster-data',
         image))
     removeUntaggedImages()
@@ -117,9 +118,9 @@ def logs(configFile="config.yml", follow=True):
     """
     loadConfig(configFile)
     if follow:
-        execute(sudo, cmd('docker', 'logs', '-f', 'buildmaster'))
+        execute(sudo, cmd('journalctl', '--follow', 'SYSLOG_IDENTIFIER=buildmaster'))
     else:
-        execute(sudo, cmd('docker', 'logs', 'buildmaster'))
+        execute(sudo, cmd('journalctl', 'SYSLOG_IDENTIFIER=buildmaster'))
 
 
 @task

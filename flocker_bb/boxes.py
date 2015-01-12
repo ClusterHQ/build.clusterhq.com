@@ -154,6 +154,7 @@ class FlockerWebStatus(html.WebStatus):
 
         File.contentTypes[".py,cover"] = "text/plain"
         File.contentTypes[".svg"] = "image/svg+xml"
+        File.contentTypes[".json"] = "application/json"
 
         # Historical name
         resultsPath = os.path.join(self.master.basedir, "private_html")

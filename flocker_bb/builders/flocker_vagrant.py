@@ -1,15 +1,18 @@
 from buildbot.steps.shell import ShellCommand, SetPropertyFromCommand
-from buildbot.process.properties import Interpolate
+from buildbot.process.properties import Interpolate, Property, renderer
+from buildbot.steps.python_twisted import Trial
+from buildbot.steps.trigger import Trigger
+from buildbot.steps.transfer import StringDownload
 
 from ..steps import (
     buildVirtualEnv, virtualenvBinary,
     getFactory,
     GITHUB,
     buildbotURL,
-    URLShellCommand
+    MasterWriteFile, asJSON
     )
 
-#FIXME
+# FIXME
 from flocker_bb.builders.flocker import installDependencies, _flockerTests
 
 # This is where temporary files associated with a build will be dumped.
@@ -18,13 +21,18 @@ TMPDIR = Interpolate(b"%(prop:workdir)s/tmp-%(prop:buildnumber)s")
 flockerBranch = Interpolate("%(src:flocker:branch)s")
 
 
+def dotted_version(version):
+    @renderer
+    def render(props):
+        return props.render(version).addCallback(lambda v: v.replace('-', '.'))
+    return render
+
+
 def getFlockerFactory():
     factory = getFactory("flocker", useSubmodules=False, mergeForward=True)
     factory.addSteps(buildVirtualEnv("python2.7", useSystem=True))
     factory.addSteps(installDependencies())
     return factory
-
-
 
 
 def buildVagrantBox(box, add=True):
@@ -56,9 +64,9 @@ def buildVagrantBox(box, add=True):
         ),
     ]
 
-    steps.append(URLShellCommand(
+    steps.append(ShellCommand(
         name='upload-base-box',
-        description=['uploaiding', 'base', box, 'box'],
+        description=['uploading', 'base', box, 'box'],
         descriptionDone=['upload', 'base', box, 'box'],
         command=[
             virtualenvBinary('gsutil'),
@@ -70,12 +78,32 @@ def buildVagrantBox(box, add=True):
                 'gs://clusterhq-vagrant-buildbot/%(kw:box)s/',
                 box=box),
         ],
+    ))
+    steps.append(MasterWriteFile(
+        name='write-base-box-metadata',
+        description=['writing', 'base', box, 'box', 'metadata'],
+        descriptionDone=['write', 'base', box, 'box', 'metadata'],
+        path=Interpolate(
+            b"private_html/vagrant/%(kw:branch)s/flocker-%(kw:box)s.json",
+            branch=flockerBranch, box=box),
+        content=asJSON({
+            "name": "clusterhq/flocker-%s" % (box,),
+            "description": "Test clusterhq/flocker-%s box." % (box,),
+            'versions': [{
+                "version": dotted_version(Property('version')),
+                "providers": [{
+                    "name": "virtualbox",
+                    "url": Interpolate(
+                        'https://storage.googleapis.com/clusterhq-vagrant-buildbot/'  # noqa
+                        '%(kw:box)s/flocker-%(kw:box)s-%(prop:version)s.box',
+                        box=box),
+                }]
+            }]
+        }),
         urls={
             Interpolate('%(kw:box)s box', box=box):
-            Interpolate(
-                'https://storage.googleapis.com/clusterhq-vagrant-buildbot/'
-                '%(kw:box)s/flocker-%(kw:box)s-%(prop:version)s.box',
-                box=box),
+            Interpolate(b"/results/vagrant/%(kw:branch)s/flocker-%(kw:box)s.json",  # noqa
+                branch=flockerBranch, box=box),
         }
     ))
 
@@ -142,29 +170,94 @@ def buildTutorialBox():
     factory = getFlockerFactory()
 
     factory.addSteps(buildVagrantBox('tutorial', add=True))
+    factory.addStep(Trigger(
+        name='trigger-vagrant-tests',
+        schedulerNames=['trigger/built-vagrant-box/flocker-tutorial'],
+        updateSourceStamp=True,
+        waitForFinish=False,
+        ))
+    return factory
 
+
+def run_acceptance_tests(distribution, provider):
+    factory = getFlockerFactory()
+    factory.addSteps(_flockerTests(
+        kwargs={'trialMode': []},
+        tests=[],
+        trial=[
+            Interpolate('%(prop:builddir)s/build/admin/run-acceptance-tests'),
+            '--distribution', distribution,
+            '--provider', provider,
+        ],
+    ))
+    return factory
+
+
+VAGRANTFILE_TEMPLATE = """\
+# -*- mode: ruby -*-
+# vi: set ft=ruby :
+
+# This requires Vagrant 1.6.2 or newer (earlier versions can't reliably
+# configure the Fedora 20 network stack).
+Vagrant.require_version ">= 1.6.2"
+
+
+# Vagrantfile API/syntax version. Don't touch unless you know what you're doing
+VAGRANTFILE_API_VERSION = "2"
+
+Vagrant.configure(VAGRANTFILE_API_VERSION) do |config|
+  config.vm.box = "clusterhq/flocker-%(kw:box)s"
+  config.vm.box_version = "= %(kw:version)s"
+  config.vm.box_url = "%(kw:buildbotURL)sresults/vagrant/%(kw:branch)s/flocker-%(kw:box)s.json"  # noqa
+end
+"""
+
+
+def test_installed_package(box):
+    factory = getFlockerFactory()
+    factory.addStep(SetPropertyFromCommand(
+        command=["python", "setup.py", "--version"],
+        name='check-version',
+        description=['checking', 'version'],
+        descriptionDone=['checking', 'version'],
+        property='version'
+    ))
+    factory.addStep(StringDownload(
+        Interpolate(
+            VAGRANTFILE_TEMPLATE,
+            version=dotted_version(Property('version')),
+            buildbotURL=buildbotURL, branch=flockerBranch, box=box),
+        'Vagrantfile',
+        workdir='test',
+        name='init-%s-box' % (box,),
+        description=['initializing', box, 'box'],
+        descriptionDone=['initialize', box, 'box'],
+        ))
+    # There is no need to destroy the box, since the .vagrant directory
+    # got destroyed.
     factory.addStep(ShellCommand(
         name='start-tutorial-box',
-        description=['starting', 'tutorial', 'box'],
-        descriptionDone=['start', 'tutorial', 'box'],
+        description=['starting', box, 'box'],
+        descriptionDone=['start', box, 'box'],
         command=['vagrant', 'up'],
-        workdir='build/docs/gettingstarted/tutorial',
+        workdir='test',
         haltOnFailure=True,
         ))
-
-    ACCEPTANCE_NODES = ["172.16.255.250", "172.16.255.251"]
-    factory.addSteps(_flockerTests(
-        kwargs={},
-        tests=['flocker.acceptance'],
-        env={"FLOCKER_ACCEPTANCE_NODES": ":".join(ACCEPTANCE_NODES)},
-        ))
-
+    factory.addStep(Trial(
+        trial=['vagrant', 'ssh', '--', 'sudo', '/opt/flocker/bin/trial'],
+        # Set lazylogfiles, so that trial.log isn't captured
+        # Trial is being run remotely, so it isn't available
+        lazylogfiles=True,
+        testpath=None,
+        tests='flocker',
+        workdir='test',
+    ))
     factory.addStep(ShellCommand(
-        name='destroy-tutorial-box',
-        description=['destroy', 'tutorial', 'box'],
-        descriptionDone=['destroy', 'tutorial', 'box'],
+        name='destroy-%s-box' % (box,),
+        description=['destroy', box, 'box'],
+        descriptionDone=['destroy', box, 'box'],
         command=['vagrant', 'destroy', '-f'],
-        workdir='build/docs/gettingstarted/tutorial',
+        workdir='test',
         alwaysRun=True,
         ))
     return factory
@@ -196,11 +289,29 @@ def getBuilders(slavenames):
                       category='flocker',
                       factory=buildTutorialBox(),
                       nextSlave=idleSlave),
+        BuilderConfig(name='flocker/installed-package/fedora-20',
+                      builddir='flocker-installed-package-fedora-20',
+                      slavenames=slavenames['fedora-vagrant'],
+                      category='flocker',
+                      factory=test_installed_package(
+                          box='tutorial'),
+                      nextSlave=idleSlave),
+        BuilderConfig(name='flocker/acceptance/vagrant/fedora-20',
+                      builddir='flocker-acceptance-vagrant-fedora-20',
+                      slavenames=slavenames['fedora-vagrant'],
+                      category='flocker',
+                      factory=run_acceptance_tests(
+                          provider='vagrant',
+                          distribution='fedora-20',
+                          ),
+                      nextSlave=idleSlave),
         ]
 
 BUILDERS = [
     'flocker-vagrant-dev-box',
     'flocker-vagrant-tutorial-box',
+    'flocker/installed-package/fedora-20',
+    'flocker/acceptance/vagrant/fedora-20',
     ]
 
 MASTER_RELEASE_RE = r"(master|release/|[0-9]+\.[0-9]+\.[0-9]+((pre|dev)[0-9]+)?)"  # noqa
@@ -223,7 +334,7 @@ def getSchedulers():
                 )
         ),
         Triggerable(
-            name='trigger-flocker-vagrant',
+            name='trigger/built-rpms/fedora-20',
             builderNames=['flocker-vagrant-tutorial-box'],
             codebases={
                 "flocker": {"repository": GITHUB + b"/flocker"},
@@ -245,4 +356,17 @@ def getSchedulers():
             properties=[FixedParameter("github-status", default=False)],
             builderNames=BUILDERS,
             ),
+        Triggerable(
+            name='trigger/built-vagrant-box/flocker-tutorial',
+            builderNames=[
+                'flocker/installed-package/fedora-20',
+                'flocker/acceptance/vagrant/fedora-20',
+            ],
+            codebases={
+                "flocker": {"repository": GITHUB + b"/flocker"},
+            },
+            properties={
+                "github-status": False,
+            },
+        ),
         ]
