@@ -96,7 +96,7 @@ class GitHubStatus(BuildsetStatusReceiver):
         request.update({
             'state': STATE[build.getResults()],
             'target_url': self.parent.getURLForThing(build),
-            'description': build.getText(),
+            'description': " ".join(build.getText()),
             'context': self._simplifyBuilderName(builderName)
             })
 
