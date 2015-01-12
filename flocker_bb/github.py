@@ -18,15 +18,20 @@ from __future__ import absolute_import
 from twisted.python import log
 from txgithub.api import GithubApi as GitHubAPI
 
-from buildbot.status.builder import SUCCESS
+from buildbot.status.results import (
+    SUCCESS, EXCEPTION, FAILURE, WARNINGS, RETRY)
 
 from flocker_bb.buildset_status import BuildsetStatusReceiver
 
+# When a change comes in, report status pending, for all appropriate builders
+# When a build start, report status building
+# When a build stops, repost status finished
 
 import re
-_re_github = re.compile("(?:git@github.com:|https://github.com/)(?P<repo_user>[^/]*)/(?P<repo_name>[^/]*)(?:\.git)?")
+_re_github = re.compile("(?:git@github.com:|https://github.com/)(?P<repo_user>[^/]*)/(?P<repo_name>[^/]*)(?:\.git)?")  # noqa
 
-class GitHubStatus(object):
+
+class GitHubStatus(BuildsetStatusReceiver):
     """
     Send build status to GitHub.
     """
@@ -35,9 +40,67 @@ class GitHubStatus(object):
         """
         Token for GitHub API.
         """
-        self._token = token
-        self._github = GitHubAPI(oauth2_token=self._token)
+        self._github = GitHubAPI(oauth2_token=token)
+        BuildsetStatusReceiver.__init__(self, started=self.buildsetStarted)
 
+    def _sendStatus(self, request):
+        request.update({k: v.encode('utf-8') for k, v in request.iteritems()
+                        if isinstance(v, unicode)})
+        log.msg(format="github request %(request)s", request=request)
+        d = self._github.repos.createStatus(**request)
+        d.addErrback(
+            log.err,
+            'While sending start status to GitHub: ' + repr(request))
+
+    @staticmethod
+    def _simplifyBuilderName(name):
+        name = name.rpartition('flocker-')[2]
+        return name
+
+    def builderAdded(self, builderName, builder):
+        return self
+
+    def buildStarted(self, builderName, build):
+        sourceStamps = [ss.asDict() for ss in build.getSourceStamps()]
+        request, branch = self._getSourceStampData(sourceStamps)
+        if 'sha' not in request:
+            return
+
+        request.update({
+            'state': 'pending',
+            'target_url': self.parent.getURLForThing(build),
+            'description': 'Build started.',
+            'context': self._simplifyBuilderName(builderName)
+            })
+
+        self._sendStatus(request)
+
+    def buildFinished(self, builderName, build, results):
+        sourceStamps = [ss.asDict() for ss in build.getSourceStamps()]
+        request, branch = self._getSourceStampData(sourceStamps)
+
+        got_revision = build.getProperty('got_revision', {})
+        sha = got_revision.get('flocker') or request.get('sha')
+        if not sha:
+            return
+        request['sha'] = sha
+
+        STATE = {
+            SUCCESS: "success",
+            WARNINGS: "success",
+            FAILURE: "failure",
+            EXCEPTION: "error",
+            RETRY: "pending",
+        }
+
+        request.update({
+            'state': STATE[build.getResults()],
+            'target_url': self.parent.getURLForThing(build),
+            'description': build.getText(),
+            'context': self._simplifyBuilderName(builderName)
+            })
+
+        self._sendStatus(request)
 
     def _getSourceStampData(self, sourceStamps):
         request = {}
@@ -55,87 +118,25 @@ class GitHubStatus(object):
 
         return request, branch
 
-    @staticmethod
-    def _simplifyBuilderName(name):
-        name = name.rpartition('flocker-')[2]
-        return name
-
-    def _shouldReportBuild(self, buildRequests):
-        for buildRequest in buildRequests:
-            for prop, value, source in buildRequest['properties']:
-                if prop == 'github-status' and not value:
-                    return False
-        return True
-
     def buildsetStarted(self, (sourceStamps, buildRequests), status):
-        if not self._shouldReportBuild(buildRequests):
-            log.msg(format="Ignoring build because of github-status.")
-            return
-
         request, branch = self._getSourceStampData(sourceStamps)
 
-        if not request.has_key('sha'):
+        if 'sha' not in request:
             return
 
         request.update({
             'state': 'pending',
-            'target_url': status.getBuildbotURL() + 'boxes-flocker?branch=' + branch,
-            'description': 'Starting build.'
+            'description': 'Build pending.'
             })
 
-        log.msg(format="github request %(request)s", request=request)
-        d = self._sendStatus(request)
-        d.addErrback(
-            log.err,
-            'While sending start status to GitHub: ' + repr(request))
-
-    def _sendStatus(self, request):
-        request.update({k: v.encode('utf-8') for k, v in request.iteritems() if isinstance(v, unicode)})
-        return self._github.repos.createStatus(**request)
-
-
-    def buildsetFinished(self, (sourceStamps, buildRequests), status):
-        if not self._shouldReportBuild(buildRequests):
-            log.msg(format="Ignoring build because of github-status.")
-            return
-
-        request, branch = self._getSourceStampData(sourceStamps)
-
-        failed = []
-        revisions = set()
         for buildRequest in buildRequests:
-            build = max(buildRequest['builds'], key=lambda build: build['number'])
-            builderName = self._simplifyBuilderName(build['builderName'])
-            revisions.add([
-                v['flocker'] for (k, v, _) in build['properties']
-                    if k == 'got_revision'][0])
+            r = request.copy()
+            r.update({
+                'context': self._simplifyBuilderName(
+                    buildRequest['builderName']),
+            })
+            self._sendStatus(r)
 
-            if build['results'] != SUCCESS:
-                failed.append(builderName)
-
-        if not request.has_key('sha'):
-            if len(revisions) == 1:
-                request['sha'] = revisions.pop()
-            else:
-                return
-
-        if failed:
-            request['state'] = 'failure'
-            request['description'] = 'Build failed: ' + ', '.join(failed)
-        else:
-            request['state'] = 'success'
-            request['description'] = 'Build succeeded'
-
-        request['target_url'] = status.getBuildbotURL() + 'boxes-flocker?branch=' + branch
-
-        d = self._sendStatus(request)
-        d.addErrback(
-            log.err,
-            'While sending start status to GitHub: ' + repr(request))
 
 def codebaseStatus(codebase, token):
-    writer = GitHubStatus(token=token)
-    status = BuildsetStatusReceiver(
-            started=writer.buildsetStarted,
-            finished=writer.buildsetFinished)
-    return status
+    return GitHubStatus(token=token)
