@@ -189,6 +189,7 @@ def run_acceptance_tests(distribution, provider):
             '--distribution', distribution,
             '--provider', provider,
         ],
+        sigtermTime=5*60,
     ))
     return factory
 
