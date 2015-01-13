@@ -184,6 +184,8 @@ def run_acceptance_tests(distribution, provider):
     factory.addSteps(_flockerTests(
         kwargs={
             'trialMode': [],
+            # Allow 5 minutes for acceptance test runner to shutdown gracefully
+            # In particular, this allows it to clean up the VMs it spawns.
             'sigtermTime': 5*60,
         },
         tests=[],
