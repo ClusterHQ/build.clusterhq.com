@@ -186,5 +186,5 @@ class GitHubStatus(BuildsetStatusReceiver):
             self._sendStatus(r)
 
 
-def codebaseStatus(codebase, token):
+def createGithubStatus(codebase, token):
     return GitHubStatus(token=token)

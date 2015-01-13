@@ -136,9 +136,9 @@ addBuilderModule(maint)
 
 c['status'] = []
 
-from flocker_bb.github import codebaseStatus
+from flocker_bb.github import createGithubStatus
 if privateData['github']['report_status']:
-    c['status'].append(codebaseStatus('flocker', token=privateData['github']['token']))
+    c['status'].append(createGithubStatus('flocker', token=privateData['github']['token']))
 
 from flocker_bb.boxes import FlockerWebStatus as WebStatus
 from buildbot.status.web import authz
