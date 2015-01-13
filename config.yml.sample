@@ -8,6 +8,7 @@ auth:
 zulip:
     user: "<zulip user>"
     password: "<zulip password>"
+    stream: "BuildBot"
 aws:
     identifier: "<aws user>"
     secret_identifier: "<aws password>"
