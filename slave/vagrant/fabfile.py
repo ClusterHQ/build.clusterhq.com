@@ -1,12 +1,25 @@
+# Copyright Hybrid Logic Ltd.
+"""
+Configuration for a buildslave to run vagrant on.
+
+.. warning::
+    Although this code has been tested to produce a working slave the
+    production slave wasn't configured with this code. In particular,
+    it points at the staging buildserver by default.
+"""
+
 from fabric.api import run, task, sudo, put, local
 from twisted.python.filepath import FilePath
 from StringIO import StringIO
 import yaml
 
-# WARNING: Although this code has been tested to produce a working slave
-# the production slave wasn't configured with this code.
 
 def configure_gsutil():
+    """
+    Install certificate and configuration for gsutil.
+
+    This allows the slave to upload vagrant images to google cloud.
+    """
     boto_config = FilePath(__file__).sibling('boto-config.in').getContent()
     output = local('lpass show --notes "google-cert@build.clusterhq.com"',
                    capture=True)
@@ -17,6 +30,9 @@ def configure_gsutil():
 
 @task
 def install(index, password):
+    """
+    Install a buildslave with vagrant installed.
+    """
     run("wget -O /etc/yum.repos.d/virtualbox.repo http://download.virtualbox.org/virtualbox/rpm/fedora/virtualbox.repo")
 
     run("""
