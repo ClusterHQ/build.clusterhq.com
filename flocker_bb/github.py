@@ -22,12 +22,14 @@ from buildbot.status.results import (
     SUCCESS, EXCEPTION, FAILURE, WARNINGS, RETRY)
 
 from flocker_bb.buildset_status import BuildsetStatusReceiver
+from characteristic import attributes
 
 
 import re
 _re_github = re.compile("(?:git@github.com:|https://github.com/)(?P<repo_user>[^/]*)/(?P<repo_name>[^/]*)(?:\.git)?")  # noqa
 
 
+@attributes(['codebase'])
 class GitHubStatus(BuildsetStatusReceiver):
     """
     Send build status to GitHub.
@@ -36,6 +38,8 @@ class GitHubStatus(BuildsetStatusReceiver):
       the buildset.
     - When a build start, report status building.
     - When a build stops, report status finished.
+
+    :ivar codebase: Codebase to report status for.
     """
 
     def __init__(self, token):
@@ -61,13 +65,12 @@ class GitHubStatus(BuildsetStatusReceiver):
             log.err,
             'While sending start status to GitHub: ' + repr(request))
 
-    @staticmethod
-    def _simplifyBuilderName(name):
+    def _simplifyBuilderName(self, name):
         """
         If the builder name starts with the codebase, remove it to avoid
         cluttering the status display with many redundant copies of the name.
         """
-        name = name.rpartition('flocker-')[2]
+        name = name.rpartition(self.codebase + '-')[2]
         return name
 
     def builderAdded(self, builderName, builder):
@@ -77,7 +80,8 @@ class GitHubStatus(BuildsetStatusReceiver):
         :return StatusReceiver: An object that should get notified of events on
             the builder.
         """
-        return self
+        if builderName.startswith(self.codebase + '-'):
+            return self
 
     def buildStarted(self, builderName, build):
         """
@@ -111,7 +115,7 @@ class GitHubStatus(BuildsetStatusReceiver):
         request = self._getSourceStampData(sourceStamps)
 
         got_revision = build.getProperty('got_revision', {})
-        sha = got_revision.get('flocker') or request.get('sha')
+        sha = got_revision.get(self.codebase) or request.get('sha')
         if not sha:
             return
         request['sha'] = sha
@@ -145,7 +149,7 @@ class GitHubStatus(BuildsetStatusReceiver):
         """
         request = {}
         for sourceStamp in sourceStamps:
-            if sourceStamp['codebase'] == "flocker":
+            if sourceStamp['codebase'] == self.codebase:
                 m = _re_github.match(sourceStamp['repository'])
                 request.update(m.groupdict())
 
@@ -185,4 +189,4 @@ class GitHubStatus(BuildsetStatusReceiver):
 
 
 def createGithubStatus(codebase, token):
-    return GitHubStatus(token=token)
+    return GitHubStatus(codebase=codebase, token=token)
