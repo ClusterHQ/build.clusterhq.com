@@ -87,7 +87,7 @@ class GitHubStatus(BuildsetStatusReceiver):
         build.
         """
         sourceStamps = [ss.asDict() for ss in build.getSourceStamps()]
-        request, branch = self._getSourceStampData(sourceStamps)
+        request = self._getSourceStampData(sourceStamps)
         if 'sha' not in request:
             return
 
@@ -108,7 +108,7 @@ class GitHubStatus(BuildsetStatusReceiver):
         build, and the build result.
         """
         sourceStamps = [ss.asDict() for ss in build.getSourceStamps()]
-        request, branch = self._getSourceStampData(sourceStamps)
+        request = self._getSourceStampData(sourceStamps)
 
         got_revision = build.getProperty('got_revision', {})
         sha = got_revision.get('flocker') or request.get('sha')
@@ -152,13 +152,11 @@ class GitHubStatus(BuildsetStatusReceiver):
                 if sourceStamp['revision']:
                     request['sha'] = sourceStamp['revision']
 
-                branch = sourceStamp['branch']
-
                 break
         else:
             return {}, ''
 
-        return request, branch
+        return request
 
     def buildsetStarted(self, (sourceStamps, buildRequests), status):
         """
@@ -167,7 +165,7 @@ class GitHubStatus(BuildsetStatusReceiver):
         Reports to github that builds are pending, for each build
         request comprising this buildset.
         """
-        request, branch = self._getSourceStampData(sourceStamps)
+        request = self._getSourceStampData(sourceStamps)
 
         if 'sha' not in request:
             return
