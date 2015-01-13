@@ -42,6 +42,12 @@ class GitHubStatus(BuildsetStatusReceiver):
     :ivar codebase: Codebase to report status for.
     """
 
+    # There are a couple of ways this can be tested.
+    # - Point this at a clone of the flocker repository. This involves changing
+    #   a bunch of references to the official one in the repository.
+    # - Changing the logging below to log to zulip, instead of reporting to
+    #   github.
+
     def __init__(self, token):
         """
         :param token: Token for GitHub API.
