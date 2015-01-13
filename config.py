@@ -87,7 +87,7 @@ for base, slaveConfig in privateData['slaves'].items():
     else:
         for i, password in enumerate(slaveConfig['passwords']):
             name = '%s-%d' % (base, i)
-            SLAVENAMES[base] = [name]
+            SLAVENAMES[base].append(name)
             c['slaves'].append(BuildSlave(name, password=password))
 
 
