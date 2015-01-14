@@ -1,0 +1,18 @@
+[Unit]
+Description=Fedora Vagrant Slave
+
+[Service]
+ExecStart=/usr/bin/twistd \
+    --nodaemon \
+    --pidfile= \
+    --python=/home/buildslave/fedora-vagrant/buildbot.tac
+
+WorkingDirectory=/home/buildslave/fedora-vagrant
+
+User=buildslave
+Group=buildslave
+
+Restart=always
+
+[Install]
+WantedBy=multi-user.target

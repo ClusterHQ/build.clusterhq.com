@@ -534,7 +534,8 @@ def idleSlave(builder, slavebuilders):
 
 def getBuilders(slavenames):
     builders = [
-        BuilderConfig(name='flocker',
+        BuilderConfig(name='flocker-fedora-20',
+                      builddir='flocker',
                       slavenames=slavenames['fedora'],
                       category='flocker',
                       factory=makeFactory(b'python2.7'),
@@ -619,7 +620,7 @@ def getBuilders(slavenames):
     return builders
 
 BUILDERS = [
-    'flocker',
+    'flocker-fedora-20',
     'flocker-ubuntu-14.04',
     'flocker-centos-7',
     'flocker-twisted-trunk',
