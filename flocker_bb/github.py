@@ -76,7 +76,8 @@ class GitHubStatus(BuildsetStatusReceiver):
         If the builder name starts with the codebase, remove it to avoid
         cluttering the status display with many redundant copies of the name.
         """
-        name = name.rpartition(self.codebase + '-')[2]
+        if name.startswith(self.codebase):
+            name = name[len(self.codebase)+1:]
         return name
 
     def builderAdded(self, builderName, builder):
@@ -86,7 +87,7 @@ class GitHubStatus(BuildsetStatusReceiver):
         :return StatusReceiver: An object that should get notified of events on
             the builder.
         """
-        if builderName.startswith(self.codebase + '-'):
+        if builderName.startswith(self.codebase):
             return self
 
     def buildStarted(self, builderName, build):
