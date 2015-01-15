@@ -538,7 +538,6 @@ BUILDERS = [
     'flocker-coverage',
     'flocker-lint',
     'flocker-docs',
-    'flocker-native-rpm-fedora-20',
     'flocker-zfs-head',
     'flocker-admin',
 ] + [
