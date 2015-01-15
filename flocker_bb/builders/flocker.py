@@ -7,8 +7,7 @@ from buildbot.steps.python import Sphinx
 from buildbot.steps.transfer import DirectoryUpload, StringDownload
 from buildbot.steps.master import MasterShellCommand
 from buildbot.steps.source.git import Git
-from buildbot.process.properties import Interpolate, Property
-from buildbot.steps.package.rpm import RpmLint
+from buildbot.process.properties import Interpolate
 from buildbot.steps.trigger import Trigger
 from buildbot.config import error
 
