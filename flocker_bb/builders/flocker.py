@@ -23,8 +23,6 @@ from ..steps import (
     isMasterBranch,
     )
 
-from ..mock import MockBuildSRPM, MockRebuild
-
 # This is where temporary files associated with a build will be dumped.
 TMPDIR = Interpolate(b"%(prop:workdir)s/tmp-%(prop:buildnumber)s")
 
