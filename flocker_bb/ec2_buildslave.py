@@ -1,4 +1,3 @@
-# Copied form e081bd2d0f4e959ad90be9f83a7bd5ce58001cee
 # This file is part of Buildbot.  Buildbot is free software: you can
 # redistribute it and/or modify it under the terms of the GNU General Public
 # License as published by the Free Software Foundation, version 2.
@@ -64,6 +63,7 @@ from twisted.internet import defer
 from twisted.internet import reactor
 
 from buildbot.buildslave.base import BuildSlave
+from buildbot import config
 
 from flocker_bb.ec2 import EC2
 
@@ -88,6 +88,9 @@ class EC2BuildSlave(BuildSlave):
         BuildSlave.__init__(
             self, name, password, max_builds, notify_on_missing,
             missing_timeout, properties, locks)
+        if build_wait_timeout < 0:
+            config.error("%s: %s: Can't wait for negative time."
+                         % (self.__class__, name))
         self.build_wait_timeout = build_wait_timeout
         # Uggh
         if keepalive_interval is not None:
@@ -132,8 +135,6 @@ class EC2BuildSlave(BuildSlave):
 
     def _setBuildWaitTimer(self):
         self._clearBuildWaitTimer()
-        if self.build_wait_timeout <= 0:
-            return
         self.build_wait_timer = reactor.callLater(
             self.build_wait_timeout, self.ec2.stop)
 
