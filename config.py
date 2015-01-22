@@ -36,7 +36,7 @@ if 'zulip' in privateData:
 c['slavePortnum'] = 9989
 
 from flocker_bb.password import generate_password
-from flocker_bb.ec2_buildslave import EC2LatentBuildSlave
+from flocker_bb.ec2_buildslave import EC2BuildSlave
 from buildbot.buildslave import BuildSlave
 
 cloudInit = FilePath(__file__).sibling("slave").child("cloud-init.sh").getContent()
@@ -50,16 +50,14 @@ for base, slaveConfig in privateData['slaves'].items():
         for i in range(slaveConfig['slaves']):
             name = '%s-%d' % (base, i)
             password = generate_password(32)
-            ami = r'.*/%s$' % (slaveConfig['ami'],)
 
             SLAVENAMES[base].append(name)
             c['slaves'].append(
-                EC2LatentBuildSlave(
+                EC2BuildSlave(
                     name, password,
                     instance_type=slaveConfig['instance_type'],
                     build_wait_timeout=50*60,
-                    valid_ami_owners=[121466501720],
-                    valid_ami_location_regex=ami,
+                    image_name=slaveConfig['ami'],
                     region='us-west-2',
                     security_name='ssh',
                     keypair_name='hybrid-master',
@@ -74,14 +72,11 @@ for base, slaveConfig in privateData['slaves'].items():
                         'buildmaster_host': privateData['buildmaster']['host'],
                         'buildmaster_port': c['slavePortnum'],
                         },
-                    spot_instance='max_spot_price' in slaveConfig,
-                    max_spot_price=slaveConfig.get('max_spot_price', None),
                     keepalive_interval=60,
                     tags={
-                        u'Name': name,
-                        u'Image': slaveConfig['ami'],
-                        u'Class': base,
-                        u'BuildMaster': privateData['buildmaster']['host'],
+                        'Image': slaveConfig['ami'],
+                        'Class': base,
+                        'BuildMaster': privateData['buildmaster']['host'],
                         },
                     ))
     else:
@@ -136,9 +131,9 @@ addBuilderModule(maint)
 
 c['status'] = []
 
-from flocker_bb.github import codebaseStatus
+from flocker_bb.github import createGithubStatus
 if privateData['github']['report_status']:
-    c['status'].append(codebaseStatus('flocker', token=privateData['github']['token']))
+    c['status'].append(createGithubStatus('flocker', token=privateData['github']['token']))
 
 from flocker_bb.boxes import FlockerWebStatus as WebStatus
 from buildbot.status.web import authz

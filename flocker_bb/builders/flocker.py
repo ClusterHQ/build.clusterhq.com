@@ -7,8 +7,7 @@ from buildbot.steps.python import Sphinx
 from buildbot.steps.transfer import DirectoryUpload, StringDownload
 from buildbot.steps.master import MasterShellCommand
 from buildbot.steps.source.git import Git
-from buildbot.process.properties import Interpolate, Property
-from buildbot.steps.package.rpm import RpmLint
+from buildbot.process.properties import Interpolate
 from buildbot.steps.trigger import Trigger
 from buildbot.config import error
 
@@ -22,8 +21,6 @@ from ..steps import (
     pip,
     isMasterBranch,
     )
-
-from ..mock import MockBuildSRPM, MockRebuild
 
 # This is where temporary files associated with a build will be dumped.
 TMPDIR = Interpolate(b"%(prop:workdir)s/tmp-%(prop:buildnumber)s")
@@ -307,7 +304,11 @@ def makeInternalDocsFactory():
     factory.addStep(sphinxBuild(
         "linkcheck", "build/docs",
         logfiles={'errors': '_build/linkcheck/output.txt'},
-        haltOnFailure=False))
+        haltOnFailure=False,
+        flunkOnWarnings=False,
+        flunkOnFailure=False,
+        warnOnFailure=True,
+        ))
     factory.addStep(sphinxBuild("html", "build/docs"))
     factory.addStep(DirectoryUpload(
         b"docs/_build/html",
@@ -412,59 +413,6 @@ def makeOmnibusFactory(distribution, triggerSchedulers=()):
     return factory
 
 
-def makeNativeRPMFactory():
-    branch = "%(src:flocker:branch)s"
-    factory = getFlockerFactory(python="python2.7")
-    factory.addStep(ShellCommand(
-        name='build-sdist',
-        description=["building", "sdist"],
-        descriptionDone=["build", "sdist"],
-        command=[
-            virtualenvBinary('python'),
-            "setup.py", "sdist", "generate_spec",
-            ],
-        haltOnFailure=True))
-    factory.addStep(MockBuildSRPM(
-        root='fedora-20-x86_64',
-        resultdir='dist',
-        spec='python-flocker.spec',
-        sources='dist',
-        ))
-    factory.addStep(MockRebuild(
-        root='fedora-20-x86_64',
-        resultdir='dist',
-        srpm=Interpolate('dist/%(prop:srpm)s'),
-        ))
-    factory.addStep(ShellCommand(
-        name="create-repo-directory",
-        description=["creating", "repo", "directory"],
-        descriptionDone=["create", "repo", "directory"],
-        command=["mkdir", "repo"],
-        haltOnFailure=True))
-    factory.addStep(ShellCommand(
-        name="populate-repo",
-        description=["populating", "repo"],
-        descriptionDone=["populate", "repo"],
-        command=["cp", "-t", "../repo", Property('srpm'), Property('rpm')],
-        workdir='build/dist',
-        haltOnFailure=True))
-    factory.addSteps(createRepository("fedora-20"))
-    factory.addStep(DirectoryUpload(
-        Interpolate('repo'),
-        Interpolate(b"private_html/fedora/20/x86_64/%s/" % (branch,)),
-        url=Interpolate(
-            b"/results/fedora/20/x86_64/%s/" % (branch,),
-            ),
-        name="upload-repo",
-        ))
-    factory.addStep(RpmLint(
-        [Property('srpm'), Property('rpm')],
-        workdir="build/dist",
-    ))
-
-    return factory
-
-
 from buildbot.config import BuilderConfig
 from buildbot.schedulers.basic import AnyBranchScheduler
 from buildbot.schedulers.forcesched import (
@@ -508,7 +456,8 @@ def idleSlave(builder, slavebuilders):
 
 def getBuilders(slavenames):
     builders = [
-        BuilderConfig(name='flocker',
+        BuilderConfig(name='flocker-fedora-20',
+                      builddir='flocker',
                       slavenames=slavenames['fedora'],
                       category='flocker',
                       factory=makeFactory(b'python2.7'),
@@ -554,12 +503,6 @@ def getBuilders(slavenames):
                       category='flocker',
                       factory=makeInternalDocsFactory(),
                       nextSlave=idleSlave),
-        BuilderConfig(name='flocker-native-rpm-fedora-20',
-                      builddir='flocker-rpms',
-                      slavenames=slavenames['fedora'],
-                      category='flocker',
-                      factory=makeNativeRPMFactory(),
-                      nextSlave=idleSlave),
         BuilderConfig(name='flocker-admin',
                       slavenames=slavenames['fedora'],
                       category='flocker',
@@ -593,14 +536,13 @@ def getBuilders(slavenames):
     return builders
 
 BUILDERS = [
-    'flocker',
+    'flocker-fedora-20',
     'flocker-ubuntu-14.04',
     'flocker-centos-7',
     'flocker-twisted-trunk',
     'flocker-coverage',
     'flocker-lint',
     'flocker-docs',
-    'flocker-native-rpm-fedora-20',
     'flocker-zfs-head',
     'flocker-admin',
 ] + [
