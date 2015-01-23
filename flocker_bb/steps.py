@@ -153,6 +153,9 @@ class MergeForward(Source):
 
     @staticmethod
     def _isMaster(branch):
+        """
+        Is this branch master?
+        """
         return branch == 'master'
 
     _RELEASE_TAG_RE = re.compile(
@@ -160,6 +163,9 @@ class MergeForward(Source):
 
     @classmethod
     def _isRelease(cls, branch):
+        """
+        Is this a release branch or tag?
+        """
         return (branch.startswith('release/')
                 or cls._RELEASE_TAG_RE.match(branch))
 
@@ -168,6 +174,11 @@ class MergeForward(Source):
 
     @classmethod
     def mergeTarget(cls, branch):
+        """
+        Determine which branch to merge against.
+
+        :return: The branch to merge against or `None`.
+        """
         # Don't merge forward on master or release branches.
         if cls._isMaster(branch) or cls._isRelease(branch):
             return None
@@ -182,14 +193,15 @@ class MergeForward(Source):
         return "master"
 
     def startVC(self, branch, revision, patch):
-        self.stdio_log = self.addLog('stdio')
-
         self.step_status.setText(['merging', 'forward'])
+
         merge_branch = self.mergeTarget(branch)
+        # If we aren't merging against anything, just skip this step.
         if merge_branch is None:
             self.finished(SKIPPED)
             return
 
+        self.stdio_log = self.addLog('stdio')
         d = defer.succeed(None)
         d.addCallback(lambda _: self._fetch(merge_branch))
         d.addCallback(self._getCommitDate)
