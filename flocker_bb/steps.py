@@ -7,7 +7,7 @@ from buildbot.steps.shell import ShellCommand
 from buildbot.steps.source.git import Git
 from buildbot.steps.source.base import Source
 from buildbot.process.factory import BuildFactory
-from buildbot.status.results import SUCCESS
+from buildbot.status.results import SUCCESS, SKIPPED
 from buildbot.process import buildstep
 from buildbot.process.properties import renderer
 
@@ -155,27 +155,45 @@ class MergeForward(Source):
     def _isMaster(branch):
         return branch == 'master'
 
-    @staticmethod
-    def _isRelease(branch):
-        return (branch.startswith('release/') or re.match('^[0-9]+\.[0-9]+\.[0-9]+(?:dev[0-9]+|pre[0-9]+)?$', branch))
+    _RELEASE_TAG_RE = re.compile(
+        '^[0-9]+\.[0-9]+\.[0-9]+(?:dev[0-9]+|pre[0-9]+)?$')
 
+    @classmethod
+    def _isRelease(cls, branch):
+        return (branch.startswith('release/')
+                or cls._RELEASE_TAG_RE.match(branch))
+
+    _MAINTENCE_BRANCH_RE = re.compile(
+        '^release-maintence/(?P<target>[^/]*)/(?P<branch>.*)')
+
+    @classmethod
+    def mergeTarget(cls, branch):
+        # Don't merge forward on master or release branches.
+        if cls._isMaster(branch) or cls._isRelease(branch):
+            return None
+
+        # If we are on a release-maintence branch,
+        # merge against the corresponding release
+        match = cls._MAINTENCE_BRANCH_RE.match(branch)
+        if match:
+            return "release/%(target)s" % match.groupdict()
+
+        # Otherwise merge against master.
+        return "master"
 
     def startVC(self, branch, revision, patch):
         self.stdio_log = self.addLog('stdio')
 
         self.step_status.setText(['merging', 'forward'])
-        d = defer.succeed(None)
-        if not self._isMaster(branch):
-            d.addCallback(lambda _: self._fetch())
-        if not (self._isMaster(branch) or self._isRelease(branch)):
-            d.addCallback(self._getCommitDate)
-            d.addCallback(self._merge)
-        if self._isMaster(branch):
-            d.addCallback(lambda _: self._getPreviousVersion())
-        else:
-            d.addCallback(lambda _: self._getMergeBase())
-        d.addCallback(self._setLintVersion)
+        merge_branch = self.mergeTarget(branch)
+        if merge_branch is None:
+            self.finished(SKIPPED)
+            return
 
+        d = defer.succeed(None)
+        d.addCallback(lambda _: self._fetch(merge_branch))
+        d.addCallback(self._getCommitDate)
+        d.addCallback(self._merge)
         d.addCallback(lambda _: SUCCESS)
         d.addCallbacks(self.finished, self.checkDisconnect)
         d.addErrback(self.failed)
@@ -183,12 +201,14 @@ class MergeForward(Source):
     def finished(self, results):
         if results == SUCCESS:
             self.step_status.setText(['merge', 'forward'])
+        elif results == SKIPPED:
+            self.step_status.setText(['did', 'not', 'merge'])
         else:
             self.step_status.setText(['merge', 'forward', 'failed'])
         return Source.finished(self, results)
 
-    def _fetch(self):
-        return self._dovccmd(['fetch', self.repourl, 'master'])
+    def _fetch(self, branch='master'):
+        return self._dovccmd(['fetch', self.repourl, branch])
 
     def _merge(self, date):
         # We re-use the date of the latest commit from the branch
@@ -200,17 +220,6 @@ class MergeForward(Source):
         return self._dovccmd(['merge',
                               '--no-ff', '--no-stat',
                               'FETCH_HEAD'])
-
-    def _getPreviousVersion(self):
-        return self._dovccmd(['rev-parse', 'HEAD~1'],
-                             collectStdout=True)
-
-    def _getMergeBase(self):
-        return self._dovccmd(['merge-base', 'HEAD', 'FETCH_HEAD'],
-                             collectStdout=True)
-
-    def _setLintVersion(self, version):
-        self.setProperty("lint_revision", version.strip(), "merge-forward")
 
     def _getCommitDate(self, date):
         return self._dovccmd(['log', '--format=%ci', '-n1'],
