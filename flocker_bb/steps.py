@@ -194,8 +194,8 @@ class MergeForward(Source):
         # We re-use the date of the latest commit from the branch
         # to ensure that the commit hash is consistent.
         self.env.update({
-            'GIT_AUTHOR_DATE': date,
-            'GIT_COMMITTER_DATE': date,
+            'GIT_AUTHOR_DATE': date.strip(),
+            'GIT_COMMITTER_DATE': date.strip(),
         })
         return self._dovccmd(['merge',
                               '--no-ff', '--no-stat',
