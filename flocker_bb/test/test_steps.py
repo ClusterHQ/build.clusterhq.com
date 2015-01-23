@@ -7,9 +7,6 @@ from ..steps import (
     MergeForward)
 
 
-COMMIT_HASH = "deadbeef00000000000000000000000000000000"
-COMMIT_HASH_NL = COMMIT_HASH + '\n'
-
 COMMIT_DATE = '2014-09-28 11:13:09 +0200'
 COMMIT_DATE_NL = COMMIT_DATE + '\n'
 
