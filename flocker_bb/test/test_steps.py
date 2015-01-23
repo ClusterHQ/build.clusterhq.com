@@ -96,8 +96,8 @@ class TestMergeForward(sourcesteps.SourceStepMixin, TestCase):
         self.expectOutcome(result=SUCCESS, status_text=['merge', 'forward'])
         return self.runStep()
 
-    def test_maintence_branch(self):
-        self.buildStep('release-maintence/flocker-1.2.3/destroy-the-sun-5000')
+    def test_maintenance_branch(self):
+        self.buildStep('release-maintenance/flocker-1.2.3/destroy-the-sun-500')
         self.expectCommands(
             ExpectShell(workdir='wkdir',
                         command=['git', 'fetch',

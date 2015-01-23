@@ -169,8 +169,8 @@ class MergeForward(Source):
         return (branch.startswith('release/')
                 or cls._RELEASE_TAG_RE.match(branch))
 
-    _MAINTENCE_BRANCH_RE = re.compile(
-        '^release-maintence/(?P<target>[^/]*)/(?P<branch>.*)')
+    _MAINTENANCE_BRANCH_RE = re.compile(
+        '^release-maintenance/(?P<target>[^/]*)/(?P<branch>.*)')
 
     @classmethod
     def mergeTarget(cls, branch):
@@ -183,9 +183,9 @@ class MergeForward(Source):
         if cls._isMaster(branch) or cls._isRelease(branch):
             return None
 
-        # If we are on a release-maintence branch,
+        # If we are on a release-maintenance branch,
         # merge against the corresponding release
-        match = cls._MAINTENCE_BRANCH_RE.match(branch)
+        match = cls._MAINTENANCE_BRANCH_RE.match(branch)
         if match:
             return "release/%(target)s" % match.groupdict()
 
