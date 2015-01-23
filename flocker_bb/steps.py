@@ -22,6 +22,7 @@ GITHUB = b"https://github.com/ClusterHQ"
 
 TWISTED_GIT = b'https://github.com/twisted/twisted'
 
+
 def buildVirtualEnv(python, useSystem=False):
     steps = []
     if useSystem:
@@ -30,19 +31,19 @@ def buildVirtualEnv(python, useSystem=False):
         command = [python, VIRTUALENV_PY]
     command += ["--clear", Interpolate(VIRTUALENV_DIR)],
     steps.append(ShellCommand(
-            name="build-virtualenv",
-            description=["build", "virtualenv"],
-            descriptionDone=["built", "virtualenv"],
-            command=command,
-            haltOnFailure=True,
-            ))
+        name="build-virtualenv",
+        description=["build", "virtualenv"],
+        descriptionDone=["built", "virtualenv"],
+        command=command,
+        haltOnFailure=True,
+    ))
     steps.append(ShellCommand(
-            name="clean-virtualenv-builds",
-            description=["cleaning", "virtualenv"],
-            descriptionDone=["clean", "virtualenv"],
-            command=["rm", "-rf" , Interpolate(path.join(VIRTUALENV_DIR, "build"))],
-            haltOnFailure=True,
-            ))
+        name="clean-virtualenv-builds",
+        description=["cleaning", "virtualenv"],
+        descriptionDone=["clean", "virtualenv"],
+        command=["rm", "-rf", Interpolate(path.join(VIRTUALENV_DIR, "build"))],
+        haltOnFailure=True,
+    ))
     return steps
 
 
@@ -88,7 +89,6 @@ def asJSON(data):
     return render
 
 
-
 class URLShellCommand(ShellCommand):
     renderables = ["urls"]
 
@@ -129,7 +129,6 @@ class MasterWriteFile(buildstep.BuildStep):
         self.finished(SUCCESS)
 
 
-
 class MergeForward(Source):
     """
     Merge with master.
@@ -139,20 +138,18 @@ class MergeForward(Source):
     descriptionDone = ['merge', 'forward']
     haltOnFailure = True
 
-
     def __init__(self, repourl, branch='master',
-            **kwargs):
+                 **kwargs):
         self.repourl = repourl
         self.branch = branch
         kwargs['env'] = {
-                'GIT_AUTHOR_EMAIL': 'buildbot@clusterhq.com',
-                'GIT_AUTHOR_NAME': 'ClusterHQ Buildbot',
-                'GIT_COMMITTER_EMAIL': 'buildbot@clusterhq.com',
-                'GIT_COMMITTER_NAME': 'ClusterHQ Buildbot',
-                }
+            'GIT_AUTHOR_EMAIL': 'buildbot@clusterhq.com',
+            'GIT_AUTHOR_NAME': 'ClusterHQ Buildbot',
+            'GIT_COMMITTER_EMAIL': 'buildbot@clusterhq.com',
+            'GIT_COMMITTER_NAME': 'ClusterHQ Buildbot',
+        }
         Source.__init__(self, **kwargs)
         self.addFactoryArguments(repourl=repourl, branch=branch)
-
 
     @staticmethod
     def _isMaster(branch):
@@ -206,19 +203,21 @@ class MergeForward(Source):
 
     def _getPreviousVersion(self):
         return self._dovccmd(['rev-parse', 'HEAD~1'],
-                              collectStdout=True)
+                             collectStdout=True)
 
     def _getMergeBase(self):
         return self._dovccmd(['merge-base', 'HEAD', 'FETCH_HEAD'],
-                              collectStdout=True)
+                             collectStdout=True)
 
     def _setLintVersion(self, version):
         self.setProperty("lint_revision", version.strip(), "merge-forward")
 
     def _getCommitDate(self, date):
-        return self._dovccmd(['log', '--format=%ci', '-n1'], collectStdout=True)
+        return self._dovccmd(['log', '--format=%ci', '-n1'],
+                             collectStdout=True)
 
-    def _dovccmd(self, command, abandonOnFailure=True, collectStdout=False, extra_args={}):
+    def _dovccmd(self, command, abandonOnFailure=True, collectStdout=False,
+                 extra_args={}):
         cmd = buildstep.RemoteShellCommand(self.workdir, ['git'] + command,
                                            env=self.env,
                                            logEnviron=self.logEnviron,
@@ -226,6 +225,7 @@ class MergeForward(Source):
                                            **extra_args)
         cmd.useLog(self.stdio_log, False)
         d = self.runCommand(cmd)
+
         def evaluateCommand(cmd):
             if abandonOnFailure and cmd.rc != 0:
                 log.msg("Source step failed while running command %s" % cmd)
@@ -236,6 +236,7 @@ class MergeForward(Source):
                 return cmd.rc
         d.addCallback(lambda _: evaluateCommand(cmd))
         return d
+
 
 def pip(what, packages):
     """
@@ -273,6 +274,7 @@ def isBranch(codebase, branchName, prefix=False):
         else:
             return branch == branchName
     return test
+
 
 def isMasterBranch(codebase):
     return isBranch(codebase, 'master')
