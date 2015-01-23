@@ -7,7 +7,7 @@ from buildbot.steps.shell import ShellCommand
 from buildbot.steps.source.git import Git
 from buildbot.steps.source.base import Source
 from buildbot.process.factory import BuildFactory
-from buildbot.status.results import SUCCESS, SKIPPED
+from buildbot.status.results import SUCCESS
 from buildbot.process import buildstep
 from buildbot.process.properties import renderer
 
@@ -193,19 +193,25 @@ class MergeForward(Source):
         return "master"
 
     def startVC(self, branch, revision, patch):
+        self.stdio_log = self.addLog('stdio')
         self.step_status.setText(['merging', 'forward'])
 
         merge_branch = self.mergeTarget(branch)
-        # If we aren't merging against anything, just skip this step.
-        if merge_branch is None:
-            self.finished(SKIPPED)
-            return
 
-        self.stdio_log = self.addLog('stdio')
         d = defer.succeed(None)
-        d.addCallback(lambda _: self._fetch(merge_branch))
-        d.addCallback(self._getCommitDate)
-        d.addCallback(self._merge)
+        if merge_branch is None:
+            # If we aren't merging anything, just get the previous
+            # version, to check coverage against (lint_revision).
+            d.addCallback(lambda _: self._getPreviousVersion())
+        else:
+            # If we are merging, fetch that version, merge and
+            # record the merge base to lint against.
+            d.addCallback(lambda _: self._fetch(merge_branch))
+            d.addCallback(lambda _: self._getCommitDate())
+            d.addCallback(self._merge)
+            d.addCallback(lambda _: self._getMergeBase())
+
+        d.addCallback(self._setLintVersion)
         d.addCallback(lambda _: SUCCESS)
         d.addCallbacks(self.finished, self.checkDisconnect)
         d.addErrback(self.failed)
@@ -213,8 +219,6 @@ class MergeForward(Source):
     def finished(self, results):
         if results == SUCCESS:
             self.step_status.setText(['merge', 'forward'])
-        elif results == SKIPPED:
-            self.step_status.setText(['did', 'not', 'merge'])
         else:
             self.step_status.setText(['merge', 'forward', 'failed'])
         return Source.finished(self, results)
@@ -233,7 +237,18 @@ class MergeForward(Source):
                               '--no-ff', '--no-stat',
                               'FETCH_HEAD'])
 
-    def _getCommitDate(self, date):
+    def _getPreviousVersion(self):
+        return self._dovccmd(['rev-parse', 'HEAD~1'],
+                             collectStdout=True)
+
+    def _getMergeBase(self):
+        return self._dovccmd(['merge-base', 'HEAD', 'FETCH_HEAD'],
+                             collectStdout=True)
+
+    def _setLintVersion(self, version):
+        self.setProperty("lint_revision", version.strip(), "merge-forward")
+
+    def _getCommitDate(self):
         return self._dovccmd(['log', '--format=%ci', '-n1'],
                              collectStdout=True)
 

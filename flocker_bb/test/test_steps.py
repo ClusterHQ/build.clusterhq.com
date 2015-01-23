@@ -1,11 +1,14 @@
 from twisted.trial.unittest import TestCase
 from buildbot.test.util import sourcesteps
-from buildbot.status.results import SUCCESS, SKIPPED
+from buildbot.status.results import SUCCESS
 from buildbot.test.fake.remotecommand import ExpectShell
 
 from ..steps import (
     MergeForward)
 
+
+COMMIT_HASH = "deadbeef00000000000000000000000000000000"
+COMMIT_HASH_NL = COMMIT_HASH + '\n'
 
 COMMIT_DATE = '2014-09-28 11:13:09 +0200'
 COMMIT_DATE_NL = COMMIT_DATE + '\n'
@@ -40,8 +43,15 @@ class TestMergeForward(sourcesteps.SourceStepMixin, TestCase):
 
     def test_master(self):
         self.buildStep('master')
-        self.expectCommands()
-        self.expectOutcome(result=SKIPPED, status_text=['did', 'not', 'merge'])
+        self.expectCommands(
+            ExpectShell(workdir='wkdir',
+                        command=['git', 'rev-parse', 'HEAD~1'],
+                        env=self.env)
+            + ExpectShell.log('stdio', stdout=COMMIT_HASH_NL)
+            + 0
+        )
+        self.expectOutcome(result=SUCCESS, status_text=['merge', 'forward'])
+        self.expectProperty('lint_revision', COMMIT_HASH)
         return self.runStep()
 
     def test_branch(self):
@@ -64,14 +74,26 @@ class TestMergeForward(sourcesteps.SourceStepMixin, TestCase):
                                  'FETCH_HEAD'],
                         env=self.date_env)
             + 0,
+            ExpectShell(workdir='wkdir',
+                        command=['git', 'merge-base', 'HEAD', 'FETCH_HEAD'],
+                        env=self.date_env)
+            + ExpectShell.log('stdio', stdout=COMMIT_HASH_NL)
+            + 0,
         )
         self.expectOutcome(result=SUCCESS, status_text=['merge', 'forward'])
+        self.expectProperty('lint_revision', COMMIT_HASH)
         return self.runStep()
 
     def test_releaseBranch(self):
         self.buildStep('release/flocker-1.2.3')
-        self.expectCommands()
-        self.expectOutcome(result=SKIPPED, status_text=['did', 'not', 'merge'])
+        self.expectCommands(
+            ExpectShell(workdir='wkdir',
+                        command=['git', 'rev-parse', 'HEAD~1'],
+                        env=self.env)
+            + ExpectShell.log('stdio', stdout=COMMIT_HASH_NL)
+            + 0
+        )
+        self.expectOutcome(result=SUCCESS, status_text=['merge', 'forward'])
         return self.runStep()
 
     def test_maintence_branch(self):
@@ -94,6 +116,12 @@ class TestMergeForward(sourcesteps.SourceStepMixin, TestCase):
                                  'FETCH_HEAD'],
                         env=self.date_env)
             + 0,
+            ExpectShell(workdir='wkdir',
+                        command=['git', 'merge-base', 'HEAD', 'FETCH_HEAD'],
+                        env=self.date_env)
+            + ExpectShell.log('stdio', stdout=COMMIT_HASH_NL)
+            + 0,
         )
         self.expectOutcome(result=SUCCESS, status_text=['merge', 'forward'])
+        self.expectProperty('lint_revision', COMMIT_HASH)
         return self.runStep()
