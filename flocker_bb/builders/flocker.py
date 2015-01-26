@@ -507,7 +507,6 @@ def getBuilders(slavenames):
                       slavenames=slavenames['fedora'],
                       category='flocker',
                       factory=makeAdminFactory(),
-                      locks=[functionalLock.access('counting')],
                       nextSlave=idleSlave),
         ]
     for distribution, config in OMNIBUS_DISTRIBUTIONS.items():
