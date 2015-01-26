@@ -68,6 +68,20 @@ def slavebuilder_buildStarted(self):
         self.slave.buildStarted(self)
 
 
+from buildbot.process.buildrequestdistributor import BasicBuildChooser
+
+
+class NoFallBackBuildChooser(BasicBuildChooser):
+    """
+    BuildChooser that doesn't fall back to rejected slaves.
+    In particular, builds with locks won't be assigned before a lock is ready.
+    """
+
+    def __init__(self, bldr, master):
+        BasicBuildChooser.__init__(self, bldr, master)
+        self.rejectedSlaves = None
+
+
 def apply_patches():
     log.msg("Apply flocker_bb.monkeypatch.")
     from buildbot.process.buildrequestdistributor import (
@@ -77,3 +91,6 @@ def apply_patches():
     BotMaster.maybeStartBuildsForSlave = botmaster_maybeStartBuildsForSlave
     from buildbot.process.slavebuilder import SlaveBuilder
     SlaveBuilder.buildStarted = slavebuilder_buildStarted
+    from buildbot.process.buildrequestdistributor import (
+        BuildRequestDistributor)
+    BuildRequestDistributor.BuildChooser = NoFallBackBuildChooser
