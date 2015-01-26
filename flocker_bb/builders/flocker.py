@@ -523,16 +523,6 @@ def getBuilders(slavenames):
                 nextSlave=idleSlave,
                 ))
 
-    # Distribute builders that have locks accross slaves.
-    # This assumes there is only a single type of lock.
-    locked_builders = sorted([b for b in builders if b.locks],
-                             key=lambda b: b.slavenames)
-    for slavenames, slave_builders in groupby(locked_builders,
-                                              key=lambda b: b.slavenames):
-        for builder, slavename in zip(slave_builders, slavenames):
-            print builder.name, slavename
-            builder.slavenames = [slavename]
-
     return builders
 
 BUILDERS = [
