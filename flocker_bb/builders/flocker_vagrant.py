@@ -319,7 +319,7 @@ BUILDERS = [
     'flocker/acceptance/vagrant/fedora-20',
     ]
 
-MASTER_RELEASE_RE = r"(master|release/|[0-9]+\.[0-9]+\.[0-9]+((pre|dev)[0-9]+)?)"  # noqa
+from ..steps import MergeForward
 
 
 def getSchedulers():
@@ -332,7 +332,9 @@ def getSchedulers():
                 "flocker": {"repository": GITHUB + b"/flocker"},
             },
             change_filter=ChangeFilter(
-                branch_re=MASTER_RELEASE_RE,
+                branch_fn=lambda branch:
+                    (MergeForward._isMaster(branch)
+                        or MergeForward._isRelease(branch)),
                 )
         ),
         Triggerable(
