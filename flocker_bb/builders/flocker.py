@@ -348,7 +348,7 @@ def makeInternalDocsFactory():
             Interpolate('%s/%s/docs/' % (branch, revision)),
             Interpolate(
                 "s3://%(kw:bucket)s/%(prop:version)s/",
-                bucket=privateData['docs']['s3_bucket'],
+                bucket='clusterhq-dev-docs',
             ),
         ],
         path="private_html",

@@ -12,8 +12,6 @@ zulip:
 aws:
     identifier: "<aws user>"
     secret_identifier: "<aws password>"
-docs:
-    s3_bucket: "clusterhq-docs"
 github:
     token: "<github api token>"
     report_status: True
