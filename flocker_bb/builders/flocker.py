@@ -22,8 +22,6 @@ from ..steps import (
     isMasterBranch, isReleaseBranch
     )
 
-from .. import privateData
-
 # This is where temporary files associated with a build will be dumped.
 TMPDIR = Interpolate(b"%(prop:workdir)s/tmp-%(prop:buildnumber)s")
 
