@@ -19,7 +19,7 @@ from ..steps import (
     GITHUB,
     TWISTED_GIT,
     pip,
-    isMasterBranch,
+    isMasterBranch, isReleaseBranch
     )
 
 # This is where temporary files associated with a build will be dumped.
@@ -296,6 +296,13 @@ def makeInternalDocsFactory():
     revision = "flocker-%(prop:buildnumber)s"
 
     factory = getFlockerFactory(python="python2.7")
+    factory.addStep(SetPropertyFromCommand(
+        command=["python", "setup.py", "--version"],
+        name='check-version',
+        description=['checking', 'version'],
+        descriptionDone=['checking', 'version'],
+        property='version'
+    ))
     factory.addSteps(installDependencies())
     factory.addStep(sphinxBuild(
         "spelling", "build/docs",
@@ -328,9 +335,28 @@ def makeInternalDocsFactory():
             'docs',
             ],
         path="private_html",
-        haltOnFailure=True,
         doStepIf=isMasterBranch('flocker'),
         ))
+    factory.addStep(MasterShellCommand(
+        name='upload-release-documentation',
+        description=["uploading", "release", "documentation"],
+        descriptionDone=["upload", "release", "documentation"],
+        command=[
+            # We use s3cmd instead of gsutil here because of
+            # https://github.com/GoogleCloudPlatform/gsutil/issues/247
+            "s3cmd", "sync",
+            '--verbose',
+            '--delete-removed',
+            '--no-preserve',
+            Interpolate('%s/%s/docs/' % (branch, revision)),
+            Interpolate(
+                "s3://%(kw:bucket)s/%(prop:version)s/",
+                bucket='clusterhq-dev-docs',
+            ),
+        ],
+        path="private_html",
+        doStepIf=isReleaseBranch('flocker'),
+    ))
     return factory
 
 

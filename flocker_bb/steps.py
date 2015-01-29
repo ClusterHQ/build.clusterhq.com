@@ -159,7 +159,7 @@ class MergeForward(Source):
         return branch == 'master'
 
     _RELEASE_TAG_RE = re.compile(
-        '^[0-9]+\.[0-9]+\.[0-9]+(?:dev[0-9]+|pre[0-9]+)?$')
+        '^[0-9]+\.[0-9]+\.[0-9]+(?:dev[0-9]+|pre[0-9]+|\+doc[0-9]+)?$')
 
     @classmethod
     def _isRelease(cls, branch):
@@ -293,24 +293,25 @@ def pip(what, packages):
         haltOnFailure=True)
 
 
-def isBranch(codebase, branchName, prefix=False):
+def isBranch(codebase, predicate):
     """
     Return C{doStepIf} function checking whether the built branch
     matches the given branch.
 
     @param codebase: Codebase to check
-    @param branchName: Target branch
-    @param prefix: L{bool} indicating whether to check against a prefix
+    @param predicate: L{callable} that takes a branch and returns whether
+        the step should be run.
     """
     def test(step):
         sourcestamp = step.build.getSourceStamp(codebase)
         branch = sourcestamp.branch
-        if prefix:
-            return branch.startswith(branchName)
-        else:
-            return branch == branchName
+        return predicate(branch)
     return test
 
 
 def isMasterBranch(codebase):
-    return isBranch(codebase, 'master')
+    return isBranch(codebase, MergeForward._isMaster)
+
+
+def isReleaseBranch(codebase):
+    return isBranch(codebase, MergeForward._isRelease)
