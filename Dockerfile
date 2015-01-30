@@ -5,6 +5,8 @@ ADD tomprince-hybridlogic-fedora-20-x86_64.repo /etc/yum.repos.d/
 RUN yum install -y python-devel python-pip gcc libffi-devel openssl-devel git s3cmd
 RUN ["pip", "install", "buildbot==0.8.10", "txgithub==15.0.0", "eliot", "apache-libcloud", "service_identity", "machinist"]
 
+RUN yum install -y dpkg-dev createrepo_c
+
 
 ADD buildbot.tac /srv/buildmaster/
 ADD public_html /srv/buildmaster/public_html

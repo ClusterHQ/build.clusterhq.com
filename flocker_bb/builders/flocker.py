@@ -366,24 +366,25 @@ def makeInternalDocsFactory():
     return factory
 
 
-def createRepository(distribution):
+def createRepository(distribution, repository_path):
     steps = []
     flavour, version = distribution.split('-', 1)
     if flavour in ("fedora", "centos"):
-        steps.append(ShellCommand(
+        steps.append(MasterShellCommand(
             name='build-repo-metadata',
             description=["building", "repo", "metadata"],
             descriptionDone=["build", "repo", "metadata"],
             command=["createrepo_c", "repo"],
+            path=repository_path,
             haltOnFailure=True))
     elif flavour in ("ubuntu", "debian"):
-        steps.append(ShellCommand(
+        steps.append(MasterShellCommand(
             name='build-repo-metadata',
             description=["building", "repo", "metadata"],
             descriptionDone=["build", "repo", "metadata"],
             # FIXME: Don't use shell here.
             command="dpkg-scanpackages . | gzip > Packages.gz",
-            workdir='build/repo',
+            path=repository_path,
             haltOnFailure=True))
     else:
         error("Unknown distritubtion %s in createRepository."
@@ -426,13 +427,13 @@ def makeOmnibusFactory(distribution, triggerSchedulers=()):
 
     repository_path = resultPath('omnibus', descriminator=distribution)
 
-    factory.addSteps(createRepository(distribution))
     factory.addStep(DirectoryUpload(
         'repo',
         repository_path,
         url=resultURL('omnibus', descriminator=distribution),
         name="upload-repo",
     ))
+    factory.addSteps(createRepository(distribution, repository_path))
     if triggerSchedulers:
         factory.addStep(Trigger(
             name='trigger/built-rpms',
