@@ -19,11 +19,29 @@ from ..steps import (
     GITHUB,
     TWISTED_GIT,
     pip,
+    flockerBranch,
     isMasterBranch, isReleaseBranch
     )
 
 # This is where temporary files associated with a build will be dumped.
 TMPDIR = Interpolate(b"%(prop:workdir)s/tmp-%(prop:buildnumber)s")
+
+buildNumber = Interpolate("flocker-%(prop:buildnumber)s")
+
+
+def _result(kind, prefix, descriminator=buildNumber):
+    return Interpolate(
+        b"%(kw:prefix)s%(kw:kind)s/%(kw:descriminator)s/%(kw:build)s",
+        branch=flockerBranch, descriminator=descriminator,
+        kind=kind, prefix=prefix)
+
+
+def resultPath(kind, descriminator=buildNumber):
+    return _result(kind, prefix="private_html/", descriminator=descriminator)
+
+
+def resultURL(kind, descriminator=buildNumber):
+    return _result(kind, prefix="/results/", descriminator=descriminator)
 
 
 def getFlockerFactory(python):
@@ -68,8 +86,6 @@ def _flockerTests(kwargs, tests=None, env=None, trial=None):
 
 
 def _flockerCoverage():
-    branch = "%(src:flocker:branch)s"
-    revision = "flocker-%(prop:buildnumber)s"
     steps = _flockerTests({
         'python': [
             # Buildbot flattens this for us.
@@ -128,10 +144,8 @@ def _flockerCoverage():
             ),
         DirectoryUpload(
             b"change-coverage-annotations",
-            Interpolate(b"private_html/%s/%s/change" % (branch, revision)),
-            url=Interpolate(
-                b"/results/%s/%s/change" % (
-                    branch, revision)),
+            resultPath('change-coverage'),
+            url=resultURL('change-coverage'),
             name="upload-coverage-annotations",
             ),
         ShellCommand(
@@ -145,10 +159,8 @@ def _flockerCoverage():
             ),
         DirectoryUpload(
             b"html-coverage",
-            Interpolate(b"private_html/%s/%s/complete" % (branch, revision)),
-            url=Interpolate(
-                b"/results/%s/%s/complete" % (
-                    branch, revision)),
+            resultPath('complete-coverage'),
+            url=resultURL('complete-coverage'),
             name="upload-coverage-html",
             ),
         ShellCommand(
@@ -292,9 +304,6 @@ def sphinxBuild(builder, workdir=b"build/docs", **kwargs):
 
 
 def makeInternalDocsFactory():
-    branch = "%(src:flocker:branch)s"
-    revision = "flocker-%(prop:buildnumber)s"
-
     factory = getFlockerFactory(python="python2.7")
     factory.addStep(SetPropertyFromCommand(
         command=["python", "setup.py", "--version"],
@@ -319,10 +328,8 @@ def makeInternalDocsFactory():
     factory.addStep(sphinxBuild("html", "build/docs"))
     factory.addStep(DirectoryUpload(
         b"docs/_build/html",
-        Interpolate(b"private_html/%s/%s/docs" % (branch, revision)),
-        url=Interpolate(
-            b"/results/%s/%s/docs" % (
-                branch, revision)),
+        resultPath('docs'),
+        url=resultURL('docs'),
         name="upload-html",
         ))
     factory.addStep(MasterShellCommand(
@@ -331,7 +338,7 @@ def makeInternalDocsFactory():
         descriptionDone=["link", "release", "documentation"],
         command=[
             "ln", '-nsf',
-            Interpolate('%s/%s/docs' % (branch, revision)),
+            _result('docs', prefix=''),
             'docs',
             ],
         path="private_html",
@@ -348,13 +355,12 @@ def makeInternalDocsFactory():
             '--verbose',
             '--delete-removed',
             '--no-preserve',
-            Interpolate('%s/%s/docs/' % (branch, revision)),
+            resultPath('docs'),
             Interpolate(
                 "s3://%(kw:bucket)s/%(prop:version)s/",
                 bucket='clusterhq-dev-docs',
             ),
         ],
-        path="private_html",
         doStepIf=isReleaseBranch('flocker'),
     ))
     return factory
@@ -387,8 +393,6 @@ def createRepository(distribution):
 
 
 def makeOmnibusFactory(distribution, triggerSchedulers=()):
-    branch = "%(src:flocker:branch)s"
-
     factory = getFlockerFactory(python="python2.7")
     factory.addStep(SetPropertyFromCommand(
         command=["python", "setup.py", "--version"],
@@ -419,15 +423,16 @@ def makeOmnibusFactory(distribution, triggerSchedulers=()):
         description=['building', 'package'],
         descriptionDone=['build', 'package'],
         haltOnFailure=True))
+
+    repository_path = resultPath('omnibus', descriminator=distribution)
+
     factory.addSteps(createRepository(distribution))
     factory.addStep(DirectoryUpload(
-        Interpolate('repo'),
-        Interpolate(b"private_html/omnibus/%s/%s" % (branch, distribution)),
-        url=Interpolate(
-            b"/results/omnibus/%s/%s/" % (branch, distribution),
-            ),
+        'repo',
+        repository_path,
+        url=resultURL('omnibus', descriminator=distribution),
         name="upload-repo",
-        ))
+    ))
     if triggerSchedulers:
         factory.addStep(Trigger(
             name='trigger/built-rpms',

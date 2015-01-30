@@ -22,6 +22,8 @@ GITHUB = b"https://github.com/ClusterHQ"
 
 TWISTED_GIT = b'https://github.com/twisted/twisted'
 
+flockerBranch = Interpolate("%(src:flocker:branch)s")
+
 
 def buildVirtualEnv(python, useSystem=False):
     steps = []
