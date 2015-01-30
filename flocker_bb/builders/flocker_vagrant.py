@@ -173,6 +173,9 @@ def buildTutorialBox():
     factory.addStep(Trigger(
         name='trigger-vagrant-tests',
         schedulerNames=['trigger/built-vagrant-box/flocker-tutorial'],
+        set_properties={
+            'merge_target': Property('lint_revision')
+        },
         updateSourceStamp=True,
         waitForFinish=False,
         ))

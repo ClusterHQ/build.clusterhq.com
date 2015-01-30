@@ -75,7 +75,39 @@ class TestMergeForward(sourcesteps.SourceStepMixin, TestCase):
                         env=self.date_env)
             + 0,
             ExpectShell(workdir='wkdir',
-                        command=['git', 'merge-base', 'HEAD', 'FETCH_HEAD'],
+                        command=['git', 'rev-parse', 'FETCH_HEAD'],
+                        env=self.date_env)
+            + ExpectShell.log('stdio', stdout=COMMIT_HASH_NL)
+            + 0,
+        )
+        self.expectOutcome(result=SUCCESS, status_text=['merge', 'forward'])
+        self.expectProperty('lint_revision', COMMIT_HASH)
+        return self.runStep()
+
+    def test_branch_with_merge_target(self):
+        self.buildStep('destroy-the-sun-5000')
+        self.properties.setProperty(
+            'merge_target', 'merge-hash', source='test')
+        self.expectCommands(
+            ExpectShell(workdir='wkdir',
+                        command=['git', 'fetch',
+                                 'git://twisted', 'master'],
+                        env=self.env)
+            + 0,
+            ExpectShell(workdir='wkdir',
+                        command=['git', 'log',
+                                 '--format=%ci', '-n1'],
+                        env=self.env)
+            + ExpectShell.log('stdio', stdout=COMMIT_DATE_NL)
+            + 0,
+            ExpectShell(workdir='wkdir',
+                        command=['git', 'merge',
+                                 '--no-ff', '--no-stat',
+                                 'merge-hash'],
+                        env=self.date_env)
+            + 0,
+            ExpectShell(workdir='wkdir',
+                        command=['git', 'rev-parse', 'merge-hash'],
                         env=self.date_env)
             + ExpectShell.log('stdio', stdout=COMMIT_HASH_NL)
             + 0,
@@ -117,7 +149,7 @@ class TestMergeForward(sourcesteps.SourceStepMixin, TestCase):
                         env=self.date_env)
             + 0,
             ExpectShell(workdir='wkdir',
-                        command=['git', 'merge-base', 'HEAD', 'FETCH_HEAD'],
+                        command=['git', 'rev-parse', 'FETCH_HEAD'],
                         env=self.date_env)
             + ExpectShell.log('stdio', stdout=COMMIT_HASH_NL)
             + 0,

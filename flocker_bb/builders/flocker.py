@@ -7,7 +7,7 @@ from buildbot.steps.python import Sphinx
 from buildbot.steps.transfer import DirectoryUpload, StringDownload
 from buildbot.steps.master import MasterShellCommand
 from buildbot.steps.source.git import Git
-from buildbot.process.properties import Interpolate
+from buildbot.process.properties import Interpolate, Property
 from buildbot.steps.trigger import Trigger
 from buildbot.config import error
 
@@ -432,6 +432,9 @@ def makeOmnibusFactory(distribution, triggerSchedulers=()):
         factory.addStep(Trigger(
             name='trigger/built-rpms',
             schedulerNames=triggerSchedulers,
+            set_properties={
+                'merge_target': Property('lint_revision')
+            },
             updateSourceStamp=True,
             waitForFinish=False,
             ))

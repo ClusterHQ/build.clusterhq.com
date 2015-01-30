@@ -209,7 +209,7 @@ class MergeForward(Source):
             d.addCallback(lambda _: self._fetch(merge_branch))
             d.addCallback(lambda _: self._getCommitDate())
             d.addCallback(self._merge)
-            d.addCallback(lambda _: self._getMergeBase())
+            d.addCallback(self._getMergeBase)
 
         d.addCallback(self._setLintVersion)
         d.addCallback(lambda _: SUCCESS)
@@ -233,16 +233,19 @@ class MergeForward(Source):
             'GIT_AUTHOR_DATE': date.strip(),
             'GIT_COMMITTER_DATE': date.strip(),
         })
-        return self._dovccmd(['merge',
-                              '--no-ff', '--no-stat',
-                              'FETCH_HEAD'])
+        merge_target = self.getProperty('merge_target', 'FETCH_HEAD')
+        d = self._dovccmd(['merge',
+                           '--no-ff', '--no-stat',
+                           merge_target])
+        d.addCallback(lambda _: merge_target)
+        return d
 
     def _getPreviousVersion(self):
         return self._dovccmd(['rev-parse', 'HEAD~1'],
                              collectStdout=True)
 
-    def _getMergeBase(self):
-        return self._dovccmd(['merge-base', 'HEAD', 'FETCH_HEAD'],
+    def _getMergeBase(self, merge_target):
+        return self._dovccmd(['rev-parse', merge_target],
                              collectStdout=True)
 
     def _setLintVersion(self, version):
