@@ -374,7 +374,7 @@ def createRepository(distribution, repository_path):
             name='build-repo-metadata',
             description=["building", "repo", "metadata"],
             descriptionDone=["build", "repo", "metadata"],
-            command=["createrepo_c", "repo"],
+            command=["createrepo_c", "."],
             path=repository_path,
             haltOnFailure=True))
     elif flavour in ("ubuntu", "debian"):
