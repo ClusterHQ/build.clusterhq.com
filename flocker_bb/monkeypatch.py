@@ -77,3 +77,5 @@ def apply_patches():
     BotMaster.maybeStartBuildsForSlave = botmaster_maybeStartBuildsForSlave
     from buildbot.process.slavebuilder import SlaveBuilder
     SlaveBuilder.buildStarted = slavebuilder_buildStarted
+    from buildbot.steps.master import MasterShellCommand
+    MasterShellCommand.renderables += ['path']
