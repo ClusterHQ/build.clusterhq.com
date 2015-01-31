@@ -31,7 +31,7 @@ buildNumber = Interpolate("flocker-%(prop:buildnumber)s")
 
 def _result(kind, prefix, descriminator=buildNumber):
     return Interpolate(
-        b"%(kw:prefix)s%(kw:kind)s/%(kw:descriminator)s/%(kw:build)s",
+        b"%(kw:prefix)s%(kw:kind)s/%(kw:branch)s/%(kw:descriminator)s",
         branch=flockerBranch, descriminator=descriminator,
         kind=kind, prefix=prefix)
 
