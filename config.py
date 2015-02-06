@@ -167,7 +167,9 @@ c['status'].append(WebStatus(
 from flocker_bb.zulip_status import createZulipStatus
 if 'zulip' in privateData:
     ZULIP_STREAM = privateData['zulip'].get('stream', u"BuildBot")
-    c['status'].append(createZulipStatus(zulip, ZULIP_STREAM))
+    CRITICAL_STREAM = privateData['zulip'].get('critical_stream',
+                                               u"Engineering")
+    c['status'].append(createZulipStatus(zulip, ZULIP_STREAM, CRITICAL_STREAM))
 
 ####### PROJECT IDENTITY
 

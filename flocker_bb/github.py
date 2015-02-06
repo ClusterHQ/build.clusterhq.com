@@ -113,7 +113,7 @@ class GitHubStatus(BuildsetStatusReceiver):
 
     def buildFinished(self, builderName, build, results):
         """
-        Notify this receiver that a build has started.
+        Notify this receiver that a build has finished.
 
         Reports to github that a build has finished, along with a link to the
         build, and the build result.
