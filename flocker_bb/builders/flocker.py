@@ -19,29 +19,14 @@ from ..steps import (
     GITHUB,
     TWISTED_GIT,
     pip,
-    flockerBranch,
-    isMasterBranch, isReleaseBranch
+    isMasterBranch, isReleaseBranch,
+    resultPath, resultURL,
     )
 
 # This is where temporary files associated with a build will be dumped.
 TMPDIR = Interpolate(b"%(prop:workdir)s/tmp-%(prop:buildnumber)s")
 
 buildNumber = Interpolate("flocker-%(prop:buildnumber)s")
-
-
-def _result(kind, prefix, descriminator=buildNumber):
-    return Interpolate(
-        b"%(kw:prefix)s%(kw:kind)s/%(kw:branch)s/%(kw:descriminator)s",
-        branch=flockerBranch, descriminator=descriminator,
-        kind=kind, prefix=prefix)
-
-
-def resultPath(kind, descriminator=buildNumber):
-    return _result(kind, prefix="private_html/", descriminator=descriminator)
-
-
-def resultURL(kind, descriminator=buildNumber):
-    return _result(kind, prefix="/results/", descriminator=descriminator)
 
 
 def getFlockerFactory(python):
@@ -338,7 +323,7 @@ def makeInternalDocsFactory():
         descriptionDone=["link", "release", "documentation"],
         command=[
             "ln", '-nsf',
-            _result('docs', prefix=''),
+            resultPath('docs'),
             'docs',
             ],
         path="private_html",

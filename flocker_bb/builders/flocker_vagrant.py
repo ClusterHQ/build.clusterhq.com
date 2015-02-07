@@ -11,6 +11,7 @@ from ..steps import (
     buildbotURL,
     MasterWriteFile, asJSON,
     flockerBranch,
+    resultPath, resultURL
     )
 
 # FIXME
@@ -82,9 +83,7 @@ def buildVagrantBox(box, add=True):
         name='write-base-box-metadata',
         description=['writing', 'base', box, 'box', 'metadata'],
         descriptionDone=['write', 'base', box, 'box', 'metadata'],
-        path=Interpolate(
-            b"private_html/vagrant/%(kw:branch)s/flocker-%(kw:box)s.json",
-            branch=flockerBranch, box=box),
+        path=resultPath('vagrant', descrimintaor="flocker-%s.json" % box),
         content=asJSON({
             "name": "clusterhq/flocker-%s" % (box,),
             "description": "Test clusterhq/flocker-%s box." % (box,),
@@ -101,8 +100,7 @@ def buildVagrantBox(box, add=True):
         }),
         urls={
             Interpolate('%(kw:box)s box', box=box):
-            Interpolate(b"/results/vagrant/%(kw:branch)s/flocker-%(kw:box)s.json",  # noqa
-                branch=flockerBranch, box=box),
+            resultURL('vagrant', descrimintaor="flocker-%s.json" % box),
         }
     ))
 

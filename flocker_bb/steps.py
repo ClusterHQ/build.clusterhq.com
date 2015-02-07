@@ -14,6 +14,7 @@ from buildbot.process.properties import renderer
 from os import path
 import re
 import json
+from functools import partial
 
 VIRTUALENV_DIR = '%(prop:workdir)s/venv'
 
@@ -23,6 +24,25 @@ GITHUB = b"https://github.com/ClusterHQ"
 TWISTED_GIT = b'https://github.com/twisted/twisted'
 
 flockerBranch = Interpolate("%(src:flocker:branch)s")
+
+buildNumber = Interpolate("%(buildNumber)s")
+
+
+def _result(kind, prefix, descriminator=buildNumber):
+    """
+    Build a path to resultss.
+    """
+    @renderer
+    def render(build):
+        d = defer.gatherResults(
+            map(build.render,
+                [prefix, kind, flockerBranch, descriminator]))
+        d.addCallback(
+            lambda args:
+            FilePath(args[0]).descendant(args[1:]).path)
+
+resultPath = partial(_result, prefix="private_html")
+resultURL = partial(_result, prefix="/results/")
 
 
 def buildVirtualEnv(python, useSystem=False):
