@@ -80,7 +80,7 @@ def buildVagrantBox(box, add=True):
         name='write-base-box-metadata',
         description=['writing', 'base', box, 'box', 'metadata'],
         descriptionDone=['write', 'base', box, 'box', 'metadata'],
-        path=resultPath('vagrant', descrimintaor="flocker-%s.json" % box),
+        path=resultPath('vagrant', descriminator="flocker-%s.json" % box),
         content=asJSON({
             "name": "clusterhq/flocker-%s" % (box,),
             "description": "Test clusterhq/flocker-%s box." % (box,),
@@ -97,7 +97,7 @@ def buildVagrantBox(box, add=True):
         }),
         urls={
             Interpolate('%(kw:box)s box', box=box):
-            resultURL('vagrant', descrimintaor="flocker-%s.json" % box),
+            resultURL('vagrant', descriminator="flocker-%s.json" % box),
         }
     ))
 

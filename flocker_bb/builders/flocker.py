@@ -26,8 +26,6 @@ from ..steps import (
 # This is where temporary files associated with a build will be dumped.
 TMPDIR = Interpolate(b"%(prop:workdir)s/tmp-%(prop:buildnumber)s")
 
-buildNumber = Interpolate("flocker-%(prop:buildnumber)s")
-
 
 def getFlockerFactory(python):
     factory = getFactory("flocker", useSubmodules=False, mergeForward=True)

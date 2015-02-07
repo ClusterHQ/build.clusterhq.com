@@ -25,7 +25,7 @@ TWISTED_GIT = b'https://github.com/twisted/twisted'
 
 flockerBranch = Interpolate("%(src:flocker:branch)s")
 
-buildNumber = Interpolate("%(buildNumber)s")
+buildNumber = Interpolate("%(prop:buildNumber)s")
 
 
 def _result(kind, prefix, descriminator=buildNumber):
