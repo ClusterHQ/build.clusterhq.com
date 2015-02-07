@@ -17,9 +17,6 @@ from ..steps import (
 # FIXME
 from flocker_bb.builders.flocker import installDependencies, _flockerTests
 
-# This is where temporary files associated with a build will be dumped.
-TMPDIR = Interpolate(b"%(prop:workdir)s/tmp-%(prop:buildnumber)s")
-
 
 def dotted_version(version):
     @renderer
