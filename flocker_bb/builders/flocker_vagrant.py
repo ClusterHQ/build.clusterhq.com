@@ -24,7 +24,10 @@ flockerBranch = Interpolate("%(src:flocker:branch)s")
 def dotted_version(version):
     @renderer
     def render(props):
-        return props.render(version).addCallback(lambda v: v.replace('-', '.'))
+        return (props.render(version)
+                .addCallback(lambda v: v.replace('-', '.')
+                                        .replace('_', '.')
+                                        .replace('+', '.')))
     return render
 
 
