@@ -408,12 +408,12 @@ def makeOmnibusFactory(distribution, triggerSchedulers=()):
         descriptionDone=['build', 'package'],
         haltOnFailure=True))
 
-    repository_path = resultPath('omnibus', descriminator=distribution)
+    repository_path = resultPath('omnibus', discriminator=distribution)
 
     factory.addStep(DirectoryUpload(
         'repo',
         repository_path,
-        url=resultURL('omnibus', descriminator=distribution),
+        url=resultURL('omnibus', discriminator=distribution),
         name="upload-repo",
     ))
     factory.addSteps(createRepository(distribution, repository_path))
@@ -422,6 +422,9 @@ def makeOmnibusFactory(distribution, triggerSchedulers=()):
             name='trigger/built-rpms',
             schedulerNames=triggerSchedulers,
             set_properties={
+                # lint_revision is the commit that was merged against,
+                # if we merged forward, so have the triggered build
+                # merge against it as well.
                 'merge_target': Property('lint_revision')
             },
             updateSourceStamp=True,

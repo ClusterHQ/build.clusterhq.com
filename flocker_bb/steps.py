@@ -28,15 +28,15 @@ flockerBranch = Interpolate("%(src:flocker:branch)s")
 buildNumber = Interpolate("%(prop:buildNumber)s")
 
 
-def _result(kind, prefix, descriminator=buildNumber):
+def _result(kind, prefix, discriminator=buildNumber):
     """
-    Build a path to resultss.
+    Build a path to results.
     """
     @renderer
     def render(build):
         d = defer.gatherResults(
             map(build.render,
-                [prefix, kind, flockerBranch, descriminator]))
+                [prefix, kind, flockerBranch, discriminator]))
         d.addCallback(
             lambda args:
             FilePath(args[0]).descendant(args[1:]).path)
@@ -255,6 +255,8 @@ class MergeForward(Source):
             'GIT_AUTHOR_DATE': date.strip(),
             'GIT_COMMITTER_DATE': date.strip(),
         })
+        # Merge against the requested commit (if this is a triggered build).
+        # Otherwise, merge against the tip of the merge branch.
         merge_target = self.getProperty('merge_target', 'FETCH_HEAD')
         d = self._dovccmd(['merge',
                            '--no-ff', '--no-stat',

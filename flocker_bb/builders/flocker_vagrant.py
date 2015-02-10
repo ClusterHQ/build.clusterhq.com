@@ -80,7 +80,7 @@ def buildVagrantBox(box, add=True):
         name='write-base-box-metadata',
         description=['writing', 'base', box, 'box', 'metadata'],
         descriptionDone=['write', 'base', box, 'box', 'metadata'],
-        path=resultPath('vagrant', descriminator="flocker-%s.json" % box),
+        path=resultPath('vagrant', discriminator="flocker-%s.json" % box),
         content=asJSON({
             "name": "clusterhq/flocker-%s" % (box,),
             "description": "Test clusterhq/flocker-%s box." % (box,),
@@ -97,7 +97,7 @@ def buildVagrantBox(box, add=True):
         }),
         urls={
             Interpolate('%(kw:box)s box', box=box):
-            resultURL('vagrant', descriminator="flocker-%s.json" % box),
+            resultURL('vagrant', discriminator="flocker-%s.json" % box),
         }
     ))
 
@@ -168,6 +168,9 @@ def buildTutorialBox():
         name='trigger-vagrant-tests',
         schedulerNames=['trigger/built-vagrant-box/flocker-tutorial'],
         set_properties={
+            # lint_revision is the commit that was merged against,
+            # if we merged forward, so have the triggered build
+            # merge against it as well.
             'merge_target': Property('lint_revision')
         },
         updateSourceStamp=True,
