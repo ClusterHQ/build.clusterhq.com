@@ -40,6 +40,8 @@ def _result(kind, prefix, discriminator=buildNumber):
         d.addCallback(
             lambda args:
             FilePath(args[0]).descendant(args[1:]).path)
+        return d
+    return render
 
 resultPath = partial(_result, prefix="private_html")
 resultURL = partial(_result, prefix="/results/")
