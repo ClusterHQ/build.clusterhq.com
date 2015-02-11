@@ -55,6 +55,7 @@ def buildVagrantBox(box, add=True):
             description=['building', 'base', box, 'box'],
             descriptionDone=['build', 'base', box, 'box'],
             command=[
+                virtualenvBinary('python'),
                 'admin/build-vagrant-box',
                 '--box', box,
                 '--branch', flockerBranch,
@@ -193,6 +194,7 @@ def run_acceptance_tests(distribution, provider):
         },
         tests=[],
         trial=[
+            virtualenvBinary('python'),
             Interpolate('%(prop:builddir)s/build/admin/run-acceptance-tests'),
             '--distribution', distribution,
             '--provider', provider,
