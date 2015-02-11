@@ -262,6 +262,7 @@ class MergeForward(Source):
         merge_target = self.getProperty('merge_target', 'FETCH_HEAD')
         d = self._dovccmd(['merge',
                            '--no-ff', '--no-stat',
+                           '-m', 'Merge forward.',
                            merge_target])
         d.addCallback(lambda _: merge_target)
         return d
