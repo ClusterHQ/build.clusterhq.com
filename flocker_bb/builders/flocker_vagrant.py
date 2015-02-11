@@ -9,16 +9,13 @@ from ..steps import (
     getFactory,
     GITHUB,
     buildbotURL,
-    MasterWriteFile, asJSON
+    MasterWriteFile, asJSON,
+    flockerBranch,
+    resultPath, resultURL
     )
 
 # FIXME
 from flocker_bb.builders.flocker import installDependencies, _flockerTests
-
-# This is where temporary files associated with a build will be dumped.
-TMPDIR = Interpolate(b"%(prop:workdir)s/tmp-%(prop:buildnumber)s")
-
-flockerBranch = Interpolate("%(src:flocker:branch)s")
 
 
 def dotted_version(version):
@@ -86,9 +83,7 @@ def buildVagrantBox(box, add=True):
         name='write-base-box-metadata',
         description=['writing', 'base', box, 'box', 'metadata'],
         descriptionDone=['write', 'base', box, 'box', 'metadata'],
-        path=Interpolate(
-            b"private_html/vagrant/%(kw:branch)s/flocker-%(kw:box)s.json",
-            branch=flockerBranch, box=box),
+        path=resultPath('vagrant', discriminator="flocker-%s.json" % box),
         content=asJSON({
             "name": "clusterhq/flocker-%s" % (box,),
             "description": "Test clusterhq/flocker-%s box." % (box,),
@@ -105,8 +100,7 @@ def buildVagrantBox(box, add=True):
         }),
         urls={
             Interpolate('%(kw:box)s box', box=box):
-            Interpolate(b"/results/vagrant/%(kw:branch)s/flocker-%(kw:box)s.json",  # noqa
-                branch=flockerBranch, box=box),
+            resultURL('vagrant', discriminator="flocker-%s.json" % box),
         }
     ))
 
@@ -176,6 +170,12 @@ def buildTutorialBox():
     factory.addStep(Trigger(
         name='trigger-vagrant-tests',
         schedulerNames=['trigger/built-vagrant-box/flocker-tutorial'],
+        set_properties={
+            # lint_revision is the commit that was merged against,
+            # if we merged forward, so have the triggered build
+            # merge against it as well.
+            'merge_target': Property('lint_revision')
+        },
         updateSourceStamp=True,
         waitForFinish=False,
         ))

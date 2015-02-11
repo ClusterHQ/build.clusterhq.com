@@ -7,7 +7,7 @@ from buildbot.steps.python import Sphinx
 from buildbot.steps.transfer import DirectoryUpload, StringDownload
 from buildbot.steps.master import MasterShellCommand
 from buildbot.steps.source.git import Git
-from buildbot.process.properties import Interpolate
+from buildbot.process.properties import Interpolate, Property
 from buildbot.steps.trigger import Trigger
 from buildbot.config import error
 
@@ -19,7 +19,8 @@ from ..steps import (
     GITHUB,
     TWISTED_GIT,
     pip,
-    isMasterBranch, isReleaseBranch
+    isMasterBranch, isReleaseBranch,
+    resultPath, resultURL,
     )
 
 # This is where temporary files associated with a build will be dumped.
@@ -68,8 +69,6 @@ def _flockerTests(kwargs, tests=None, env=None, trial=None):
 
 
 def _flockerCoverage():
-    branch = "%(src:flocker:branch)s"
-    revision = "flocker-%(prop:buildnumber)s"
     steps = _flockerTests({
         'python': [
             # Buildbot flattens this for us.
@@ -128,10 +127,8 @@ def _flockerCoverage():
             ),
         DirectoryUpload(
             b"change-coverage-annotations",
-            Interpolate(b"private_html/%s/%s/change" % (branch, revision)),
-            url=Interpolate(
-                b"/results/%s/%s/change" % (
-                    branch, revision)),
+            resultPath('change-coverage'),
+            url=resultURL('change-coverage'),
             name="upload-coverage-annotations",
             ),
         ShellCommand(
@@ -145,10 +142,8 @@ def _flockerCoverage():
             ),
         DirectoryUpload(
             b"html-coverage",
-            Interpolate(b"private_html/%s/%s/complete" % (branch, revision)),
-            url=Interpolate(
-                b"/results/%s/%s/complete" % (
-                    branch, revision)),
+            resultPath('complete-coverage'),
+            url=resultURL('complete-coverage'),
             name="upload-coverage-html",
             ),
         ShellCommand(
@@ -292,9 +287,6 @@ def sphinxBuild(builder, workdir=b"build/docs", **kwargs):
 
 
 def makeInternalDocsFactory():
-    branch = "%(src:flocker:branch)s"
-    revision = "flocker-%(prop:buildnumber)s"
-
     factory = getFlockerFactory(python="python2.7")
     factory.addStep(SetPropertyFromCommand(
         command=["python", "setup.py", "--version"],
@@ -319,10 +311,8 @@ def makeInternalDocsFactory():
     factory.addStep(sphinxBuild("html", "build/docs"))
     factory.addStep(DirectoryUpload(
         b"docs/_build/html",
-        Interpolate(b"private_html/%s/%s/docs" % (branch, revision)),
-        url=Interpolate(
-            b"/results/%s/%s/docs" % (
-                branch, revision)),
+        resultPath('docs'),
+        url=resultURL('docs'),
         name="upload-html",
         ))
     factory.addStep(MasterShellCommand(
@@ -331,10 +321,9 @@ def makeInternalDocsFactory():
         descriptionDone=["link", "release", "documentation"],
         command=[
             "ln", '-nsf',
-            Interpolate('%s/%s/docs' % (branch, revision)),
-            'docs',
+            resultPath('docs'),
+            'doc-dev',
             ],
-        path="private_html",
         doStepIf=isMasterBranch('flocker'),
         ))
     factory.addStep(MasterShellCommand(
@@ -348,36 +337,36 @@ def makeInternalDocsFactory():
             '--verbose',
             '--delete-removed',
             '--no-preserve',
-            Interpolate('%s/%s/docs/' % (branch, revision)),
+            resultPath('docs'),
             Interpolate(
                 "s3://%(kw:bucket)s/%(prop:version)s/",
                 bucket='clusterhq-dev-docs',
             ),
         ],
-        path="private_html",
         doStepIf=isReleaseBranch('flocker'),
     ))
     return factory
 
 
-def createRepository(distribution):
+def createRepository(distribution, repository_path):
     steps = []
     flavour, version = distribution.split('-', 1)
     if flavour in ("fedora", "centos"):
-        steps.append(ShellCommand(
+        steps.append(MasterShellCommand(
             name='build-repo-metadata',
             description=["building", "repo", "metadata"],
             descriptionDone=["build", "repo", "metadata"],
-            command=["createrepo_c", "repo"],
+            command=["createrepo_c", "."],
+            path=repository_path,
             haltOnFailure=True))
     elif flavour in ("ubuntu", "debian"):
-        steps.append(ShellCommand(
+        steps.append(MasterShellCommand(
             name='build-repo-metadata',
             description=["building", "repo", "metadata"],
             descriptionDone=["build", "repo", "metadata"],
             # FIXME: Don't use shell here.
             command="dpkg-scanpackages . | gzip > Packages.gz",
-            workdir='build/repo',
+            path=repository_path,
             haltOnFailure=True))
     else:
         error("Unknown distritubtion %s in createRepository."
@@ -387,8 +376,6 @@ def createRepository(distribution):
 
 
 def makeOmnibusFactory(distribution, triggerSchedulers=()):
-    branch = "%(src:flocker:branch)s"
-
     factory = getFlockerFactory(python="python2.7")
     factory.addStep(SetPropertyFromCommand(
         command=["python", "setup.py", "--version"],
@@ -419,19 +406,26 @@ def makeOmnibusFactory(distribution, triggerSchedulers=()):
         description=['building', 'package'],
         descriptionDone=['build', 'package'],
         haltOnFailure=True))
-    factory.addSteps(createRepository(distribution))
+
+    repository_path = resultPath('omnibus', discriminator=distribution)
+
     factory.addStep(DirectoryUpload(
-        Interpolate('repo'),
-        Interpolate(b"private_html/omnibus/%s/%s" % (branch, distribution)),
-        url=Interpolate(
-            b"/results/omnibus/%s/%s/" % (branch, distribution),
-            ),
+        'repo',
+        repository_path,
+        url=resultURL('omnibus', discriminator=distribution),
         name="upload-repo",
-        ))
+    ))
+    factory.addSteps(createRepository(distribution, repository_path))
     if triggerSchedulers:
         factory.addStep(Trigger(
             name='trigger/built-rpms',
             schedulerNames=triggerSchedulers,
+            set_properties={
+                # lint_revision is the commit that was merged against,
+                # if we merged forward, so have the triggered build
+                # merge against it as well.
+                'merge_target': Property('lint_revision')
+            },
             updateSourceStamp=True,
             waitForFinish=False,
             ))

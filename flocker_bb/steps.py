@@ -14,6 +14,7 @@ from buildbot.process.properties import renderer
 from os import path
 import re
 import json
+from functools import partial
 
 VIRTUALENV_DIR = '%(prop:workdir)s/venv'
 
@@ -21,6 +22,29 @@ VIRTUALENV_PY = Interpolate("%(prop:workdir)s/../dependencies/virtualenv.py")
 GITHUB = b"https://github.com/ClusterHQ"
 
 TWISTED_GIT = b'https://github.com/twisted/twisted'
+
+flockerBranch = Interpolate("%(src:flocker:branch)s")
+
+buildNumber = Interpolate("%(prop:buildNumber)s")
+
+
+def _result(kind, prefix, discriminator=buildNumber):
+    """
+    Build a path to results.
+    """
+    @renderer
+    def render(build):
+        d = defer.gatherResults(
+            map(build.render,
+                [prefix, kind, flockerBranch, discriminator]))
+        d.addCallback(
+            lambda args:
+            FilePath(args[0]).descendant(args[1:]).path)
+        return d
+    return render
+
+resultPath = partial(_result, prefix="private_html")
+resultURL = partial(_result, prefix="/results/")
 
 
 def buildVirtualEnv(python, useSystem=False):
@@ -209,7 +233,7 @@ class MergeForward(Source):
             d.addCallback(lambda _: self._fetch(merge_branch))
             d.addCallback(lambda _: self._getCommitDate())
             d.addCallback(self._merge)
-            d.addCallback(lambda _: self._getMergeBase())
+            d.addCallback(self._getMergeBase)
 
         d.addCallback(self._setLintVersion)
         d.addCallback(lambda _: SUCCESS)
@@ -233,16 +257,21 @@ class MergeForward(Source):
             'GIT_AUTHOR_DATE': date.strip(),
             'GIT_COMMITTER_DATE': date.strip(),
         })
-        return self._dovccmd(['merge',
-                              '--no-ff', '--no-stat',
-                              'FETCH_HEAD'])
+        # Merge against the requested commit (if this is a triggered build).
+        # Otherwise, merge against the tip of the merge branch.
+        merge_target = self.getProperty('merge_target', 'FETCH_HEAD')
+        d = self._dovccmd(['merge',
+                           '--no-ff', '--no-stat',
+                           merge_target])
+        d.addCallback(lambda _: merge_target)
+        return d
 
     def _getPreviousVersion(self):
         return self._dovccmd(['rev-parse', 'HEAD~1'],
                              collectStdout=True)
 
-    def _getMergeBase(self):
-        return self._dovccmd(['merge-base', 'HEAD', 'FETCH_HEAD'],
+    def _getMergeBase(self, merge_target):
+        return self._dovccmd(['rev-parse', merge_target],
                              collectStdout=True)
 
     def _setLintVersion(self, version):
