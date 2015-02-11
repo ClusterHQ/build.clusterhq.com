@@ -160,12 +160,8 @@ class FlockerWebStatus(html.WebStatus):
         resultsPath = os.path.join(self.master.basedir, "private_html")
         results = File(resultsPath)
         resource.putChild(b'results', results)
-        # Keep this around so old links work.
-        resource.putChild(b'private', results)
 
         vhost = NameVirtualHost()
         vhost.default = resource
         vhost.addHost('doc-dev.clusterhq.com', docdev)
-        # Keep this around so old links work
-        vhost.addHost('doc.flocker.hybridcluster.net', docdev)
         self.site.resource = vhost
