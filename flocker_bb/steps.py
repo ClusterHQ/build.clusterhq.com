@@ -39,7 +39,7 @@ def _result(kind, prefix, discriminator=buildNumber):
                 [prefix, kind, flockerBranch, discriminator]))
         d.addCallback(
             lambda args:
-            FilePath(args[0]).descendant(args[1:]).path)
+            reduce(FilePath.preauthChild, args[1:], FilePath(args[0])).path)
         return d
     return render
 
