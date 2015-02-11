@@ -3,16 +3,13 @@
 Configuration for a buildslave to run vagrant on.
 
 .. warning::
-    Although this code has been tested to produce a working slave the
-    production slave wasn't configured with this code. In particular,
-    it points at the staging buildserver by default.
+    This points at the staging buildserver by default.
 """
 
 from fabric.api import run, task, sudo, put, local
 from twisted.python.filepath import FilePath
 from StringIO import StringIO
 import yaml
-
 
 
 def configure_gsutil():
@@ -30,11 +27,11 @@ def configure_gsutil():
 
 
 @task
-def install(index, password):
+def install(index, password, master='build.staging.clusterhq.com'):
     """
     Install a buildslave with vagrant installed.
     """
-    run("wget -O /etc/yum.repos.d/virtualbox.repo http://download.virtualbox.org/virtualbox/rpm/fedora/virtualbox.repo")
+    run("wget -O /etc/yum.repos.d/virtualbox.repo http://download.virtualbox.org/virtualbox/rpm/fedora/virtualbox.repo")  # noqa
 
     run("""
 UNAME_R=$(uname -r)
@@ -42,14 +39,14 @@ PV=${UNAME_R%.*}
 KV=${PV%%-*}
 SV=${PV##*-}
 ARCH=$(uname -m)
-yum install -y https://kojipkgs.fedoraproject.org//packages/kernel/${KV}/${SV}/${ARCH}/kernel-devel-${UNAME_R}.rpm
+yum install -y https://kojipkgs.fedoraproject.org//packages/kernel/${KV}/${SV}/${ARCH}/kernel-devel-${UNAME_R}.rpm  # noqa
 """)
 
     run('yum install -y dkms')
     packages = [
         "https://dl.bintray.com/mitchellh/vagrant/vagrant_1.6.5_x86_64.rpm",
         "VirtualBox-4.3.x86_64",
-        "https://kojipkgs.fedoraproject.org//packages/buildbot/0.8.10/1.fc22/noarch/buildbot-slave-0.8.10-1.fc22.noarch.rpm",
+        "https://kojipkgs.fedoraproject.org//packages/buildbot/0.8.10/1.fc22/noarch/buildbot-slave-0.8.10-1.fc22.noarch.rpm",  # noqa
         "mongodb",
         "git",
         "libffi-devel",
@@ -60,9 +57,12 @@ yum install -y https://kojipkgs.fedoraproject.org//packages/kernel/${KV}/${SV}/$
     ]
     run("yum install -y " + " ".join(packages))
     run("useradd buildslave")
-    sudo("buildslave create-slave /home/buildslave/fedora-vagrant build.staging.clusterhq.com fedora-vagrant-%s %s" % (index, password), user='buildslave')
+    sudo("buildslave create-slave /home/buildslave/fedora-vagrant %(master)s fedora-vagrant-%(index)s %(password)s"  # noqa
+         % {'index': index, 'password': password, 'master': master},
+         user='buildslave')
     sudo('mkdir ~/.ssh', user='buildslave')
-    sudo('ln -s ~/.vagrant.d/insecure_private_key ~/.ssh/id_rsa', user='buildslave')
+    sudo('ln -s ~/.vagrant.d/insecure_private_key ~/.ssh/id_rsa',
+         user='buildslave')
 
     put(FilePath(__file__).sibling('fedora-vagrant-slave.service').path,
         '/etc/systemd/system/fedora-vagrant-slave.service')
