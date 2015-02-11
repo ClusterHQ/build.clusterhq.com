@@ -149,7 +149,7 @@ class FlockerWebStatus(html.WebStatus):
         html.WebStatus.setupSite(self)
         resource = self.site.resource
 
-        docdevPath = os.path.join(self.master.basedir, "private_html", "docs")
+        docdevPath = os.path.join(self.master.basedir, "doc-dev")
         docdev = File(docdevPath)
 
         File.contentTypes[".py,cover"] = "text/plain"

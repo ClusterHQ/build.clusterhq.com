@@ -322,9 +322,8 @@ def makeInternalDocsFactory():
         command=[
             "ln", '-nsf',
             resultPath('docs'),
-            'docs',
+            'doc-dev',
             ],
-        path="private_html",
         doStepIf=isMasterBranch('flocker'),
         ))
     factory.addStep(MasterShellCommand(
