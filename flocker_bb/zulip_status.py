@@ -10,6 +10,7 @@ from buildbot.status.results import (
 from flocker_bb.buildset_status import BuildsetStatusReceiver
 
 from characteristic import attributes
+from textwrap import dedent
 
 
 RESULT_SYMBOLS = {
@@ -21,8 +22,8 @@ RESULT_SYMBOLS = {
 }
 
 
-@attributes(['zulip', 'stream'])
-class _ZulipWriteOnlyStatus(object):
+@attributes(['zulip', 'stream', 'critical_stream'])
+class ZulipStatus(BuildsetStatusReceiver):
     """
     BuildBot status hook-up object.
 
@@ -36,6 +37,17 @@ class _ZulipWriteOnlyStatus(object):
         @type zulip: L{_Zulip}
         """
         self._builders = []
+        BuildsetStatusReceiver.__init__(
+            self, finished=self.report_buildsetFinished)
+
+    def builderAdded(self, builderName, builder):
+        """
+        Notify this receiver of a new builder.
+
+        :return StatusReceiver: An object that should get notified of events on
+            the builder.
+        """
+        return self
 
     @staticmethod
     def _simplifyBuilderName(name):
@@ -91,7 +103,7 @@ class _ZulipWriteOnlyStatus(object):
 
         return subjects, message
 
-    def _sendMessage(self, (subjects, message)):
+    def _sendMessage(self, (subjects, message), stream):
         """
         Announce completed builds.
         """
@@ -109,23 +121,62 @@ class _ZulipWriteOnlyStatus(object):
         # project and branch as the subject.  This way the information will be
         # visible on each project/branch the build relates to.
         for subject in subjects:
-            msg(format="_ZulipWriteOnlyStatus sending, subject = %(subject)s",
-                subject=subject)
+            msg(format="ZulipStatus sending, "
+                       "subject = %(subject)s, stream = %(stream)s",
+                subject=subject, stream=stream)
             d = self.zulip.send(
                 type=u"stream",
                 content=message,
-                to=self.stream,
+                to=stream,
                 subject=subject)
-            d.addCallback(
-                lambda ignored: msg("_ZulipWriteOnlyStatus send success"))
-            d.addErrback(err, "_ZulipWriteOnlyStatus send failed")
+            d.addErrback(err, "ZulipStatus send failed")
 
-    def buildsetFinished(self, data, status):
+    def report_buildsetFinished(self, data, status):
         message = self._composeMessage(data, status)
-        self._sendMessage(message)
+        self._sendMessage(message, stream=self.stream)
+
+    def buildFinished(self, builderName, build, results):
+        """
+        Notify this receiver that a build has finished.
+
+        Reports to github that a build has finished, along with a link to the
+        build, and the build result.
+        """
+        if build.getResults() in (SUCCESS, WARNINGS, RETRY):
+            # Not failing.
+            return
+
+        sourceStamps = [ss.asDict() for ss in build.getSourceStamps()]
+
+        subjects = []
+
+        for sourceStamp in sourceStamps:
+            if sourceStamp['branch'] == 'master':
+                subjects.append("%(codebase)s %(branch)s is failing"
+                                % sourceStamp)
+
+        if not subjects:
+            # Not on master
+            return
+
+        buildURL = self.parent.getURLForThing(build)
+
+        message = dedent(
+            """
+            @engineering
+            :fire: :fire: :fire:
+            [Build #%(buildNumber)s](%(buildURL)s) of %(builderName)s: %(text)s
+            :fire: :fire: :fire:
+            """ % {
+                'buildNumber': build.getNumber(),
+                'buildURL': buildURL,
+                'builderName': builderName,
+                'text': u" ".join(build.getText()),
+            })
+
+        self._sendMessage((subjects, message), stream=self.critical_stream)
 
 
-def createZulipStatus(zulip, stream):
-    writer = _ZulipWriteOnlyStatus(zulip=zulip, stream=stream)
-    status = BuildsetStatusReceiver(finished=writer.buildsetFinished)
-    return status
+def createZulipStatus(zulip, stream, critical_stream):
+    return ZulipStatus(
+        zulip=zulip, stream=stream, critical_stream=critical_stream)
