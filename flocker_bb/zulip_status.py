@@ -163,6 +163,7 @@ class ZulipStatus(BuildsetStatusReceiver):
 
         message = dedent(
             """
+            @engineering
             :fire: :fire: :fire:
             [Build #%(buildNumber)s](%(buildURL)s) of %(builderName)s: %(text)s
             :fire: :fire: :fire:
