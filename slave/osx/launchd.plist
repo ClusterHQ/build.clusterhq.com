@@ -6,11 +6,6 @@
 	<string>twistd.log</string>
 	<key>StandardErrorPath</key>
 	<string>twistd-err.log</string>
-	<key>EnvironmentVariables</key>
-	<dict>
-		<key>PATH</key>
-		<string>/opt/local/bin:/sbin:/usr/sbin:/bin:/usr/bin:/Users/buildslave/Library/python/2.7/bin</string>
-	</dict>
 	<key>GroupName</key>
 	<string>staff</string>
 	<key>KeepAlive</key>
@@ -22,10 +17,7 @@
 	<string>net.buildslave</string>
 	<key>ProgramArguments</key>
 	<array>
-		<string>twistd</string>
-		<string>--nodaemon</string>
-		<string>-y</string>
-		<string>./buildbot.tac</string>
+		<string>./start-buildslave</string>
 	</array>
 	<key>RunAtLoad</key>
 	<true/>

@@ -1,0 +1,5 @@
+#!/bin/sh
+
+PATH=$HOME/Library/python/2.7/bin:$PATH
+
+exec twistd --nodaemon -y ./buildbot.tac
