@@ -198,6 +198,10 @@ def run_acceptance_tests(distribution, provider):
             Interpolate('%(prop:builddir)s/build/admin/run-acceptance-tests'),
             '--distribution', distribution,
             '--provider', provider,
+            '--branch', flockerBranch,
+            '--build-server', buildbotURL,
+            # FIXME: This path shouldn't be hard-coded here.
+            '--config-file', '/home/buildslave/acceptance.yml',
         ],
     ))
     return factory
@@ -315,6 +319,15 @@ def getBuilders(slavenames):
                           distribution='fedora-20',
                           ),
                       nextSlave=idleSlave),
+        BuilderConfig(name='flocker/acceptance/rackspace/fedora-20',
+                      builddir='flocker-acceptance-rackspace-fedora-20',
+                      slavenames=slavenames['fedora-vagrant'],
+                      category='flocker',
+                      factory=run_acceptance_tests(
+                          provider='rackspace',
+                          distribution='fedora-20',
+                          ),
+                      nextSlave=idleSlave),
         ]
 
 BUILDERS = [
@@ -322,6 +335,7 @@ BUILDERS = [
     'flocker-vagrant-tutorial-box',
     'flocker/installed-package/fedora-20',
     'flocker/acceptance/vagrant/fedora-20',
+    'flocker/acceptance/rackspace/fedora-20',
     ]
 
 from ..steps import MergeForward
@@ -344,7 +358,10 @@ def getSchedulers():
         ),
         Triggerable(
             name='trigger/built-rpms/fedora-20',
-            builderNames=['flocker-vagrant-tutorial-box'],
+            builderNames=[
+                'flocker-vagrant-tutorial-box',
+                'flocker/acceptance/rackspace/fedora-20',
+            ],
             codebases={
                 "flocker": {"repository": GITHUB + b"/flocker"},
             },
