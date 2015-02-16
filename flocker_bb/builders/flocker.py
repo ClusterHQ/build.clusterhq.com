@@ -564,6 +564,7 @@ BUILDERS = [
     'flocker-fedora-20',
     'flocker-ubuntu-14.04',
     'flocker-centos-7',
+    'flocker-osx-10.10',
     'flocker-twisted-trunk',
     'flocker-coverage',
     'flocker-lint',
