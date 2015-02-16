@@ -42,9 +42,13 @@ ARCH=$(uname -m)
 yum install -y https://kojipkgs.fedoraproject.org//packages/kernel/${KV}/${SV}/${ARCH}/kernel-devel-${UNAME_R}.rpm  # noqa
 """)
 
+    run("""
+ARCH=$(uname -m)
+yum install -y https://clusterhq.s3.amazonaws.com/repo/fedora/20/${ARCH}/phantomjs-1.9.8-1.x86_64.rpm  # noqa
+""")
+
     run('yum install -y dkms')
     packages = [
-        "http://cl.ly/3S1j1X0b372S/download/phantomjs-198-1x86_64.rpm",
         "https://dl.bintray.com/mitchellh/vagrant/vagrant_1.6.5_x86_64.rpm",
         "VirtualBox-4.3.x86_64",
         "https://kojipkgs.fedoraproject.org//packages/buildbot/0.8.10/1.fc22/noarch/buildbot-slave-0.8.10-1.fc22.noarch.rpm",  # noqa
