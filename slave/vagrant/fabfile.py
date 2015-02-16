@@ -67,9 +67,15 @@ yum install -y https://kojipkgs.fedoraproject.org//packages/kernel/${KV}/${SV}/$
     sudo("buildslave create-slave /home/buildslave/fedora-vagrant %(master)s fedora-vagrant-%(index)s %(password)s"  # noqa
          % {'index': index, 'password': password, 'master': master},
          user='buildslave')
+
     sudo('mkdir ~/.ssh', user='buildslave')
-    sudo('ln -s ~/.vagrant.d/insecure_private_key ~/.ssh/id_rsa',
-         user='buildslave')
+    put(StringIO("IdentifyFile ~/.vagrant.d/insecure_private_key\n"),
+        '/home/buildslave/.ssh/config', mode=0600)
+    put(StringIO(config['ssh-key']), '/home/buildslave/.ssh/id_rsa', mode=0600)
+    run('chown -R buildslave /home/buildslave/.ssh')
+
+    put(StringIO(yaml.safe_dump(config['acceptance'])),
+        '/home/buildslave/acceptance.yml')
 
     put(FilePath(__file__).sibling('fedora-vagrant-slave.service').path,
         '/etc/systemd/system/fedora-vagrant-slave.service')
