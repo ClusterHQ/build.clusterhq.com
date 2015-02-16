@@ -12,18 +12,22 @@ from StringIO import StringIO
 import yaml
 
 
-def configure_gsutil():
+def get_vagrant_config():
+    output = local('lpass show --notes "vagrant@build.clusterhq.com"',
+                   capture=True)
+    config = yaml.safe_load(output.stdout)
+    return config
+
+
+def configure_gsutil(config):
     """
     Install certificate and configuration for gsutil.
 
     This allows the slave to upload vagrant images to google cloud.
     """
     boto_config = FilePath(__file__).sibling('boto-config.in').getContent()
-    output = local('lpass show --notes "google-cert@build.clusterhq.com"',
-                   capture=True)
-    cert = yaml.safe_load(output.stdout)
-    put(StringIO(boto_config % cert), '/home/buildslave/.boto')
-    put(StringIO(cert['certificate']), '/home/buildslave/google.p12')
+    put(StringIO(boto_config % config), '/home/buildslave/.boto')
+    put(StringIO(config['certificate']), '/home/buildslave/google.p12')
 
 
 @task
@@ -31,6 +35,8 @@ def install(index, password, master='build.staging.clusterhq.com'):
     """
     Install a buildslave with vagrant installed.
     """
+    config = get_vagrant_config()
+
     run("wget -O /etc/yum.repos.d/virtualbox.repo http://download.virtualbox.org/virtualbox/rpm/fedora/virtualbox.repo")  # noqa
 
     run("""
@@ -68,7 +74,7 @@ yum install -y https://kojipkgs.fedoraproject.org//packages/kernel/${KV}/${SV}/$
     put(FilePath(__file__).sibling('fedora-vagrant-slave.service').path,
         '/etc/systemd/system/fedora-vagrant-slave.service')
 
-    configure_gsutil()
+    configure_gsutil(config=config['google-certificate'])
 
     run('systemctl start fedora-vagrant-slave')
     run('systemctl enable fedora-vagrant-slave')
