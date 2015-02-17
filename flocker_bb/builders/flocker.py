@@ -337,7 +337,8 @@ def makeInternalDocsFactory():
             '--verbose',
             '--delete-removed',
             '--no-preserve',
-            resultPath('docs'),
+            # s3cmd needs a trailing slash.
+            Interpolate("%(kw:path)s/", path=resultPath('docs')),
             Interpolate(
                 "s3://%(kw:bucket)s/%(prop:version)s/",
                 bucket='clusterhq-dev-docs',
