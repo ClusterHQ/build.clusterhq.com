@@ -43,3 +43,5 @@ slaves:
         max_spot_price: 0.10
     fedora-vagrant:
         passwords: ['password']
+    flocker-osx-10.10:
+        passwords: ['password']
