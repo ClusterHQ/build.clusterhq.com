@@ -30,6 +30,19 @@ def configure_gsutil(config):
     put(StringIO(config['certificate']), '/home/buildslave/google.p12')
 
 
+def configure_ssh(ssh_key):
+    sudo('mkdir ~/.ssh', user='buildslave')
+    put(StringIO("IdentityFile ~/.vagrant.d/insecure_private_key\n"),
+        '/home/buildslave/.ssh/config', mode=0600)
+    put(StringIO(ssh_key), '/home/buildslave/.ssh/id_rsa', mode=0600)
+    run('chown -R buildslave /home/buildslave/.ssh')
+
+
+def configure_acceptance(config):
+    put(StringIO(yaml.safe_dump(config)),
+        '/home/buildslave/acceptance.yml')
+
+
 @task
 def install(index, password, master='build.staging.clusterhq.com'):
     """
@@ -68,19 +81,20 @@ yum install -y https://kojipkgs.fedoraproject.org//packages/kernel/${KV}/${SV}/$
          % {'index': index, 'password': password, 'master': master},
          user='buildslave')
 
-    sudo('mkdir ~/.ssh', user='buildslave')
-    put(StringIO("IdentityFile ~/.vagrant.d/insecure_private_key\n"),
-        '/home/buildslave/.ssh/config', mode=0600)
-    put(StringIO(config['ssh-key']), '/home/buildslave/.ssh/id_rsa', mode=0600)
-    run('chown -R buildslave /home/buildslave/.ssh')
-
-    put(StringIO(yaml.safe_dump(config['acceptance'])),
-        '/home/buildslave/acceptance.yml')
+    configure_ssh(ssh_key=config['ssh-key'])
+    configure_acceptance(config=config['acceptance'])
+    configure_gsutil(config=config['google-certificate'])
 
     put(FilePath(__file__).sibling('fedora-vagrant-slave.service').path,
         '/etc/systemd/system/fedora-vagrant-slave.service')
 
-    configure_gsutil(config=config['google-certificate'])
-
     run('systemctl start fedora-vagrant-slave')
     run('systemctl enable fedora-vagrant-slave')
+
+
+@task
+def update_config():
+    config = get_vagrant_config()
+    configure_ssh(ssh_key=config['ssh-key'])
+    configure_acceptance(config=config['acceptance'])
+    configure_gsutil(config=config['google-certificate'])
