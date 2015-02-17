@@ -69,7 +69,7 @@ yum install -y https://kojipkgs.fedoraproject.org//packages/kernel/${KV}/${SV}/$
          user='buildslave')
 
     sudo('mkdir ~/.ssh', user='buildslave')
-    put(StringIO("IdentifyFile ~/.vagrant.d/insecure_private_key\n"),
+    put(StringIO("IdentityFile ~/.vagrant.d/insecure_private_key\n"),
         '/home/buildslave/.ssh/config', mode=0600)
     put(StringIO(config['ssh-key']), '/home/buildslave/.ssh/id_rsa', mode=0600)
     run('chown -R buildslave /home/buildslave/.ssh')
