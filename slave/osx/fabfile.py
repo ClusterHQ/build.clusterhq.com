@@ -5,7 +5,14 @@ from twisted.python.filepath import FilePath
 @task
 def create_user(username, uid=650):
     """
-    Create an OSX user.
+    Create an OS X user.
+
+    UID must be > 500 for the user to show up in
+    /System/Library/PreferencePanes/Accounts.prefPane.
+
+    UID cannot conflict with an existing user.
+    UID and PrimaryGroupID were chosen to mimic a created standard user on a
+    test Mac.
     """
     sudo("""
     dscl . -create /Users/%(username)s
