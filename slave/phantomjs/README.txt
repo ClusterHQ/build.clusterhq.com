@@ -1,9 +1,8 @@
-Build the Docker image using
-$ docker build .
+In this directory, run ./build.sh
 
-Run the built image using
-$ docker -it <image-id>
+This script will start a Fedora 20 Docker image, fetch PhantomJS from Github,
+build the source, and then build the RPM.  The RPM will be copied into this
+directory.
 
-Copy the RPM using:
-$ docker cp <container-id>:/tmp/phantomjs-1.9.8-1.x86_64.rpm .
-
+Upload the RPM to a permanent web address, and set the URL in file
+slave/vagrant/fabfile.py
