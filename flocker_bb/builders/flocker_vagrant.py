@@ -290,6 +290,12 @@ def idleSlave(builder, slaves):
     if idle:
         return idle[0]
 
+ACCEPTANCE_PROVIDERS = [
+    'vagrant',
+    'rackspace',
+    'digitalocean',
+]
+
 
 def getBuilders(slavenames):
     return [
@@ -310,33 +316,28 @@ def getBuilders(slavenames):
                       factory=test_installed_package(
                           box='tutorial'),
                       nextSlave=idleSlave),
-        BuilderConfig(name='flocker/acceptance/vagrant/fedora-20',
-                      builddir='flocker-acceptance-vagrant-fedora-20',
-                      slavenames=slavenames['fedora-vagrant'],
-                      category='flocker',
-                      factory=run_acceptance_tests(
-                          provider='vagrant',
-                          distribution='fedora-20',
-                          ),
-                      nextSlave=idleSlave),
-        BuilderConfig(name='flocker/acceptance/rackspace/fedora-20',
-                      builddir='flocker-acceptance-rackspace-fedora-20',
-                      slavenames=slavenames['fedora-vagrant'],
-                      category='flocker',
-                      factory=run_acceptance_tests(
-                          provider='rackspace',
-                          distribution='fedora-20',
-                          ),
-                      nextSlave=idleSlave),
+        ] + [
+            BuilderConfig(
+                name='flocker/acceptance/%s/fedora-20' % (provider,),
+                builddir='flocker-acceptance-%s-fedora-20' % (provider,),
+                slavenames=slavenames['fedora-vagrant'],
+                category='flocker',
+                factory=run_acceptance_tests(
+                    provider=provider,
+                    distribution='fedora-20',
+                    ),
+                nextSlave=idleSlave)
+            for provider in ACCEPTANCE_PROVIDERS
         ]
 
 BUILDERS = [
     'flocker-vagrant-dev-box',
     'flocker-vagrant-tutorial-box',
     'flocker/installed-package/fedora-20',
-    'flocker/acceptance/vagrant/fedora-20',
-    'flocker/acceptance/rackspace/fedora-20',
-    ]
+] + [
+    'flocker/acceptance/%s/fedora-20' % (provider,)
+    for provider in ACCEPTANCE_PROVIDERS
+]
 
 from ..steps import MergeForward
 
@@ -361,6 +362,7 @@ def getSchedulers():
             builderNames=[
                 'flocker-vagrant-tutorial-box',
                 'flocker/acceptance/rackspace/fedora-20',
+                'flocker/acceptance/digitalocean/fedora-20',
             ],
             codebases={
                 "flocker": {"repository": GITHUB + b"/flocker"},
