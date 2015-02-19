@@ -138,3 +138,14 @@ The lifecycle configuration file is in :file:`vagrant/clusterhq-vagrant-buildbot
 It was configured by::
 
   gsutil lifecycle set vagrant/clusterhq-vagrant-buildbot.lifecycle.json gs://clusterhq-vagrant-buildbot/
+
+Mac OS X Buildslave
+-------------------
+
+Running tests on OS X requires root priviledges on an OS X machine and for SSH to be configured on this machine.
+
+To configure this machine run:
+
+   fab --hosts=${USERNAME}@${OSX_ADDRESS} install:0,${PASSWORD},${MASTER}
+
+Where ${USERNAME} is a user on the OS X machine, and ${PASSWORD} is the password in ``slaves.osx.passwords`` from the ``config.yml`` used to deploy the BuildBot master at ${MASTER}.
