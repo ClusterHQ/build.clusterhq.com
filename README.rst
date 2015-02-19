@@ -146,6 +146,7 @@ Running tests on OS X requires root priviledges on an OS X machine and for SSH t
 
 To configure this machine run:
 
+   cd slave/osx
    fab --hosts=${USERNAME}@${OSX_ADDRESS} install:0,${PASSWORD},${MASTER}
 
 Where ${USERNAME} is a user on the OS X machine, and ${PASSWORD} is the password in ``slaves.osx.passwords`` from the ``config.yml`` used to deploy the BuildBot master at ${MASTER}.
