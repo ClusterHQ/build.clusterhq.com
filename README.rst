@@ -142,10 +142,12 @@ It was configured by::
 Mac OS X Buildslave
 -------------------
 
-Running tests on OS X requires root priviledges on an OS X machine and for SSH to be configured on this machine.
+Configuring an OS X machine to run tests requires root priviledges and for SSH to be configured on this machine.
 
 To configure this machine run:
 
    fab -f slave/osx/fabfile.py --hosts=${USERNAME}@${OSX_ADDRESS} install:0,${PASSWORD},${MASTER}
+
+The tests do not run with root or administrator privileges.
 
 Where ${USERNAME} is a user on the OS X machine, and ${PASSWORD} is the password in ``slaves.osx.passwords`` from the ``config.yml`` used to deploy the BuildBot master at ${MASTER}.
