@@ -13,6 +13,7 @@ def create_user(username, uid=650):
     UID cannot conflict with an existing user.
     UID and PrimaryGroupID were chosen to mimic a created standard user on a
     test Mac.
+    The PrimaryGroupID is for the "staff" group.
     """
     sudo("""
     dscl . -create /Users/%(username)s
