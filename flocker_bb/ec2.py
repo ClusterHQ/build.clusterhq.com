@@ -135,8 +135,15 @@ class EC2(object):
             self._fsm.receive(InstanceStopped())
 
         def failed(f):
+            instance_id = self.node.id
+            # Assume the instance is already gone.
+            del self.node
+            self._fsm.receive(InstanceStopped())
             log.err(f, "while stopping %s" % (self.name,))
-            self._fsm.receive(StopFailed())
+            log.msg(
+                format="EC2 Instance [%(instance_id)s](https://us-west-2.console.aws.amazon.com/ec2/v2/home?region=us-west-2#Instances:instanceId=%(instance_id)s) failed to stop.",  # noqa
+                instance_id=instance_id,
+                zulip_subject="EC2 Instances")
 
         d.addCallbacks(stopped, failed)
 
