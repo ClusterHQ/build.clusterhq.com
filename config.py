@@ -161,7 +161,9 @@ c['status'].append(WebStatus(
     http_port=80, authz=authz_cfg,
     public_html=sibpath(__file__, 'public_html'),
     jinja_loaders=[jinja2.FileSystemLoader(sibpath(__file__, 'templates'))],
-    change_hook_dialects={'github': True}))
+    change_hook_dialects={'github': True},
+    failing_builders=set(privateData['failing_builders']),
+))
 
 
 from flocker_bb.zulip_status import createZulipStatus
