@@ -11,7 +11,7 @@ class Monitor(StatusReceiverMultiService):
 
     def __init__(self):
         StatusReceiverMultiService.__init__(self)
-        timer = TimerService(10, self.report_pending_builds)
+        timer = TimerService(60*60, self.report_pending_builds)
         timer.setServiceParent(self)
 
     def startService(self):
