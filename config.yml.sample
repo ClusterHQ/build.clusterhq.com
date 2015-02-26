@@ -45,3 +45,5 @@ slaves:
         passwords: ['password']
 # List of builders whose failures shouldn't be reported.
 failing_builders: []
+    osx:
+        passwords: ['password']
