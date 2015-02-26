@@ -556,7 +556,6 @@ def getBuilders(slavenames):
     for slavenames, slave_builders in groupby(locked_builders,
                                               key=lambda b: b.slavenames):
         for builder, slavename in zip(slave_builders, slavenames):
-            print builder.name, slavename
             builder.slavenames = [slavename]
 
     return builders
