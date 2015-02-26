@@ -9,7 +9,7 @@ from buildbot.status.results import (
 
 from flocker_bb.buildset_status import BuildsetStatusReceiver
 
-from characteristic import attributes
+from characteristic import attributes, Attribute
 from textwrap import dedent
 
 
@@ -22,7 +22,10 @@ RESULT_SYMBOLS = {
 }
 
 
-@attributes(['zulip', 'stream', 'critical_stream'])
+@attributes([
+    'zulip', 'stream', 'critical_stream',
+    Attribute('failing_builders', default_factory=frozenset),
+])
 class ZulipStatus(BuildsetStatusReceiver):
     """
     BuildBot status hook-up object.
@@ -159,6 +162,10 @@ class ZulipStatus(BuildsetStatusReceiver):
             # Not on master
             return
 
+        if builderName in self.failing_builders:
+            # The failure is expected.
+            return
+
         buildURL = self.parent.getURLForThing(build)
 
         message = dedent(
@@ -177,6 +184,7 @@ class ZulipStatus(BuildsetStatusReceiver):
         self._sendMessage((subjects, message), stream=self.critical_stream)
 
 
-def createZulipStatus(zulip, stream, critical_stream):
+def createZulipStatus(zulip, stream, critical_stream, failing_builders):
     return ZulipStatus(
-        zulip=zulip, stream=stream, critical_stream=critical_stream)
+        zulip=zulip, stream=stream, critical_stream=critical_stream,
+        failing_builders=failing_builders)

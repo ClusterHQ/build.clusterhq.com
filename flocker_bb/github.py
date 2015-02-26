@@ -22,14 +22,17 @@ from buildbot.status.results import (
     SUCCESS, EXCEPTION, FAILURE, WARNINGS, RETRY)
 
 from flocker_bb.buildset_status import BuildsetStatusReceiver
-from characteristic import attributes
+from characteristic import attributes, Attribute
 
 
 import re
 _re_github = re.compile("(?:git@github.com:|https://github.com/)(?P<repo_user>[^/]*)/(?P<repo_name>[^/]*)(?:\.git)?")  # noqa
 
 
-@attributes(['codebase'])
+@attributes([
+    'codebase',
+    Attribute('failing_builders', default_factory=frozenset),
+])
 class GitHubStatus(BuildsetStatusReceiver):
     """
     Send build status to GitHub.
@@ -97,6 +100,10 @@ class GitHubStatus(BuildsetStatusReceiver):
         Reports to github that a build has started, along with a link to the
         build.
         """
+        if builderName in self.failing_builders:
+            # Don't report if builder is expected to fail.
+            return
+
         sourceStamps = [ss.asDict() for ss in build.getSourceStamps()]
         request = self._getSourceStampData(sourceStamps)
         if 'sha' not in request:
@@ -118,6 +125,10 @@ class GitHubStatus(BuildsetStatusReceiver):
         Reports to github that a build has finished, along with a link to the
         build, and the build result.
         """
+        if builderName in self.failing_builders:
+            # Don't report if builder is expected to fail.
+            return
+
         sourceStamps = [ss.asDict() for ss in build.getSourceStamps()]
         request = self._getSourceStampData(sourceStamps)
 
@@ -195,5 +206,6 @@ class GitHubStatus(BuildsetStatusReceiver):
             self._sendStatus(r)
 
 
-def createGithubStatus(codebase, token):
-    return GitHubStatus(codebase=codebase, token=token)
+def createGithubStatus(codebase, token, failing_builders):
+    return GitHubStatus(codebase=codebase, token=token,
+                        failing_builders=failing_builders)
