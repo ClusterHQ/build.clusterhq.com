@@ -1,10 +1,12 @@
+from zope.interface import implementer
 from twisted.python.constants import Names, NamedConstant
 from twisted.internet.threads import deferToThread
 from characteristic import attributes
 from twisted.python import log
 from machinist import (
     TransitionTable, MethodSuffixOutputer,
-    trivialInput, constructFiniteStateMachine, Transition)
+    trivialInput, constructFiniteStateMachine, Transition,
+    IRichInput)
 
 
 class Input(Names):
@@ -65,7 +67,15 @@ table = TransitionTable({
 })
 
 RequestStart = trivialInput(Input.REQUEST_START)
-InstanceStarted = trivialInput(Input.INSTANCE_STARTED)
+
+
+@implementer(IRichInput)
+@attributes(['instance_id'])
+class InstanceStarted(object):
+    @staticmethod
+    def symbol():
+        return Input.INSTANCE_STARTED
+
 StartFailed = trivialInput(Input.START_FAILED)
 RequestStop = trivialInput(Input.REQUEST_STOP)
 InstanceStopped = trivialInput(Input.INSTANCE_STOPPED)
@@ -119,7 +129,7 @@ class EC2(object):
 
         def started(node):
             self.node = node
-            self._fsm.receive(InstanceStarted())
+            self._fsm.receive(InstanceStarted(instance_id=node.id))
 
         def failed(f):
             log.err(f, "while starting %s" % (self.name,))
