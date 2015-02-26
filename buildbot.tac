@@ -9,6 +9,17 @@ apply_patches()
 from flocker_bb.eliot import eliot_to_twisted_logging
 eliot_to_twisted_logging()
 
+from flocker_bb import privateData
+from flocker_bb.zulip import createZulip, ZulipLogger
+from twisted.internet import reactor
+
+if 'zulip' in privateData:
+    ZULIP_BOT = privateData['zulip']['user']
+    ZULIP_KEY = privateData['zulip']['password']
+    zulip = createZulip(reactor, ZULIP_BOT, ZULIP_KEY)
+
+    ZulipLogger(zulip=zulip, stream="BuildBot - Operation").start()
+
 from twisted.application import service
 from buildbot.master import BuildMaster
 
