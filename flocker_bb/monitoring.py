@@ -27,7 +27,7 @@ class Monitor(StatusReceiverMultiService):
         build_reqs = yield self.master.db.buildrequests.getBuildRequests(
             claimed=False)
         pending_counts = Counter([br['buildername'] for br in build_reqs])
-        if max(pending_counts.values()) > 10:
+        if pending_counts and max(pending_counts.values()) > 10:
             message = [
                 "|Builder|Pending Builds",
                 "|:-|-:|",
