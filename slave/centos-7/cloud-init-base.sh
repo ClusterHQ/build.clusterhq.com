@@ -32,7 +32,6 @@ yum install -y \
 	python-devel \
 	python-tox \
 	python-virtualenv \
-	mock \
 	rpmdevtools \
 	rpmlint \
 	rpm-build \
