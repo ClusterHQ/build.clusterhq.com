@@ -13,11 +13,7 @@ fi
 yum install -y http://archive.zfsonlinux.org/epel/zfs-release.el7.noarch.rpm
 
 # For updated kernel (?)
-yum install -y http://www.elrepo.org/elrepo-release-7.0-2.el7.elrepo.noarch.rpm
-yum-config-manager --disable elrepo
-yum-config-manager --enable elrepo-kernel
-sed -i s/DEFAULTKERNEL=kernel/DEFAULTKERNEL=kernel-ml/ /etc/sysconfig/kernel
-yum install -y kernel-ml-devel kernel-ml
+yum install -y kernel-devel kernel
 
 # For dkms and ... ?
 yum install -y epel-release
