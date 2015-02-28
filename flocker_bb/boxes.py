@@ -14,6 +14,8 @@ from twisted.web.template import tags, flattenString
 from twisted.web.vhost import NameVirtualHost
 from twisted.web.static import File
 
+from flocker_bb.prometheus import PrometheusMetrics
+
 
 _backgroundColors = {
     SUCCESS: "green",
@@ -169,6 +171,8 @@ class FlockerWebStatus(html.WebStatus):
         resultsPath = os.path.join(self.master.basedir, "private_html")
         results = File(resultsPath)
         resource.putChild(b'results', results)
+
+        resource.putChild(b'metrics', PrometheusMetrics())
 
         vhost = NameVirtualHost()
         vhost.default = resource
