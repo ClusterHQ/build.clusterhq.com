@@ -41,8 +41,9 @@ class Monitor(StatusReceiverMultiService):
     @inlineCallbacks
     def metrics(self):
         pending_counts = yield self.count_pending_builds()
-        for builder, count in pending_counts.items():
-            self.pending_counts_gauge.labels(builder).set(count)
+        for builder in self.master.botmaster.builders.keys():
+            self.pending_counts_gauge.labels(builder).set(
+                pending_counts[builder])
 
     @inlineCallbacks
     def report_pending_builds(self):
