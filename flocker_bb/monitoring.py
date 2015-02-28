@@ -11,6 +11,13 @@ from prometheus_client import Gauge
 
 class Monitor(StatusReceiverMultiService):
 
+    pending_counts_gauge = Gauge(
+        'pending_builds_total',
+        'Number of pending builds',
+        labelnames=['builder'],
+        namespace='buildbot',
+    )
+
     def __init__(self):
         StatusReceiverMultiService.__init__(self)
         timer = TimerService(60*60, self.report_pending_builds)
@@ -18,13 +25,6 @@ class Monitor(StatusReceiverMultiService):
 
         timer = TimerService(30, self.metrics)
         timer.setServiceParent(self)
-
-        self.pending_counts_gauge = Gauge(
-            'pending_builds_total',
-            'Number of pending builds',
-            labelnames=['builder'],
-            namespace='buildbot',
-        )
 
     def startService(self):
         self.status = self.parent
