@@ -162,7 +162,8 @@ class ZulipStatus(BuildsetStatusReceiver):
             # Not on master
             return
 
-        if builderName in self.failing_builders:
+        if (builderName in self.failing_builders
+                and not build.getProperty("report-expected-failures")):
             # The failure is expected.
             return
 

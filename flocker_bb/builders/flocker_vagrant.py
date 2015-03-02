@@ -324,7 +324,7 @@ BUILDERS = [
     'flocker/acceptance/vagrant/fedora-20',
     ]
 
-from ..steps import MergeForward
+from ..steps import MergeForward, report_expected_failures_parameter
 
 
 def getSchedulers():
@@ -359,7 +359,9 @@ def getSchedulers():
                                               default=GITHUB + b"/flocker"),
                     ),
                 ],
-            properties=[],
+            properties=[
+                report_expected_failures_parameter,
+            ],
             builderNames=BUILDERS,
             ),
         Triggerable(

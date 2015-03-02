@@ -10,6 +10,7 @@ from buildbot.process.factory import BuildFactory
 from buildbot.status.results import SUCCESS
 from buildbot.process import buildstep
 from buildbot.process.properties import renderer
+from buildbot.schedulers.forcesched import BooleanParameter
 
 from os import path
 import re
@@ -26,6 +27,12 @@ TWISTED_GIT = b'https://github.com/twisted/twisted'
 flockerBranch = Interpolate("%(src:flocker:branch)s")
 
 buildNumber = Interpolate("%(prop:buildNumber)s")
+
+
+report_expected_failures_parameter = BooleanParameter(
+    name="report-expected-failures",
+    label="Report status for builders expected to fail:",
+)
 
 
 def _result(kind, prefix, discriminator=buildNumber):

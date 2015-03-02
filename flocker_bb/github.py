@@ -100,8 +100,9 @@ class GitHubStatus(BuildsetStatusReceiver):
         Reports to github that a build has started, along with a link to the
         build.
         """
-        if builderName in self.failing_builders:
-            # Don't report if builder is expected to fail.
+        if (builderName in self.failing_builders
+                and not build.getProperty("report-expected-failures")):
+            # The failure is expected.
             return
 
         sourceStamps = [ss.asDict() for ss in build.getSourceStamps()]
@@ -125,8 +126,9 @@ class GitHubStatus(BuildsetStatusReceiver):
         Reports to github that a build has finished, along with a link to the
         build, and the build result.
         """
-        if builderName in self.failing_builders:
-            # Don't report if builder is expected to fail.
+        if (builderName in self.failing_builders
+                and not build.getProperty("report-expected-failures")):
+            # The failure is expected.
             return
 
         sourceStamps = [ss.asDict() for ss in build.getSourceStamps()]
@@ -198,10 +200,16 @@ class GitHubStatus(BuildsetStatusReceiver):
             })
 
         for buildRequest in buildRequests:
+            builder_name = buildRequest['builderName']
+            properties = {v[0]: v[1] for v in buildRequest['properties']}
+            if (builder_name in self.failing_builders and
+                    not properties.get("report-expected-failures", False)):
+                # The failure is expected.
+                continue
             r = request.copy()
             r.update({
                 'context': self._simplifyBuilderName(
-                    buildRequest['builderName']),
+                    builder_name),
             })
             self._sendStatus(r)
 
