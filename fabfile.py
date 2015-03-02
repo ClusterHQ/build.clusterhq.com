@@ -1,4 +1,4 @@
-from fabric.api import sudo, task, env, execute, local
+from fabric.api import sudo, task, env, execute, local, put
 from pipes import quote as shellQuote
 import yaml, json
 
@@ -138,3 +138,17 @@ def saveConfig():
     """
     local('lpass show --notes "config@build.clusterhq.com" >config.yml.old')
     local('lpass edit --non-interactive --notes "config@build.clusterhq.com" <config.yml')
+
+
+@task
+def x():
+    if not containerExists('prometheus-data'):
+        sudo('docker run --name prometheus-data -v /srv/buildmaster/data --entrypoint /bin/true prom/prometheus')
+    put('prometheus.conf', '/tmp/prometheus.conf', use_sudo=True)
+    sudo(cmd(
+        'docker', 'run', '-d',
+        '--name', 'prometheus',
+        '-p', '9090:9090',
+        '-v', '/tmp/prometheus.conf:/prometheus.conf',
+        '--volumes-from', 'prometheus-data',
+        'prom/prometheus'))
