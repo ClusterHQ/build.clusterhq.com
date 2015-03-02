@@ -595,8 +595,8 @@ def getSchedulers():
                     branch=StringParameter("branch", default="master"),
                     repository=FixedParameter(
                         "repository", default=GITHUB + b"/flocker"),
-                    ),
-                ],
+                ),
+            ],
             properties=[
                 report_expected_failures_parameter,
             ],

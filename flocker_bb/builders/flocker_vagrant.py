@@ -340,7 +340,7 @@ def getSchedulers():
                 branch_fn=lambda branch:
                     (MergeForward._isMaster(branch)
                         or MergeForward._isRelease(branch)),
-                )
+            )
         ),
         Triggerable(
             name='trigger/built-rpms/fedora-20',
@@ -357,13 +357,13 @@ def getSchedulers():
                     branch=StringParameter("branch", default="master"),
                     repository=FixedParameter("repository",
                                               default=GITHUB + b"/flocker"),
-                    ),
-                ],
+                ),
+            ],
             properties=[
                 report_expected_failures_parameter,
             ],
             builderNames=BUILDERS,
-            ),
+        ),
         Triggerable(
             name='trigger/built-vagrant-box/flocker-tutorial',
             builderNames=[
@@ -374,4 +374,4 @@ def getSchedulers():
                 "flocker": {"repository": GITHUB + b"/flocker"},
             },
         ),
-        ]
+    ]
