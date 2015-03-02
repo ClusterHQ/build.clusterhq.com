@@ -43,6 +43,8 @@ class GitHubStatus(BuildsetStatusReceiver):
     - When a build stops, report status finished.
 
     :ivar codebase: Codebase to report status for.
+    :ivar failing_builders: List of builders for which results shouldn't
+        be repotrted.
     """
 
     # There are a couple of ways this can be tested.

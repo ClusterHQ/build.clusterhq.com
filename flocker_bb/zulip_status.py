@@ -38,6 +38,12 @@ class ZulipStatus(BuildsetStatusReceiver):
         """
         @param zulip: A zulip client to use to send messages.
         @type zulip: L{_Zulip}
+
+        @param stream: The stream build results should be reported to.
+        @param critical_stream: The stream critical build failures should be
+            reported to.
+        @param failing_builderes: List of builders for which critical failures
+            shouldn't be repotrted.
         """
         self._builders = []
         BuildsetStatusReceiver.__init__(
