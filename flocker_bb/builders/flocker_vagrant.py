@@ -354,7 +354,8 @@ def getSchedulers():
             codebases=[
                 CodebaseParameter(
                     "flocker",
-                    branch=StringParameter("branch", default="master"),
+                    branch=StringParameter(
+                        "branch", default="master", size=80),
                     repository=FixedParameter("repository",
                                               default=GITHUB + b"/flocker"),
                     ),
