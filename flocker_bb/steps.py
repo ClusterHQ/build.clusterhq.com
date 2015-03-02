@@ -31,7 +31,7 @@ buildNumber = Interpolate("%(prop:buildNumber)s")
 
 report_expected_failures_parameter = BooleanParameter(
     name="report-expected-failures",
-    label="Report status for builders expected to fail:",
+    label="Report status for builders expected to fail.",
 )
 
 
