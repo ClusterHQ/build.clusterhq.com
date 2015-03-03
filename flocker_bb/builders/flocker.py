@@ -4,7 +4,8 @@ from collections import Counter
 from buildbot.steps.shell import ShellCommand, SetPropertyFromCommand
 from buildbot.steps.python_twisted import Trial
 from buildbot.steps.python import Sphinx
-from buildbot.steps.transfer import DirectoryUpload, FileUpload, StringDownload
+from buildbot.steps.transfer import (
+    DirectoryUpload, FileDownload, FileUpload, StringDownload)
 from buildbot.steps.master import MasterShellCommand
 from buildbot.steps.source.git import Git
 from buildbot.process.properties import Interpolate, Property
@@ -440,6 +441,9 @@ def makeOmnibusFactory(distribution, triggerSchedulers=()):
     return factory
 
 
+HOMEBREW_RECIPE_MASTER = "~/Flocker.rb"
+
+
 def makeHomebrewRecipeCreationFactory():
     factory = getFlockerFactory(python="python2.7")
     factory.addStep(SetPropertyFromCommand(
@@ -451,11 +455,37 @@ def makeHomebrewRecipeCreationFactory():
     ))
 
     # Run admin/homebrew.py with BuildBot sdist URL as argument
+    # XXX - we almost certainly want a version number based on the
+    # XXX - build number, to avoid the file being overwritten on master
+    # XXX - during tests
+    factory.addStep(ShellCommand(
+        name='make-homebrew-recipe',
+        description=["building", "recipe"],
+        descriptionDone=["build", "recipe"],
+        command=[
+            "VERSION=1", "admin/make-homebrew-recipe", ">", "Flocker1.rb"],
+        haltOnFailure=True))
 
     # Upload new .rb file to BuildBot master
+    factory.addStep(
+        FileUpload(slavesrc="Flocker1.rb", masterdest=HOMEBREW_RECIPE_MASTER))
 
     # Trigger the homebrew-test build
+    factory.addStep(Trigger(
+        name='trigger-homebrew-test',
+        schedulerNames=['trigger/homebrew-test'],
+        set_properties={
+            # lint_revision is the commit that was merged against,
+            # if we merged forward, so have the triggered build
+            # merge against it as well.
+            'merge_target': Property('lint_revision')
+        },
+        updateSourceStamp=True,
+        waitForFinish=False,
+        ))
 
+    # XXX - maybe this should be waitForFinish=True, and then delete
+    # XXX - the sdist and Homebrew files on master?
     return factory
 
 
@@ -469,9 +499,18 @@ def makeHomebrewRecipeTestFactory():
         property='version'
     ))
 
-    # Download Homebrew recipe
+    # Download Homebrew recipe - XXX or use URL on Build master?
+    factory.addStep(FileDownload(
+        mastersrc=HOMEBREW_RECIPE_MASTER, slavedest="Flocker1.rb"))
 
-    # Run using vmrun/fabric script
+    # Run testbrew script
+    factory.addStep(ShellCommand(
+        name='run-homebrew-test',
+        description=["running", "recipe"],
+        descriptionDone=["runn", "recipe"],
+        command=[
+            "python", "admin/testbrew.py", "Flocker1.rb"],
+        haltOnFailure=True))
 
     return factory
 
