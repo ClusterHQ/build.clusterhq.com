@@ -440,47 +440,10 @@ def makeOmnibusFactory(distribution, triggerSchedulers=()):
     return factory
 
 
-def makeHomebrewRecipeCreationFactory():
-    factory = getFlockerFactory(python="python2.7")
-    factory.addStep(SetPropertyFromCommand(
-        command=["python", "setup.py", "--version"],
-        name='check-version',
-        description=['checking', 'version'],
-        descriptionDone=['checking', 'version'],
-        property='version'
-    ))
-
-    # Run admin/homebrew.py with BuildBot sdist URL as argument
-
-    # Upload new .rb file to BuildBot master
-
-    # Trigger the homebrew-test build
-
-    return factory
-
-
-def makeHomebrewRecipeTestFactory():
-    factory = getFlockerFactory(python="python2.7")
-    factory.addStep(SetPropertyFromCommand(
-        command=["python", "setup.py", "--version"],
-        name='check-version',
-        description=['checking', 'version'],
-        descriptionDone=['checking', 'version'],
-        property='version'
-    ))
-
-    # Download Homebrew recipe
-
-    # Run using vmrun/fabric script
-
-    return factory
-
-
 from buildbot.config import BuilderConfig
 from buildbot.schedulers.basic import AnyBranchScheduler
 from buildbot.schedulers.forcesched import (
     CodebaseParameter, StringParameter, ForceScheduler, FixedParameter)
-from buildbot.schedulers.triggerable import Triggerable
 from buildbot.locks import SlaveLock
 
 # A lock to prevent multiple functional tests running at the same time
@@ -488,7 +451,7 @@ functionalLock = SlaveLock('functional-tests')
 
 OMNIBUS_DISTRIBUTIONS = {
     'fedora-20': {
-        'triggers': ['trigger/built-rpms/fedora-20', 'trigger/homebrew-create'],
+        'triggers': ['trigger/built-rpms/fedora-20'],
     },
     'ubuntu-14.04': {},
     'centos-7': {}
@@ -652,19 +615,4 @@ def getSchedulers():
             properties=[],
             builderNames=BUILDERS,
             ),
-        Triggerable(
-            name='trigger/homebrew-create',
-            builderNames=['flocker-homebrew-creation'],
-            codebases={
-                "flocker": {"repository": GITHUB + b"/flocker"},
-            },
-        ),
-        Triggerable(
-            name='trigger/homebrew-test',
-            builderNames=['flocker-homebrew-test'],
-            codebases={
-                "flocker": {"repository": GITHUB + b"/flocker"},
-            },
-        ),
-
         ]
