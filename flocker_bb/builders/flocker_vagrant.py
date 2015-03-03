@@ -447,7 +447,7 @@ def getSchedulers():
             builders.append('flocker-vagrant-tutorial-box')
         schedulers.append(
             Triggerable(
-                name='trigger/built-rpms/%s' % (distribution,),
+                name='trigger/built-packages/%s' % (distribution,),
                 builderNames=builders,
                 codebases={
                     "flocker": {"repository": GITHUB + b"/flocker"},
