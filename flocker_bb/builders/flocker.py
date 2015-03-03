@@ -455,6 +455,11 @@ def makeHomebrewRecipeCreationFactory():
     ))
 
     # Run admin/homebrew.py with BuildBot sdist URL as argument
+    # XXX - how do we know the BuildBot master URL?
+    #
+    # XXX - version of make-homebrew-recipe that can handle URL argument
+    # XXX - is in ClusterHQ/flocker PR #1192
+    #
     # XXX - we almost certainly want a version number based on the
     # XXX - build number, to avoid the file being overwritten on master
     # XXX - during tests
@@ -463,7 +468,8 @@ def makeHomebrewRecipeCreationFactory():
         description=["building", "recipe"],
         descriptionDone=["build", "recipe"],
         command=[
-            "VERSION=1", "admin/make-homebrew-recipe", ">", "Flocker1.rb"],
+            "VERSION=1", "admin/make-homebrew-recipe", "some-URL", ">",
+            "Flocker1.rb"],
         haltOnFailure=True))
 
     # Upload new .rb file to BuildBot master
@@ -474,13 +480,6 @@ def makeHomebrewRecipeCreationFactory():
     factory.addStep(Trigger(
         name='trigger-homebrew-test',
         schedulerNames=['trigger/homebrew-test'],
-        set_properties={
-            # lint_revision is the commit that was merged against,
-            # if we merged forward, so have the triggered build
-            # merge against it as well.
-            'merge_target': Property('lint_revision')
-        },
-        updateSourceStamp=True,
         waitForFinish=False,
         ))
 
