@@ -459,10 +459,6 @@ def makeHomebrewRecipeCreationFactory():
     #
     # XXX - version of make-homebrew-recipe that can handle URL argument
     # XXX - is in ClusterHQ/flocker PR #1192
-    #
-    # XXX - we almost certainly want a version number based on the
-    # XXX - build number, to avoid the file being overwritten on master
-    # XXX - during tests
     factory.addStep(ShellCommand(
         name='make-homebrew-recipe',
         description=["building", "recipe"],
@@ -473,18 +469,23 @@ def makeHomebrewRecipeCreationFactory():
         haltOnFailure=True))
 
     # Upload new .rb file to BuildBot master
-    factory.addStep(
-        FileUpload(slavesrc="Flocker1.rb", masterdest=HOMEBREW_RECIPE_MASTER))
+    factory.addStep(FileUpload(
+        slavesrc="Flocker1.rb",
+        masterdest=Interpolate("~/Flocker%(prop:buildnumber)s.rb")))
 
     # Trigger the homebrew-test build
     factory.addStep(Trigger(
         name='trigger-homebrew-test',
         schedulerNames=['trigger/homebrew-test'],
+        set_properties={
+            'master_recipe': Interpolate("~/Flocker%(prop:buildnumber)s.rb")
+            },
         waitForFinish=False,
         ))
 
-    # XXX - maybe this should be waitForFinish=True, and then delete
-    # XXX - the sdist and Homebrew files on master?
+    # XXX - maybe the above should be waitForFinish=True, and then this
+    # XXX - build deletes the sdist and Homebrew files on master?
+
     return factory
 
 
@@ -500,7 +501,7 @@ def makeHomebrewRecipeTestFactory():
 
     # Download Homebrew recipe - XXX or use URL on Build master?
     factory.addStep(FileDownload(
-        mastersrc=HOMEBREW_RECIPE_MASTER, slavedest="Flocker1.rb"))
+        mastersrc=Property('master_recipe'), slavedest="Flocker1.rb"))
 
     # Run testbrew script
     factory.addStep(ShellCommand(
