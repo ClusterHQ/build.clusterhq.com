@@ -376,6 +376,12 @@ def createRepository(distribution, repository_path):
     return steps
 
 
+def makeHomebrewFactory(triggerSchedulers=()):
+    # XXX this stub will change
+    factory = getFlockerFactory(python="python2.7")
+    return factory
+
+
 def makeOmnibusFactory(distribution, triggerSchedulers=()):
     factory = getFlockerFactory(python="python2.7")
     factory.addStep(SetPropertyFromCommand(
@@ -540,6 +546,13 @@ def getBuilders(slavenames):
                       category='flocker',
                       factory=makeAdminFactory(),
                       nextSlave=idleSlave),
+        BuilderConfig(name='flocker-homebrew',
+                      slavenames=slavenames['fedora'],
+                      category='flocker',
+                      factory=makeHomebrewFactory(triggerSchedulers=[
+                          'trigger/test-homebrew-vm',  # XXX this will change
+                      ]),
+                      nextSlave=idleSlave),
         ]
     for distribution, config in OMNIBUS_DISTRIBUTIONS.items():
         builders.append(
@@ -576,6 +589,7 @@ BUILDERS = [
     'flocker-docs',
     'flocker-zfs-head',
     'flocker-admin',
+    'flocker-homebrew'
 ] + [
     'flocker-omnibus-%s' % (dist,) for dist in OMNIBUS_DISTRIBUTIONS.keys()
 ]
