@@ -4,7 +4,7 @@ from collections import Counter
 from buildbot.steps.shell import ShellCommand, SetPropertyFromCommand
 from buildbot.steps.python_twisted import Trial
 from buildbot.steps.python import Sphinx
-from buildbot.steps.transfer import DirectoryUpload, StringDownload
+from buildbot.steps.transfer import DirectoryUpload, FileUpload, StringDownload
 from buildbot.steps.master import MasterShellCommand
 from buildbot.steps.source.git import Git
 from buildbot.process.properties import Interpolate, Property
@@ -395,6 +395,12 @@ def makeOmnibusFactory(distribution, triggerSchedulers=()):
             "setup.py", "sdist",
             ],
         haltOnFailure=True))
+    if distribution == 'fedora-20':
+        factory.addStep(FileUpload(
+            slavesrc=Interpolate(
+                '/flocker/dist/Flocker-%(prop:version)s.tar.gz'),
+            masterdest=Interpolate(
+                '~/public_html/flocker/dist/Flocker-%(prop:version)s.tar.gz')))
     factory.addStep(ShellCommand(
         command=[
             virtualenvBinary('python'),
