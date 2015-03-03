@@ -342,6 +342,8 @@ ACCEPTEANCE_CONFIGURATIONS = [
         provider='rackspace', distribution='fedora-20',
         variants={'distro-testing'}),
     AcceptanceConfiguration(
+        provider='rackspace', distribution='centos-7'),
+    AcceptanceConfiguration(
         provider='rackspace', distribution='centos-7',
         variants={'docker-head'}),
     AcceptanceConfiguration(
