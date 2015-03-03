@@ -158,14 +158,22 @@ def saveConfig():
 
 
 @task
-def x():
+def startPrometheus():
+    removeContainer('prometheus')
     if not containerExists('prometheus-data'):
-        sudo('docker run --name prometheus-data -v /srv/buildmaster/data --entrypoint /bin/true prom/prometheus')
-    put('prometheus.conf', '/tmp/prometheus.conf', use_sudo=True)
+        sudo(cmd(
+            'docker', 'run',
+            '--name', 'prometheus-data',
+            # https://github.com/prometheus/prometheus/pull/574
+            '-v', '/tmp/metrics',
+            '--entrypoint', '/bin/true',
+            'prom/prometheus'))
+    sudo(cmd('mkdir', '-p', '/srv/prometheus'))
+    put('prometheus.conf', '/srv/prometheus/prometheus.conf', use_sudo=True)
     sudo(cmd(
         'docker', 'run', '-d',
         '--name', 'prometheus',
         '-p', '9090:9090',
-        '-v', '/tmp/prometheus.conf:/prometheus.conf',
+        '-v', '/srv/prometheus/prometheus.conf:/prometheus.conf',
         '--volumes-from', 'prometheus-data',
         'prom/prometheus'))
