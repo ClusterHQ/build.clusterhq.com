@@ -133,6 +133,12 @@ class EC2BuildSlave(BuildSlave):
                 self.build_wait_timer.cancel()
             self.build_wait_timer = None
 
+    def detached(self, mind):
+        BuildSlave.detached(self, mind)
+        # If the slave disconnects, assuming it is a problem with the instance,
+        # and stop it.
+        self.ec2.stop()
+
     def _setBuildWaitTimer(self):
         self._clearBuildWaitTimer()
         self.build_wait_timer = reactor.callLater(

@@ -1,10 +1,12 @@
+from zope.interface import implementer
 from twisted.python.constants import Names, NamedConstant
 from twisted.internet.threads import deferToThread
 from characteristic import attributes
 from twisted.python import log
 from machinist import (
     TransitionTable, MethodSuffixOutputer,
-    trivialInput, constructFiniteStateMachine, Transition)
+    trivialInput, constructFiniteStateMachine, Transition,
+    IRichInput)
 
 
 class Input(Names):
@@ -65,7 +67,15 @@ table = TransitionTable({
 })
 
 RequestStart = trivialInput(Input.REQUEST_START)
-InstanceStarted = trivialInput(Input.INSTANCE_STARTED)
+
+
+@implementer(IRichInput)
+@attributes(['instance_id'])
+class InstanceStarted(object):
+    @staticmethod
+    def symbol():
+        return Input.INSTANCE_STARTED
+
 StartFailed = trivialInput(Input.START_FAILED)
 RequestStop = trivialInput(Input.REQUEST_STOP)
 InstanceStopped = trivialInput(Input.INSTANCE_STOPPED)
@@ -119,7 +129,7 @@ class EC2(object):
 
         def started(node):
             self.node = node
-            self._fsm.receive(InstanceStarted())
+            self._fsm.receive(InstanceStarted(instance_id=node.id))
 
         def failed(f):
             log.err(f, "while starting %s" % (self.name,))
@@ -135,8 +145,15 @@ class EC2(object):
             self._fsm.receive(InstanceStopped())
 
         def failed(f):
+            instance_id = self.node.id
+            # Assume the instance is already gone.
+            del self.node
+            self._fsm.receive(InstanceStopped())
             log.err(f, "while stopping %s" % (self.name,))
-            self._fsm.receive(StopFailed())
+            log.msg(
+                format="EC2 Instance [%(instance_id)s](https://us-west-2.console.aws.amazon.com/ec2/v2/home?region=us-west-2#Instances:instanceId=%(instance_id)s) failed to stop.",  # noqa
+                instance_id=instance_id,
+                zulip_subject="EC2 Instances")
 
         d.addCallbacks(stopped, failed)
 

@@ -138,6 +138,10 @@ if privateData['github']['report_status']:
         failing_builders=failing_builders,
         ))
 
+
+from flocker_bb.monitoring import Monitor
+c['status'].append(Monitor())
+
 from flocker_bb.boxes import FlockerWebStatus as WebStatus
 from buildbot.status.web import authz
 from buildbot.status.web.auth import BasicAuth
