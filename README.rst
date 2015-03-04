@@ -144,10 +144,20 @@ Mac OS X Buildslave
 
 Configuring an OS X machine to run tests requires root priviledges and for SSH to be configured on this machine.
 
-To configure this machine run:
+To configure this machine run::
 
    fab -f slave/osx/fabfile.py --hosts=${USERNAME}@${OSX_ADDRESS} install:0,${PASSWORD},${MASTER}
 
 The tests do not run with root or administrator privileges.
 
 Where ${USERNAME} is a user on the OS X machine, and ${PASSWORD} is the password in ``slaves.osx.passwords`` from the ``config.yml`` used to deploy the BuildBot master at ${MASTER}.
+
+Monitoring
+----------
+
+There is monitoring setup for buildbot, using `prometheus <http://prometheus.io/>`_.
+It is configured to poll ``/metrics`` on both the production and staging buildbots.
+It is currently running alongside both ``build.clusterhq.com`` and ``build.staging.clusterhq.com``.
+It can be started by::
+
+   fab --hosts=${USERNAME}@${HOST} startPrometheus
