@@ -396,12 +396,6 @@ def makeOmnibusFactory(distribution, triggerSchedulers=()):
             "setup.py", "sdist",
             ],
         haltOnFailure=True))
-    if distribution == 'fedora-20':
-        factory.addStep(FileUpload(
-            slavesrc=Interpolate(
-                '/flocker/dist/Flocker-%(prop:version)s.tar.gz'),
-            masterdest=Interpolate(
-                '~/public_html/flocker/dist/Flocker-%(prop:version)s.tar.gz')))
     factory.addStep(ShellCommand(
         command=[
             virtualenvBinary('python'),
@@ -450,14 +444,28 @@ def makeHomebrewRecipeCreationFactory():
         descriptionDone=['checking', 'version'],
         property='version'
     ))
-
+    factory.addSteps(installDependencies())
+    factory.addStep(ShellCommand(
+        name='build-sdist',
+        description=["building", "sdist"],
+        descriptionDone=["build", "sdist"],
+        command=[
+            virtualenvBinary('python'),
+            "setup.py", "sdist",
+            ],
+        haltOnFailure=True))
+    factory.addStep(FileUpload(
+        slavesrc=Interpolate('/flocker/dist/Flocker-%(prop:version)s.tar.gz'),
+        masterdest=Interpolate(
+            '~/public_html/flocker/dist/Flocker-%(prop:version)s.tar.gz')
+    ))
     # Run admin/homebrew.py with BuildBot sdist URL as argument
     # XXX - how do we know the BuildBot master URL?
     #
     # XXX - version of make-homebrew-recipe that can handle URL argument
     # XXX - is in ClusterHQ/flocker PR #1192
     dist_url = "{0}{1}".format(
-        resultURL('omnibus', discriminator='fedora-20'),
+        resultURL('XXX what goes here?'),
         'Flocker-%(prop:version)s.tar.gz'
     )
     factory.addStep(ShellCommand(
@@ -472,7 +480,8 @@ def makeHomebrewRecipeCreationFactory():
     # Upload new .rb file to BuildBot master
     factory.addStep(FileUpload(
         slavesrc="FlockerDev.rb",
-        masterdest=Interpolate("~/Flocker%(prop:buildnumber)s.rb")))
+        masterdest=Interpolate("~/Flocker%(prop:buildnumber)s.rb")
+    ))
 
     # Trigger the homebrew-test build
     factory.addStep(Trigger(
@@ -500,17 +509,14 @@ def makeHomebrewRecipeTestFactory():
         property='version'
     ))
 
-    # Download Homebrew recipe - XXX or use URL on Build master?
-    factory.addStep(FileDownload(
-        mastersrc=Property('master_recipe'), slavedest="FlockerDev.rb"))
-
     # Run testbrew script
+    recipe_url = resultURL(Property('master_recipe'))
     factory.addStep(ShellCommand(
         name='run-homebrew-test',
         description=["running", "recipe"],
         descriptionDone=["runn", "recipe"],
         command=[
-            "python", "admin/testbrew.py", "FlockerDev.rb"],
+            "python", "admin/testbrew.py", recipe_url],
         haltOnFailure=True))
 
     return factory
