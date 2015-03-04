@@ -12,14 +12,14 @@ from prometheus_client import Gauge, Counter
 class Monitor(StatusReceiverMultiService):
 
     pending_counts_gauge = Gauge(
-        'pending_builds_total',
+        'pending_builds',
         'Number of pending builds',
         labelnames=['builder'],
         namespace='buildbot',
     )
 
     building_counts_gauge = Gauge(
-        'running_builds_total',
+        'running_builds',
         'Number of running builds',
         labelnames=['builder', 'slave_class', 'slave_number'],
         namespace='buildbot',
