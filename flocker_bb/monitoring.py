@@ -44,6 +44,7 @@ class Monitor(StatusReceiverMultiService):
         self.status = self.parent
         self.master = self.status.master
         StatusReceiverMultiService.startService(self)
+        self.status.subscribe(self)
 
     @inlineCallbacks
     def count_pending_builds(self):
