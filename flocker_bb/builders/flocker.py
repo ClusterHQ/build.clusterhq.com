@@ -477,7 +477,7 @@ def makeHomebrewRecipeCreationFactory():
     # Trigger the homebrew-test build
     factory.addStep(Trigger(
         name='trigger-homebrew-test',
-        schedulerNames=['trigger/homebrew-test'],
+        schedulerNames=['trigger/homebrew-created'],
         set_properties={
             'master_recipe': Interpolate("~/Flocker%(prop:buildnumber)s.rb")
             },
@@ -529,7 +529,7 @@ functionalLock = SlaveLock('functional-tests')
 OMNIBUS_DISTRIBUTIONS = {
     'fedora-20': {
         'triggers': [
-            'trigger/built-rpms/fedora-20', 'trigger/homebrew-create'
+            'trigger/built-rpms/fedora-20', 'trigger/copied-sdist'
         ],
     },
     'ubuntu-14.04': {},
@@ -625,7 +625,7 @@ def getBuilders(slavenames):
                       factory=makeHomebrewRecipeCreationFactory(),
                       nextSlave=idleSlave),
         BuilderConfig(name='flocker-homebrew-test',
-                      slavenames=slavenames['osx-10'],  # Slave name?
+                      slavenames=slavenames['osx-10'],  # XXX Slave name?
                       category='flocker',
                       factory=makeHomebrewRecipeTestFactory(),
                       nextSlave=idleSlave),
@@ -695,14 +695,14 @@ def getSchedulers():
             builderNames=BUILDERS,
             ),
         Triggerable(
-            name='trigger/homebrew-create',
+            name='trigger/copied-sdist',
             builderNames=['flocker-homebrew-creation'],
             codebases={
                 "flocker": {"repository": GITHUB + b"/flocker"},
             },
         ),
         Triggerable(
-            name='trigger/homebrew-test',
+            name='trigger/homebrew-created',
             builderNames=['flocker-homebrew-test'],
             codebases={
                 "flocker": {"repository": GITHUB + b"/flocker"},
