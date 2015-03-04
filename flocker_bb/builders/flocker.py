@@ -441,9 +441,6 @@ def makeOmnibusFactory(distribution, triggerSchedulers=()):
     return factory
 
 
-HOMEBREW_RECIPE_MASTER = "~/Flocker.rb"
-
-
 def makeHomebrewRecipeCreationFactory():
     factory = getFlockerFactory(python="python2.7")
     factory.addStep(SetPropertyFromCommand(
@@ -459,18 +456,22 @@ def makeHomebrewRecipeCreationFactory():
     #
     # XXX - version of make-homebrew-recipe that can handle URL argument
     # XXX - is in ClusterHQ/flocker PR #1192
+    dist_url = "{0}{1}".format(
+        resultURL('omnibus', discriminator='fedora-20'),
+        'Flocker-%(prop:version)s.tar.gz'
+    )
     factory.addStep(ShellCommand(
         name='make-homebrew-recipe',
         description=["building", "recipe"],
         descriptionDone=["build", "recipe"],
         command=[
-            "VERSION=1", "admin/make-homebrew-recipe", "some-URL", ">",
-            "Flocker1.rb"],
+            "VERSION=Dev", "admin/make-homebrew-recipe", dist_url, ">",
+            "FlockerDev.rb"],
         haltOnFailure=True))
 
     # Upload new .rb file to BuildBot master
     factory.addStep(FileUpload(
-        slavesrc="Flocker1.rb",
+        slavesrc="FlockerDev.rb",
         masterdest=Interpolate("~/Flocker%(prop:buildnumber)s.rb")))
 
     # Trigger the homebrew-test build
@@ -501,7 +502,7 @@ def makeHomebrewRecipeTestFactory():
 
     # Download Homebrew recipe - XXX or use URL on Build master?
     factory.addStep(FileDownload(
-        mastersrc=Property('master_recipe'), slavedest="Flocker1.rb"))
+        mastersrc=Property('master_recipe'), slavedest="FlockerDev.rb"))
 
     # Run testbrew script
     factory.addStep(ShellCommand(
@@ -509,7 +510,7 @@ def makeHomebrewRecipeTestFactory():
         description=["running", "recipe"],
         descriptionDone=["runn", "recipe"],
         command=[
-            "python", "admin/testbrew.py", "Flocker1.rb"],
+            "python", "admin/testbrew.py", "FlockerDev.rb"],
         haltOnFailure=True))
 
     return factory
@@ -527,7 +528,9 @@ functionalLock = SlaveLock('functional-tests')
 
 OMNIBUS_DISTRIBUTIONS = {
     'fedora-20': {
-        'triggers': ['trigger/built-rpms/fedora-20', 'trigger/homebrew-create'],
+        'triggers': [
+            'trigger/built-rpms/fedora-20', 'trigger/homebrew-create'
+        ],
     },
     'ubuntu-14.04': {},
     'centos-7': {}
