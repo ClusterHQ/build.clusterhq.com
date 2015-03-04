@@ -96,7 +96,7 @@ class Monitor(StatusReceiverMultiService):
         self.building_counts_gauge.labels(
             builderName, slave_name, slave_number).inc()
 
-    def buildFinished(self, builderName, build):
+    def buildFinished(self, builderName, build, results):
         """
         Notify this receiver that a build has started.
 
