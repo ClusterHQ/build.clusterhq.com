@@ -465,7 +465,7 @@ def makeHomebrewRecipeCreationFactory():
     # XXX - version of make-homebrew-recipe that can handle URL argument
     # XXX - is in ClusterHQ/flocker PR #1192
     dist_url = "{0}{1}".format(
-        resultURL('XXX what goes here?'),
+        resultURL('homebrew'),
         'Flocker-%(prop:version)s.tar.gz'
     )
     factory.addStep(ShellCommand(
