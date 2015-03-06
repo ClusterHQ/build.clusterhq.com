@@ -351,6 +351,8 @@ ACCEPTEANCE_CONFIGURATIONS = [
         variants={'zfs-testing'}),
     AcceptanceConfiguration(
         provider='digitalocean', distribution='fedora-20'),
+    AcceptanceConfiguration(
+        provider='aws', distribution='centos-7'),
 ]
 
 
