@@ -10,7 +10,6 @@ from fabric.api import run, task, sudo, put, local
 from twisted.python.filepath import FilePath
 from StringIO import StringIO
 import yaml
-from textwrap import dedent
 
 
 def get_vagrant_config():
@@ -33,12 +32,6 @@ def configure_gsutil(config):
 
 def configure_ssh(ssh_key):
     sudo('mkdir -p ~/.ssh', user='buildslave')
-    put(StringIO(
-        dedent("""\
-            IdentityFile ~/.vagrant.d/insecure_private_key
-            IdentityFile ~/.ssh/id_rsa
-            """)),
-        '/home/buildslave/.ssh/config', mode=0600)
     put(StringIO(ssh_key), '/home/buildslave/.ssh/id_rsa', mode=0600)
     run('chown -R buildslave /home/buildslave/.ssh')
 
@@ -85,6 +78,8 @@ yum install -y https://kojipkgs.fedoraproject.org//packages/kernel/${KV}/${SV}/$
     sudo("buildslave create-slave /home/buildslave/fedora-vagrant %(master)s fedora-vagrant-%(index)s %(password)s"  # noqa
          % {'index': index, 'password': password, 'master': master},
          user='buildslave')
+    put(FilePath(__file__).sibling('start').path,
+        '/home/buildslave/fedora-vagrant/start', mode=0755)
 
     sudo("vagrant plugin install vagrant-reload vagrant-vbguest",
          user='buildslave')
