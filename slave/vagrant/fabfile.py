@@ -31,7 +31,7 @@ def configure_gsutil(config):
 
 
 def configure_ssh(ssh_key):
-    sudo('mkdir ~/.ssh', user='buildslave')
+    sudo('mkdir -p ~/.ssh', user='buildslave')
     put(StringIO("IdentityFile ~/.vagrant.d/insecure_private_key\n"),
         '/home/buildslave/.ssh/config', mode=0600)
     put(StringIO(ssh_key), '/home/buildslave/.ssh/id_rsa', mode=0600)
