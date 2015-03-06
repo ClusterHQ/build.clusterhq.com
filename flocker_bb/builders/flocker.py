@@ -417,7 +417,7 @@ def makeOmnibusFactory(distribution):
     ))
     factory.addSteps(createRepository(distribution, repository_path))
     factory.addStep(Trigger(
-        name='trigger/built-rpms',
+        name='trigger/built-packages',
         schedulerNames=['trigger/built-packages/%s' % (distribution,)],
         set_properties={
             # lint_revision is the commit that was merged against,
