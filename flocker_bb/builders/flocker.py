@@ -631,7 +631,7 @@ def getBuilders(slavenames):
                       factory=makeHomebrewRecipeCreationFactory(),
                       nextSlave=idleSlave),
         BuilderConfig(name='flocker-homebrew-test',
-                      slavenames=slavenames['osx-10'],  # XXX Slave name?
+                      slavenames=slavenames['osx'],
                       category='flocker',
                       factory=makeHomebrewRecipeTestFactory(),
                       nextSlave=idleSlave),
