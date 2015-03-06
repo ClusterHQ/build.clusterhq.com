@@ -10,6 +10,7 @@ from fabric.api import run, task, sudo, put, local
 from twisted.python.filepath import FilePath
 from StringIO import StringIO
 import yaml
+from textwrap import dedent
 
 
 def get_vagrant_config():
@@ -32,7 +33,11 @@ def configure_gsutil(config):
 
 def configure_ssh(ssh_key):
     sudo('mkdir -p ~/.ssh', user='buildslave')
-    put(StringIO("IdentityFile ~/.vagrant.d/insecure_private_key\n"),
+    put(StringIO(
+        dedent("""\
+            IdentityFile ~/.vagrant.d/insecure_private_key
+            IdentityFile ~/.ssh/id_rsa
+            """)),
         '/home/buildslave/.ssh/config', mode=0600)
     put(StringIO(ssh_key), '/home/buildslave/.ssh/id_rsa', mode=0600)
     run('chown -R buildslave /home/buildslave/.ssh')
