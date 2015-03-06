@@ -42,7 +42,7 @@ class ZulipStatus(BuildsetStatusReceiver):
         @param stream: The stream build results should be reported to.
         @param critical_stream: The stream critical build failures should be
             reported to.
-        @param failing_builderes: List of builders for which critical failures
+        @param failing_builders: List of builders for which critical failures
             shouldn't be repotrted.
         """
         self._builders = []
