@@ -2,7 +2,7 @@ This is the configuration for ClusterHQ's `buildbot <http://buildbot.net/>`_.
 
 The master is deployed on an EC2 instance running in us-west-2, in a docker container.
 
-The slaves are EC2 latent slaves (spot instances) started by the master.
+The slaves are EC2 latent slaves started by the master.
 
 We use schedulers to start builds, triggered by each push of a commit to a branch and forced builds.
 After each commit is pushed, Buildbot waits a number of seconds before starting a build,
@@ -59,7 +59,7 @@ Staging changes
 Buildbot changes can be tested on a staging machine.
 The docker registry will automatically build an image based on the staging branch, whenever it is updated.
 
-Create an Ubuntu 14.04 spot instance on EC2 and note the IP of this instance.
+Create an Fedora 20 spot instance on EC2 and note the IP of this instance.
 In the following example the IP is 54.191.9.106.
 Set the Security Group of this instance to allow inbound traffic as shown below.
 
@@ -138,3 +138,26 @@ The lifecycle configuration file is in :file:`vagrant/clusterhq-vagrant-buildbot
 It was configured by::
 
   gsutil lifecycle set vagrant/clusterhq-vagrant-buildbot.lifecycle.json gs://clusterhq-vagrant-buildbot/
+
+Mac OS X Buildslave
+-------------------
+
+Configuring an OS X machine to run tests requires root priviledges and for SSH to be configured on this machine.
+
+To configure this machine run::
+
+   fab -f slave/osx/fabfile.py --hosts=${USERNAME}@${OSX_ADDRESS} install:0,${PASSWORD},${MASTER}
+
+The tests do not run with root or administrator privileges.
+
+Where ${USERNAME} is a user on the OS X machine, and ${PASSWORD} is the password in ``slaves.osx.passwords`` from the ``config.yml`` used to deploy the BuildBot master at ${MASTER}.
+
+Monitoring
+----------
+
+There is monitoring setup for buildbot, using `prometheus <http://prometheus.io/>`_.
+It is configured to poll ``/metrics`` on both the production and staging buildbots.
+It is currently running alongside both ``build.clusterhq.com`` and ``build.staging.clusterhq.com``.
+It can be started by::
+
+   fab --hosts=${USERNAME}@${HOST} startPrometheus

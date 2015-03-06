@@ -395,7 +395,7 @@ BUILDERS = [
     for configuration in ACCEPTEANCE_CONFIGURATIONS
 ]
 
-from ..steps import MergeForward
+from ..steps import MergeForward, report_expected_failures_parameter
 
 
 def getSchedulers():
@@ -411,21 +411,24 @@ def getSchedulers():
                 branch_fn=lambda branch:
                     (MergeForward._isMaster(branch)
                         or MergeForward._isRelease(branch)),
-                )
+            )
         ),
         ForceScheduler(
             name="force-flocker-vagrant",
             codebases=[
                 CodebaseParameter(
                     "flocker",
-                    branch=StringParameter("branch", default="master"),
+                    branch=StringParameter(
+                        "branch", default="master", size=80),
                     repository=FixedParameter("repository",
                                               default=GITHUB + b"/flocker"),
-                    ),
-                ],
-            properties=[],
+                ),
+            ],
+            properties=[
+                report_expected_failures_parameter,
+            ],
             builderNames=BUILDERS,
-            ),
+        ),
         Triggerable(
             name='trigger/built-vagrant-box/flocker-tutorial',
             builderNames=[

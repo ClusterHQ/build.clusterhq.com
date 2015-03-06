@@ -81,6 +81,8 @@ yum install -y https://kojipkgs.fedoraproject.org//packages/kernel/${KV}/${SV}/$
          % {'index': index, 'password': password, 'master': master},
          user='buildslave')
 
+    sudo("vagrant plugin install vagrant-reload vagrant-vbguest",
+         user='buildslave')
     configure_ssh(ssh_key=config['ssh-key'])
     configure_acceptance(config=config['acceptance'])
     configure_gsutil(config=config['google-certificate'])

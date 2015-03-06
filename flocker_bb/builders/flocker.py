@@ -337,7 +337,8 @@ def makeInternalDocsFactory():
             '--verbose',
             '--delete-removed',
             '--no-preserve',
-            resultPath('docs'),
+            # s3cmd needs a trailing slash.
+            Interpolate("%(kw:path)s/", path=resultPath('docs')),
             Interpolate(
                 "s3://%(kw:bucket)s/%(prop:version)s/",
                 bucket='clusterhq-dev-docs',
@@ -438,6 +439,8 @@ from buildbot.schedulers.forcesched import (
     CodebaseParameter, StringParameter, ForceScheduler, FixedParameter)
 from buildbot.locks import SlaveLock
 
+from ..steps import report_expected_failures_parameter
+
 # A lock to prevent multiple functional tests running at the same time
 functionalLock = SlaveLock('functional-tests')
 
@@ -492,6 +495,11 @@ def getBuilders(slavenames):
                       factory=makeFactory(b'python2.7'),
                       locks=[functionalLock.access('counting')],
                       nextSlave=idleSlave),
+        BuilderConfig(name='flocker-osx-10.10',
+                      slavenames=slavenames['osx'],
+                      category='flocker',
+                      factory=makeFactory(b'python2.7'),
+                      nextSlave=idleSlave),
         BuilderConfig(name='flocker-zfs-head',
                       slavenames=slavenames['fedora-zfs-head'],
                       category='flocker',
@@ -524,7 +532,6 @@ def getBuilders(slavenames):
                       slavenames=slavenames['fedora'],
                       category='flocker',
                       factory=makeAdminFactory(),
-                      locks=[functionalLock.access('counting')],
                       nextSlave=idleSlave),
         ]
     for distribution in OMNIBUS_DISTRIBUTIONS:
@@ -546,7 +553,6 @@ def getBuilders(slavenames):
     for slavenames, slave_builders in groupby(locked_builders,
                                               key=lambda b: b.slavenames):
         for builder, slavename in zip(slave_builders, slavenames):
-            print builder.name, slavename
             builder.slavenames = [slavename]
 
     return builders
@@ -555,6 +561,7 @@ BUILDERS = [
     'flocker-fedora-20',
     'flocker-ubuntu-14.04',
     'flocker-centos-7',
+    'flocker-osx-10.10',
     'flocker-twisted-trunk',
     'flocker-coverage',
     'flocker-lint',
@@ -581,12 +588,15 @@ def getSchedulers():
             codebases=[
                 CodebaseParameter(
                     "flocker",
-                    branch=StringParameter("branch", default="master"),
+                    branch=StringParameter(
+                        "branch", default="master", size=80),
                     repository=FixedParameter(
                         "repository", default=GITHUB + b"/flocker"),
-                    ),
-                ],
-            properties=[],
+                ),
+            ],
+            properties=[
+                report_expected_failures_parameter,
+            ],
             builderNames=BUILDERS,
             ),
         ]
