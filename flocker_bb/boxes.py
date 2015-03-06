@@ -14,6 +14,8 @@ from twisted.web.template import tags, flattenString
 from twisted.web.vhost import NameVirtualHost
 from twisted.web.static import File
 
+from characteristic import attributes, Attribute
+
 from flocker_bb.prometheus import PrometheusMetrics
 
 
@@ -32,7 +34,11 @@ _backgroundColors = {
 
 # /boxes[-things]
 #  accepts builder=, branch=, num_builds=
-class TenBoxesPerBuilder(HtmlResource):
+@attributes([
+    Attribute('categories', default_value=None),
+    Attribute('failing_builders', default_factory=frozenset),
+])
+class TenBoxesPerBuilder(HtmlResource, object):
     """This shows a narrow table with one row per build. The leftmost column
     contains the builder name. The next column contains the results of the
     most recent build. The right-hand column shows the builder's current
@@ -44,9 +50,8 @@ class TenBoxesPerBuilder(HtmlResource):
 
     title = "Latest Build"
 
-    def __init__(self, categories=None):
+    def __init__(self):
         HtmlResource.__init__(self)
-        self.categories = categories
 
     @defer.inlineCallbacks
     def content(self, req, context):
@@ -95,66 +100,85 @@ class TenBoxesPerBuilder(HtmlResource):
         table = tags.table(style="clear:both")
         tag(table)
 
-        for bn in builders:
-            builder = status.getBuilder(bn)
-            state = builder.getState()[0]
-            if state == 'building':
-                state = 'idle'
-            row = tags.tr()
-            table(row)
-            builderLink = path_to_builder(req, builder)
-            row(tags.td(class_="box %s" % (state,))
-                       (tags.a(href=builderLink)(bn)))
+        for bn in filter(lambda bn: bn not in self.failing_builders, builders):
+            table(self.builder_row(bn, req, branches, num_builds))
 
-            builds = sorted([
-                build for build in builder.getCurrentBuilds()
-                if set(map_branches(branches)) & builder._getBuildBranches(build)
-                ], key=lambda build: build.getNumber(), reverse=True)
+        table(tags.tr()(tags.td(colspan="100")(
+            tags.h3(style="float:left; margin-top:0")
+                   ("Expected failures: "))))
 
-            builds.extend(builder.generateFinishedBuilds(
-                map_branches(branches), num_builds=num_builds))
-            if builds:
-                for b in builds:
-                    url = path_to_build(req, b)
-                    try:
-                        label = b.getProperty("got_revision")
-                    except KeyError:
-                        label = None
-                    # Label should never be "None", but sometimes
-                    # buildbot has disgusting bugs.
-                    if not label or label == "None" or len(str(label)) > 20:
-                        label = "#%d" % b.getNumber()
-                    if b.isFinished():
-                        text = b.getText()
-                    else:
-                        when = b.getETA()
-                        if when:
-                            text = [
-                                "%s" % (formatInterval(when),),
-                                "%s" % (time.strftime(
-                                    "%H:%M:%S",
-                                    time.localtime(time.time() + when)),)
-                            ]
-                        else:
-                            text = []
+        for bn in filter(lambda bn: bn in self.failing_builders, builders):
+            table(self.builder_row(bn, req, branches, num_builds))
 
-                    row(tags.td(
-                        align="center",
-                        bgcolor=_backgroundColors[b.getResults()],
-                        class_=("LastBuild box ", build_get_class(b)))([
-                            (element, tags.br)
-                            for element
-                            in [tags.a(href=url)(label)] + text]))
-            else:
-                row(tags.td(class_="LastBuild box")("no build"))
         defer.returnValue((yield flattenString(req, tag)))
 
+    def builder_row(self, bn, req, branches, num_builds):
+        status = self.getStatus(req)
+        builder = status.getBuilder(bn)
+        state = builder.getState()[0]
+        if state == 'building':
+            state = 'idle'
+        row = tags.tr()
+        builderLink = path_to_builder(req, builder)
+        row(tags.td(class_="box %s" % (state,))
+                   (tags.a(href=builderLink)(bn)))
 
+        builds = sorted([
+            build for build in builder.getCurrentBuilds()
+            if set(map_branches(branches)) & builder._getBuildBranches(build)
+            ], key=lambda build: build.getNumber(), reverse=True)
+
+        builds.extend(builder.generateFinishedBuilds(
+            map_branches(branches), num_builds=num_builds))
+        if builds:
+            for b in builds:
+                url = path_to_build(req, b)
+                try:
+                    label = b.getProperty("got_revision")
+                except KeyError:
+                    label = None
+                # Label should never be "None", but sometimes
+                # buildbot has disgusting bugs.
+                if not label or label == "None" or len(str(label)) > 20:
+                    label = "#%d" % b.getNumber()
+                if b.isFinished():
+                    text = b.getText()
+                else:
+                    when = b.getETA()
+                    if when:
+                        text = [
+                            "%s" % (formatInterval(when),),
+                            "%s" % (time.strftime(
+                                "%H:%M:%S",
+                                time.localtime(time.time() + when)),)
+                        ]
+                    else:
+                        text = []
+
+                row(tags.td(
+                    align="center",
+                    bgcolor=_backgroundColors[b.getResults()],
+                    class_=("LastBuild box ", build_get_class(b)))([
+                        (element, tags.br)
+                        for element
+                        in [tags.a(href=url)(label)] + text]))
+        else:
+            row(tags.td(class_="LastBuild box")("no build"))
+
+        return row
+
+
+@attributes([
+    Attribute('failing_builders', default_factory=frozenset),
+])
 class FlockerWebStatus(html.WebStatus):
     def __init__(self, **kwargs):
         html.WebStatus.__init__(self, **kwargs)
-        self.putChild("boxes-flocker",
-                      TenBoxesPerBuilder(categories=['flocker']))
+        self.putChild(
+            "boxes-flocker",
+            TenBoxesPerBuilder(
+                categories=['flocker'],
+                failing_builders=self.failing_builders))
 
     def setupSite(self):
         html.WebStatus.setupSite(self)

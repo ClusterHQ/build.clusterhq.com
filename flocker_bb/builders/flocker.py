@@ -440,6 +440,8 @@ from buildbot.schedulers.forcesched import (
     CodebaseParameter, StringParameter, ForceScheduler, FixedParameter)
 from buildbot.locks import SlaveLock
 
+from ..steps import report_expected_failures_parameter
+
 # A lock to prevent multiple functional tests running at the same time
 functionalLock = SlaveLock('functional-tests')
 
@@ -594,9 +596,11 @@ def getSchedulers():
                         "branch", default="master", size=80),
                     repository=FixedParameter(
                         "repository", default=GITHUB + b"/flocker"),
-                    ),
-                ],
-            properties=[],
+                ),
+            ],
+            properties=[
+                report_expected_failures_parameter,
+            ],
             builderNames=BUILDERS,
             ),
         ]
