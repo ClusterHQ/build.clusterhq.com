@@ -57,12 +57,13 @@ yum install -y https://kojipkgs.fedoraproject.org//packages/kernel/${KV}/${SV}/$
         "https://clusterhq.s3.amazonaws.com/phantomjs-fedora-20/phantomjs-1.9.8-1.x86_64.rpm",  # noqa
     ]
     run("yum install -y " + " ".join(packages))
-    run("vagrant plugin install vagrant-reload vagrant-vbguest")
     run("useradd buildslave")
     sudo("buildslave create-slave /home/buildslave/fedora-vagrant %(master)s fedora-vagrant-%(index)s %(password)s"  # noqa
          % {'index': index, 'password': password, 'master': master},
          user='buildslave')
     sudo('mkdir ~/.ssh', user='buildslave')
+    sudo("vagrant plugin install vagrant-reload vagrant-vbguest",
+         user='buildslave')
     sudo('ln -s ~/.vagrant.d/insecure_private_key ~/.ssh/id_rsa',
          user='buildslave')
 
