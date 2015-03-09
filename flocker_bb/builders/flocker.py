@@ -464,9 +464,9 @@ def makeHomebrewRecipeCreationFactory():
     #
     # XXX - version of make-homebrew-recipe that can handle URL argument
     # XXX - is in ClusterHQ/flocker PR #1192
-    dist_url = "{0}{1}".format(
-        resultURL('homebrew'),
-        'Flocker-%(prop:version)s.tar.gz'
+    dist_url = Interpolate("%(kw:base_url)s%(kw:url)s/Flocker-%(prop:version)s.rb",
+        base_url=buildbotURL,
+        url=resultURL('homebrew'),
     )
     factory.addStep(ShellCommand(
         name='make-homebrew-recipe',
@@ -480,7 +480,7 @@ def makeHomebrewRecipeCreationFactory():
     # Upload new .rb file to BuildBot master
     factory.addStep(FileUpload(
         slavesrc="FlockerDev.rb",
-        masterdest=Interpolate("~/Flocker%(prop:buildnumber)s.rb")
+        masterdest=resultPath('homebrew')
     ))
 
     # Trigger the homebrew-test build
