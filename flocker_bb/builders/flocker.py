@@ -22,6 +22,7 @@ from ..steps import (
     pip,
     isMasterBranch, isReleaseBranch,
     resultPath, resultURL,
+    buildbotURL
     )
 
 # This is where temporary files associated with a build will be dumped.
@@ -459,12 +460,10 @@ def makeHomebrewRecipeCreationFactory():
         masterdest=Interpolate(
             '~/public_html/flocker/dist/Flocker-%(prop:version)s.tar.gz')
     ))
+
     # Run admin/homebrew.py with BuildBot sdist URL as argument
-    # XXX - how do we know the BuildBot master URL?
-    #
-    # XXX - version of make-homebrew-recipe that can handle URL argument
-    # XXX - is in ClusterHQ/flocker PR #1192
-    dist_url = Interpolate("%(kw:base_url)s%(kw:url)s/Flocker-%(prop:version)s.rb",
+    dist_url = Interpolate(
+        "%(kw:base_url)s%(kw:url)s/Flocker-%(prop:version)s.rb",
         base_url=buildbotURL,
         url=resultURL('homebrew'),
     )
@@ -514,7 +513,7 @@ def makeHomebrewRecipeTestFactory():
     factory.addStep(ShellCommand(
         name='run-homebrew-test',
         description=["running", "recipe"],
-        descriptionDone=["runn", "recipe"],
+        descriptionDone=["run", "recipe"],
         command=[
             "python", "admin/testbrew.py", recipe_url],
         haltOnFailure=True))
@@ -671,6 +670,7 @@ BUILDERS = [
     'flocker-docs',
     'flocker-zfs-head',
     'flocker-admin',
+    'flocker-homebrew-creation',
 ] + [
     'flocker-omnibus-%s' % (dist,) for dist in OMNIBUS_DISTRIBUTIONS.keys()
 ]
@@ -700,13 +700,6 @@ def getSchedulers():
             properties=[],
             builderNames=BUILDERS,
             ),
-        Triggerable(
-            name='trigger/copied-sdist',
-            builderNames=['flocker-homebrew-creation'],
-            codebases={
-                "flocker": {"repository": GITHUB + b"/flocker"},
-            },
-        ),
         Triggerable(
             name='trigger/homebrew-created',
             builderNames=['flocker-homebrew-test'],
