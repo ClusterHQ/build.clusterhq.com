@@ -12,18 +12,33 @@ from StringIO import StringIO
 import yaml
 
 
-def configure_gsutil():
+def get_vagrant_config():
+    output = local('lpass show --notes "vagrant@build.clusterhq.com"',
+                   capture=True)
+    config = yaml.safe_load(output.stdout)
+    return config
+
+
+def configure_gsutil(config):
     """
     Install certificate and configuration for gsutil.
 
     This allows the slave to upload vagrant images to google cloud.
     """
     boto_config = FilePath(__file__).sibling('boto-config.in').getContent()
-    output = local('lpass show --notes "google-cert@build.clusterhq.com"',
-                   capture=True)
-    cert = yaml.safe_load(output.stdout)
-    put(StringIO(boto_config % cert), '/home/buildslave/.boto')
-    put(StringIO(cert['certificate']), '/home/buildslave/google.p12')
+    put(StringIO(boto_config % config), '/home/buildslave/.boto')
+    put(StringIO(config['certificate']), '/home/buildslave/google.p12')
+
+
+def configure_ssh(ssh_key):
+    sudo('mkdir -p ~/.ssh', user='buildslave')
+    put(StringIO(ssh_key), '/home/buildslave/.ssh/id_rsa', mode=0600)
+    run('chown -R buildslave /home/buildslave/.ssh')
+
+
+def configure_acceptance(config):
+    put(StringIO(yaml.safe_dump(config)),
+        '/home/buildslave/acceptance.yml')
 
 
 @task
@@ -31,6 +46,8 @@ def install(index, password, master='build.staging.clusterhq.com'):
     """
     Install a buildslave with vagrant installed.
     """
+    config = get_vagrant_config()
+
     run("wget -O /etc/yum.repos.d/virtualbox.repo http://download.virtualbox.org/virtualbox/rpm/fedora/virtualbox.repo")  # noqa
 
     run("""
@@ -61,14 +78,25 @@ yum install -y https://kojipkgs.fedoraproject.org//packages/kernel/${KV}/${SV}/$
     sudo("buildslave create-slave /home/buildslave/fedora-vagrant %(master)s fedora-vagrant-%(index)s %(password)s"  # noqa
          % {'index': index, 'password': password, 'master': master},
          user='buildslave')
-    sudo('mkdir ~/.ssh', user='buildslave')
-    sudo('ln -s ~/.vagrant.d/insecure_private_key ~/.ssh/id_rsa',
+    put(FilePath(__file__).sibling('start').path,
+        '/home/buildslave/fedora-vagrant/start', mode=0755)
+
+    sudo("vagrant plugin install vagrant-reload vagrant-vbguest",
          user='buildslave')
+    configure_ssh(ssh_key=config['ssh-key'])
+    configure_acceptance(config=config['acceptance'])
+    configure_gsutil(config=config['google-certificate'])
 
     put(FilePath(__file__).sibling('fedora-vagrant-slave.service').path,
         '/etc/systemd/system/fedora-vagrant-slave.service')
 
-    configure_gsutil()
-
     run('systemctl start fedora-vagrant-slave')
     run('systemctl enable fedora-vagrant-slave')
+
+
+@task
+def update_config():
+    config = get_vagrant_config()
+    configure_ssh(ssh_key=config['ssh-key'])
+    configure_acceptance(config=config['acceptance'])
+    configure_gsutil(config=config['google-certificate'])

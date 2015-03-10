@@ -378,7 +378,7 @@ def createRepository(distribution, repository_path):
     return steps
 
 
-def makeOmnibusFactory(distribution, triggerSchedulers=()):
+def makeOmnibusFactory(distribution):
     factory = getFlockerFactory(python="python2.7")
     factory.addStep(SetPropertyFromCommand(
         command=["python", "setup.py", "--version"],
@@ -419,19 +419,18 @@ def makeOmnibusFactory(distribution, triggerSchedulers=()):
         name="upload-repo",
     ))
     factory.addSteps(createRepository(distribution, repository_path))
-    if triggerSchedulers:
-        factory.addStep(Trigger(
-            name='trigger/built-rpms',
-            schedulerNames=triggerSchedulers,
-            set_properties={
-                # lint_revision is the commit that was merged against,
-                # if we merged forward, so have the triggered build
-                # merge against it as well.
-                'merge_target': Property('lint_revision')
-            },
-            updateSourceStamp=True,
-            waitForFinish=False,
-            ))
+    factory.addStep(Trigger(
+        name='trigger/built-packages',
+        schedulerNames=['trigger/built-packages/%s' % (distribution,)],
+        set_properties={
+            # lint_revision is the commit that was merged against,
+            # if we merged forward, so have the triggered build
+            # merge against it as well.
+            'merge_target': Property('lint_revision')
+        },
+        updateSourceStamp=True,
+        waitForFinish=False,
+        ))
 
     return factory
 
@@ -528,18 +527,16 @@ from buildbot.schedulers.forcesched import (
 from buildbot.schedulers.triggerable import Triggerable
 from buildbot.locks import SlaveLock
 
+from ..steps import report_expected_failures_parameter
+
 # A lock to prevent multiple functional tests running at the same time
 functionalLock = SlaveLock('functional-tests')
 
-OMNIBUS_DISTRIBUTIONS = {
-    'fedora-20': {
-        'triggers': [
-            'trigger/built-rpms/fedora-20', 'trigger/copied-sdist'
-        ],
-    },
-    'ubuntu-14.04': {},
-    'centos-7': {}
-}
+OMNIBUS_DISTRIBUTIONS = [
+    'fedora-20',
+    'ubuntu-14.04',
+    'centos-7',
+]
 
 
 def idleSlave(builder, slavebuilders):
@@ -635,7 +632,7 @@ def getBuilders(slavenames):
                       factory=makeHomebrewRecipeTestFactory(),
                       nextSlave=idleSlave),
         ]
-    for distribution, config in OMNIBUS_DISTRIBUTIONS.items():
+    for distribution in OMNIBUS_DISTRIBUTIONS:
         builders.append(
             BuilderConfig(
                 name='flocker-omnibus-%s' % (distribution,),
@@ -643,7 +640,6 @@ def getBuilders(slavenames):
                 category='flocker',
                 factory=makeOmnibusFactory(
                     distribution=distribution,
-                    triggerSchedulers=config.get('triggers'),
                 ),
                 nextSlave=idleSlave,
                 ))
@@ -672,7 +668,7 @@ BUILDERS = [
     'flocker-admin',
     'flocker-homebrew-creation',
 ] + [
-    'flocker-omnibus-%s' % (dist,) for dist in OMNIBUS_DISTRIBUTIONS.keys()
+    'flocker-omnibus-%s' % (dist,) for dist in OMNIBUS_DISTRIBUTIONS
 ]
 
 
@@ -695,9 +691,11 @@ def getSchedulers():
                         "branch", default="master", size=80),
                     repository=FixedParameter(
                         "repository", default=GITHUB + b"/flocker"),
-                    ),
-                ],
-            properties=[],
+                ),
+            ],
+            properties=[
+                report_expected_failures_parameter,
+            ],
             builderNames=BUILDERS,
             ),
         Triggerable(

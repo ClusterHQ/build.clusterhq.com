@@ -38,5 +38,7 @@ slaves:
         instance_type: "c3.large"
     fedora-vagrant:
         passwords: ['password']
+# List of builders whose failures shouldn't be reported.
+failing_builders: []
     osx:
         passwords: ['password']

@@ -1,0 +1,8 @@
+#!/bin/sh
+eval $(ssh-agent -s)
+ssh-add ~/.vagrant.d/insecure_private_key
+ssh-add ~/.ssh/id_rsa
+exec /usr/bin/twistd \
+    --nodaemon \
+    --pidfile= \
+    --python=/home/buildslave/fedora-vagrant/buildbot.tac

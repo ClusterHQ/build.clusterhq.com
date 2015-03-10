@@ -2,10 +2,7 @@
 Description=Fedora Vagrant Slave
 
 [Service]
-ExecStart=/usr/bin/twistd \
-    --nodaemon \
-    --pidfile= \
-    --python=/home/buildslave/fedora-vagrant/buildbot.tac
+ExecStart=/home/buildslave/fedora-vagrant/start
 
 WorkingDirectory=/home/buildslave/fedora-vagrant
 
