@@ -79,11 +79,11 @@ Add a buildmaster.docker_tag config option, with the value ``staging``.
 
 Follow the "Deploying changes" setup but there is no need to check for running builds or make an announcement on Zulip.
 
-To start a Buildbot slave on this machine run::
+To start a Buildbot master on this machine run::
 
    $ fab start:staging.yml
 
-To update a slave on this machine, run::
+To update a master on this machine, run::
 
    $ fab update:staging.yml
 

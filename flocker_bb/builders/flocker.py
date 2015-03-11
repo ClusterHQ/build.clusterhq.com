@@ -471,8 +471,8 @@ def makeHomebrewRecipeCreationFactory():
         description=["building", "recipe"],
         descriptionDone=["build", "recipe"],
         command=[
-            "VERSION=Dev", "admin/make-homebrew-recipe", dist_url, ">",
-            "FlockerDev.rb"],
+            "admin/make-homebrew-recipe", "--flocker-version", "Dev",
+            "--sdist", dist_url, "--output-file", "FlockerDev.rb"],
         haltOnFailure=True))
 
     # Upload new .rb file to BuildBot master
@@ -490,9 +490,6 @@ def makeHomebrewRecipeCreationFactory():
             },
         waitForFinish=False,
         ))
-
-    # XXX - maybe the above should be waitForFinish=True, and then this
-    # XXX - build deletes the sdist and Homebrew files on master?
 
     return factory
 
