@@ -57,9 +57,12 @@ Staging changes
 ---------------
 
 Buildbot changes can be tested on a staging machine.
-The docker registry will automatically build an image based on the staging branch, whenever it is updated.
+The Docker registry will automatically build an image based on the ``staging`` branch, whenever it is updated.
 
-Create an Fedora 20 spot instance on EC2 and note the IP of this instance.
+Create a Fedora 20 instance on EC2 and note the IP of this instance.  To start a
+suitable instance, you can run ``python start-aws.py`` if you have `boto` 
+installed and configured to access AWS.
+
 In the following example the IP is 54.191.9.106.
 Set the Security Group of this instance to allow inbound traffic as shown below.
 
