@@ -3,18 +3,32 @@ import time
 
 import boto.ec2
 
+
+# AWS region
+aws_region = 'us-west-2'
+
+# Name of security group exposing ports for Buildmaster
+security_group = 'Buildbot staging'
+
+# Key name for EC2 host
+key_name = 'hybrid-master'
+
+
 ec2_image = {
     'Fedora-x86_64-20-20140407-sda': 'ami-cc8de6fc'
 }
 
-conn = boto.ec2.connect_to_region('us-west-2')
+conn = boto.ec2.connect_to_region(aws_region)
 
-# Buildbot master requires more than standard 2Gb disk.
-# Also add an ephemeral (4Gb) disk, not currently used.
-# If we link /var/lib/docker to /mnt/docker, we don't need the EBS disk
+# Buildbot master requires more than standard 4Gb disk.  Set the EBS
+# root disk to be 4Gb instead of default 2Gb.
+# Also add an ephemeral (4Gb) disk, not currently used.  If we link
+# /var/lib/docker to /mnt/docker, we don't need to increase the
+# size of the EBS disk.
 disk1 = boto.ec2.blockdevicemapping.EBSBlockDeviceType()
 disk1.size = 4
-disk2 = boto.ec2.blockdevicemapping.BlockDeviceType(ephemeral_name='ephemeral0')
+disk2 = boto.ec2.blockdevicemapping.BlockDeviceType(
+    ephemeral_name='ephemeral0')
 diskmap = boto.ec2.blockdevicemapping.BlockDeviceMapping()
 diskmap['/dev/sda1'] = disk1
 diskmap['/dev/sdb1'] = disk2
@@ -22,9 +36,9 @@ diskmap['/dev/sdb1'] = disk2
 
 reservation = conn.run_instances(
     ec2_image['Fedora-x86_64-20-20140407-sda'],
-    key_name='hybrid-master',
+    key_name=key_name,
     instance_type='m3.medium',
-    security_groups=['Buildbot staging'],
+    security_groups=[security_group],
     block_device_map=diskmap)
 
 instance = reservation.instances[0]
