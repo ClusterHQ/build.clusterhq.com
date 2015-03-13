@@ -59,9 +59,7 @@ Staging changes
 Buildbot changes can be tested on a staging machine.
 The Docker registry will automatically build an image based on the ``staging`` branch, whenever it is updated.
 
-Create a Fedora 20 instance on EC2 and note the IP of this instance.  To start a
-suitable instance, you can run ``python start-aws.py`` if you have `boto` 
-installed and configured to access AWS.
+Create a Fedora 20 instance on EC2 and note the IP of this instance.
 
 In the following example the IP is 54.191.9.106.
 Set the Security Group of this instance to allow inbound traffic as shown below.
@@ -74,6 +72,10 @@ Set the Security Group of this instance to allow inbound traffic as shown below.
          All ICMP, ICMP Protocol, Port Range 0-65535, Source Anywhere, 0.0.0.0/0
 
 The Security Group should allow all outbound traffic.
+
+To start a suitable instance, run ``python start-aws.py``.
+Install and configure Python package ``boto`` to access AWS.
+Ensure that the security_group and key_name variables in the file ``start-aws.py`` are set appropriately.
 
 Create staging.yml with the config.yml variables from LastPass.
 Change the buildmaster.host config option to the IP of the EC2 instance.
@@ -93,6 +95,8 @@ To update a master on this machine, run::
 Log in to 54.191.9.106 with the credentials from the ``auth`` section of the config file.
 
 The staging setup is missing the ability to trigger builds in response to pushes happening.
+
+The staging master will start Linux slaves on AWS EC2 automatically.  To start a Mac OS X slave, see below.
 
 Wheelhouse
 ----------
@@ -155,13 +159,11 @@ The tests do not run with root or administrator privileges.
 
 Where ${USERNAME} is a user on the OS X machine, and ${PASSWORD} is the password in ``slaves.osx.passwords`` from the ``config.yml`` used to deploy the BuildBot master at ${MASTER}.
 
-If you do not have root privileges, run the following commands to run a build slave:
+For testing purposes, or if you do not have root privileges, run the following commands to start a build slave:
 
 .. code:: shell
 
    # Set MASTER and PASSWORD as above
-   git clone https://github.com/ClusterHQ/build.clusterhq.com.git
-   cd build.clusterhq.com/
    curl -O https://bootstrap.pypa.io/get-pip.py
    python get-pip.py --user
    ~/Library/Python/2.7/bin/pip install --user buildbot-slave==0.8.10 virtualenv==12.0.7
