@@ -155,6 +155,20 @@ The tests do not run with root or administrator privileges.
 
 Where ${USERNAME} is a user on the OS X machine, and ${PASSWORD} is the password in ``slaves.osx.passwords`` from the ``config.yml`` used to deploy the BuildBot master at ${MASTER}.
 
+If you do not have root privileges, run the following commands to run a build slave:
+
+.. code:: shell
+
+   # Set MASTER and PASSWORD as above
+   git clone https://github.com/ClusterHQ/build.clusterhq.com.git
+   cd build.clusterhq.com/
+   curl -O https://bootstrap.pypa.io/get-pip.py
+   python get-pip.py --user
+   ~/Library/Python/2.7/bin/pip install --user buildbot-slave==0.8.10 virtualenv==12.0.7
+   ~/Library/Python/2.7/bin/buildslave create-slave ~/flocker-osx "${MASTER}" osx-0 "${PASSWORD}"
+   export PATH=$HOME/Library/python/2.7/bin:$PATH
+   twistd --nodaemon -y flocker-osx/buildbot.tac
+
 Monitoring
 ----------
 
