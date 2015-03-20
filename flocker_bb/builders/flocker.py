@@ -505,6 +505,13 @@ def makeHomebrewRecipeCreationFactory():
     factory.addStep(Trigger(
         name='trigger/created-homebrew',
         schedulerNames=['trigger/created-homebrew'],
+        set_properties={
+            # lint_revision is the commit that was merged against,
+            # if we merged forward, so have the triggered build
+            # merge against it as well.
+            'merge_target': Property('lint_revision')
+        },
+        updateSourceStamp=True,
         waitForFinish=False,
         ))
 
