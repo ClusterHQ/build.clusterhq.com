@@ -69,7 +69,7 @@ resultPath = partial(_result, prefix=path.abspath("private_html"))
 def resultURL(kind, isAbsolute=False, **kwargs):
     if isAbsolute:
         # buildbotURL has a trailing slash, so don't double it here.
-        prefix = Interpolate("%(kw:base)results/", base=buildbotURL)
+        prefix = Interpolate("%(kw:base)sresults/", base=buildbotURL)
     else:
         prefix = '/results/'
     return _result(kind=kind, prefix=prefix, **kwargs)
