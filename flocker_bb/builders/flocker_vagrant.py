@@ -204,7 +204,7 @@ def run_acceptance_tests(configuration):
             '--branch', flockerBranch,
             '--build-server', buildbotURL,
             # FIXME: This path shouldn't be hard-coded here.
-            '--config-file', '/home/buildslave/acceptance.yml',
+            '--config-file', '/srv/buildslave/acceptance.yml',
         ] + [
             ['--variant', variant]
             for variant in configuration.variants
@@ -380,7 +380,7 @@ def getBuilders(slavenames):
         builders.append(BuilderConfig(
             name=configuration.builder_name,
             builddir=configuration.builder_directory,
-            slavenames=slavenames['fedora-vagrant'],
+            slavenames=slavenames['centos-7'],
             category='flocker',
             factory=run_acceptance_tests(configuration),
             nextSlave=idleSlave))

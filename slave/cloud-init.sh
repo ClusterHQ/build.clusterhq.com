@@ -19,4 +19,14 @@ cp -r ~root/.pip $HOME/.pip
 
 git config --global credential.helper "store"
 
+cat <<"EOF" > $HOME/acceptance.yml
+%(acceptance.yml)s
+EOF
+
+mkdir -p $HOME/.ssh
+cat <<"EOF"  > $HOME/.ssh/id.rsa
+%(id.rsa)s
+EOF
+chmod -R 0600 $HOME/.ssh
+
 twistd -d /srv/buildslave -y /srv/buildslave/buildbot.tac

@@ -17,6 +17,16 @@ def loadConfig(configFile):
     config = yaml.safe_load(open(configFile))
     if not env.hosts:
         env.hosts = [config['buildmaster']['host']]
+    vagrant = get_vagrant_config()
+    config['acceptance-ssh-key'] = vagrant['ssh-key']
+    config['acceptance.yml'] = yaml.safe_dump(vagrant['acceptance'])
+    return config
+
+
+def get_vagrant_config():
+    output = local('lpass show --notes "vagrant@build.clusterhq.com"',
+                   capture=True)
+    config = yaml.safe_load(output.stdout)
     return config
 
 
