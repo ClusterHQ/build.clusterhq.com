@@ -20,11 +20,11 @@ ec2_image = {
 
 conn = boto.ec2.connect_to_region(aws_region)
 
-# Buildbot master requires more than standard 4Gb disk.  Set the EBS
-# root disk to be 4Gb instead of default 2Gb.
-# Also add an ephemeral (4Gb) disk, not currently used.  If we link
-# /var/lib/docker to /mnt/docker, we don't need to increase the
-# size of the EBS disk.
+# Buildbot master requires 4Gb diskspace.  Set the EBS root disk (disk1)
+# to be 4Gb instead of default (2Gb).  Also add an ephemeral (4Gb) disk
+# (disk2), not currently used.  If we can easily link /var/lib/docker to
+# /mnt/docker, we don't need to increase the size of the EBS disk, which
+# is slightly cheaper (ephemeral storage is free).
 disk1 = boto.ec2.blockdevicemapping.EBSBlockDeviceType()
 disk1.size = 4
 disk2 = boto.ec2.blockdevicemapping.BlockDeviceType(
