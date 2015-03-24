@@ -77,10 +77,10 @@ The Security Group should allow all outbound traffic.
 
 `Install and configure boto <http://boto.readthedocs.org/en/latest/getting_started.html>`_ to allow scriptable access to AWS.
 
-Ensure that the ``aws_region``, ``security_group``, and ``key_name`` variables in the file ``start-aws.py`` are set appropriately.
-
 Run ``python start-aws.py``.
 This command will display the external IP address of the EC2 instance.
+
+Run ``python start-aws.py --help`` to see the available options to this command.
 
 Create staging configuration
 ============================
