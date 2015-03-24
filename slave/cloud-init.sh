@@ -31,6 +31,7 @@ chmod -R 0600 /root/.ssh
 
 #GAH
 mkdir /srv/buildslave/.ssh
+ssh-keygen -N '' -f $HOME/.ssh/id_rsa_flocker
 
 eval $(ssh-agent -s)
 ssh-add /root/.ssh/id_rsa
