@@ -1,3 +1,4 @@
+import argparse
 import os
 import time
 
@@ -11,7 +12,7 @@ ec2_image = {
 
 
 def start_instance(
-        aws_region, key_name, instance_type, security_group, username):
+        aws_region, key_name, instance_type, security_group, instance_name):
 
     conn = boto.ec2.connect_to_region(aws_region)
 
@@ -31,7 +32,6 @@ def start_instance(
 
     instance = reservation.instances[0]
 
-    instance_name = '{} BuildBot staging'.format(username)
     conn.create_tags([instance.id], {'Name': instance_name})
 
     state = instance.state
@@ -49,14 +49,33 @@ def start_instance(
     print 'Instance IP:', instance.ip_address
 
 if __name__ == '__main__':
+
+    parser = argparse.ArgumentParser(
+        description='Start AWS EC2 instance for Buildbot master')
+    parser.add_argument('--region', default='us-west-2', help='AWS region')
+    parser.add_argument(
+        '--security-group', default='Buildbot staging',
+        help='AWS security group')
+    parser.add_argument(
+        '--key-name', default='hybrid-master', help='AWS key name')
+    parser.add_argument(
+        '--instance-type', default='m3.medium', help='AWS instance type')
+    parser.add_argument('--instance-name', help='AWS instance name')
+    args = parser.parse_args()
+
     # AWS region
-    aws_region = 'us-west-2'
+    aws_region = args.region
 
     # Name of security group exposing ports for Buildmaster
-    security_group = 'Buildbot staging'
+    security_group = args.security_group
 
     # Key name for EC2 host
     key_name = 'hybrid-master'
 
-    username = os.environ['USER']
-    start_instance(aws_region, key_name, 'm3.medium', security_group, username)
+    instance_name = args.instance_name
+    if instance_name is None:
+        instance_name = '{} BuildBot staging'.format(os.environ['USER'])
+
+    start_instance(
+        args.region, args.key_name, args.instance_type, args.security_group,
+        instance_name)
