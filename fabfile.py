@@ -8,30 +8,37 @@ import json
 env.user = 'fedora'
 
 
+def cmd(*args):
+    return ' '.join(map(shellQuote, args))
+
+
+def get_lastpass_config(key):
+    output = local(cmd('lpass', 'show', '--notes', key),
+                   capture=True)
+    config = yaml.safe_load(output.stdout)
+    return config
+
+
 def loadConfig(configFile):
     """
     Load config.
 
     Sets env.hosts, if not already set.
     """
-    config = yaml.safe_load(open(configFile))
+    if configFile is not None:
+        config = yaml.safe_load(open(configFile))
+    else:
+        config = get_lastpass_config("config@build.clusterhq.com")
+
     if not env.hosts:
         env.hosts = [config['buildmaster']['host']]
-    vagrant = get_vagrant_config()
-    config['acceptance-ssh-key'] = vagrant['ssh-key']
-    config['acceptance.yml'] = yaml.safe_dump(vagrant['acceptance'])
+
+    vagrant_config = get_lastpass_config("acceptance@build.clusterhq.com")
+    config['acceptance'] = {
+        'ssh-key': vagrant_config['ssh-key'],
+        'config': yaml.safe_dump(vagrant_config['config']),
+    }
     return config
-
-
-def get_vagrant_config():
-    output = local('lpass show --notes "vagrant@build.clusterhq.com"',
-                   capture=True)
-    config = yaml.safe_load(output.stdout)
-    return config
-
-
-def cmd(*args):
-    return ' '.join(map(shellQuote, args))
 
 
 def pull(image):
@@ -107,7 +114,7 @@ def bootstrap():
 
 
 @task
-def start(configFile="config.yml"):
+def start(configFile=None):
     """
     Start buildmaster on fresh host.
     """
@@ -118,7 +125,7 @@ def start(configFile="config.yml"):
 
 
 @task
-def update(configFile="config.yml"):
+def update(configFile=None):
     """
     Update buildmaster to latest image.
     """
@@ -127,7 +134,7 @@ def update(configFile="config.yml"):
 
 
 @task
-def restart(configFile="config.yml"):
+def restart(configFile=None):
     """
     Restart buildmaster with current image.
     """
@@ -136,7 +143,7 @@ def restart(configFile="config.yml"):
 
 
 @task
-def logs(configFile="config.yml", follow=True):
+def logs(configFile=None, follow=True):
     """
     Show logs.
     """

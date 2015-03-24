@@ -25,7 +25,7 @@ EOF
 
 touch /root/.ssh/known_hosts
 cat <<"EOF"  > /root/.ssh/id_rsa
-%(id.rsa)s
+%(acceptance-ssh-key)s
 EOF
 chmod -R 0600 /root/.ssh
 

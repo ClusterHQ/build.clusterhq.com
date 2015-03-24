@@ -69,8 +69,10 @@ for base, slaveConfig in privateData['slaves'].items():
                         "password": password,
                         'buildmaster_host': privateData['buildmaster']['host'],
                         'buildmaster_port': c['slavePortnum'],
-                        'acceptance.yml': privateData.get('acceptance.yml', ''),
-                        'id.rsa': privateData.get('acceptance-ssh-key', ''),
+                        'acceptance.yml':
+                            privateData['acceptance'].get('config', ''),
+                        'acceptance-ssh-key':
+                            privateData['acceptance'].get('acceptance-ssh-key', ''),
                         },
                     keepalive_interval=60,
                     tags={
