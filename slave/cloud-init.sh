@@ -24,8 +24,7 @@ cat <<"EOF" > $HOME/acceptance.yml
 EOF
 
 touch /root/.ssh/known_hosts
-mkdir -p $HOME/.ssh
-cat <<"EOF"  > $HOME/.ssh/id.rsa
+cat <<"EOF"  > /root/.ssh/id.rsa
 %(id.rsa)s
 EOF
 chmod -R 0600 $HOME/.ssh
