@@ -1,3 +1,6 @@
+import random
+from collections import Counter
+
 from twisted.internet import defer
 from twisted.python import log
 from twisted.python.filepath import FilePath
@@ -352,3 +355,29 @@ def isMasterBranch(codebase):
 
 def isReleaseBranch(codebase):
     return isBranch(codebase, MergeForward._isRelease)
+
+
+def idleSlave(builder, slavebuilders):
+    """
+    Return a slave that has the least number of running builds on it.
+    """
+    # Count the builds on each slave
+    builds = Counter([
+        slavebuilder
+        for slavebuilder in slavebuilders
+        for sb in slavebuilder.slave.slavebuilders.values()
+        if sb.isBusy()
+    ])
+
+    if not builds:
+        # If there are no builds, then everything is idle.
+        idle = slavebuilders
+    else:
+        min_builds = min(builds.values())
+        idle = [
+            slavebuilder
+            for slavebuilder in slavebuilders
+            if builds[slavebuilder] == min_builds
+        ]
+    if idle:
+        return random.choice(idle)

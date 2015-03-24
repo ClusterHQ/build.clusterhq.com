@@ -291,10 +291,7 @@ from buildbot.schedulers.triggerable import Triggerable
 from buildbot.changes.filter import ChangeFilter
 
 
-def idleSlave(builder, slaves):
-    idle = [slave for slave in slaves if slave.isAvailable()]
-    if idle:
-        return idle[0]
+from ..steps import idleSlave
 
 
 # Dictionary mapping providers for acceptence testing to a list of

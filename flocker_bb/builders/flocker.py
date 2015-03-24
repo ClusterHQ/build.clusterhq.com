@@ -1,6 +1,3 @@
-import random
-from itertools import groupby
-from collections import Counter
 from buildbot.steps.shell import ShellCommand, SetPropertyFromCommand
 from buildbot.steps.python_twisted import Trial
 from buildbot.steps.python import Sphinx
@@ -440,6 +437,7 @@ from buildbot.schedulers.forcesched import (
 from buildbot.locks import SlaveLock
 
 from ..steps import report_expected_failures_parameter
+from ..steps import idleSlave
 
 # A lock to prevent multiple functional tests running at the same time
 functionalLock = SlaveLock('functional-tests')
@@ -449,29 +447,6 @@ OMNIBUS_DISTRIBUTIONS = [
     'ubuntu-14.04',
     'centos-7',
 ]
-
-
-def idleSlave(builder, slavebuilders):
-    # Count the builds on each slave
-    builds = Counter([
-        slavebuilder
-        for slavebuilder in slavebuilders
-        for sb in slavebuilder.slave.slavebuilders.values()
-        if sb.isBusy()
-    ])
-
-    if not builds:
-        # If there are no builds, then everything is idle.
-        idle = slavebuilders
-    else:
-        min_builds = min(builds.values())
-        idle = [
-            slavebuilder
-            for slavebuilder in slavebuilders
-            if builds[slavebuilder] == min_builds
-        ]
-    if idle:
-        return random.choice(idle)
 
 
 def getBuilders(slavenames):
@@ -545,15 +520,6 @@ def getBuilders(slavenames):
                 ),
                 nextSlave=idleSlave,
                 ))
-
-    # Distribute builders that have locks accross slaves.
-    # This assumes there is only a single type of lock.
-    locked_builders = sorted([b for b in builders if b.locks],
-                             key=lambda b: b.slavenames)
-    for slavenames, slave_builders in groupby(locked_builders,
-                                              key=lambda b: b.slavenames):
-        for builder, slavename in zip(slave_builders, slavenames):
-            builder.slavenames = [slavename]
 
     return builders
 
