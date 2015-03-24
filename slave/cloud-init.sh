@@ -29,6 +29,9 @@ cat <<"EOF"  > /root/.ssh/id_rsa
 EOF
 chmod -R 0600 /root/.ssh
 
+#GAH
+mkdir /srv/buildslave/.ssh
+
 eval $(ssh-agent -s)
 ssh-add /root/.ssh/id_rsa
 
