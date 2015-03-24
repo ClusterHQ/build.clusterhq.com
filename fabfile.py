@@ -19,7 +19,7 @@ def get_lastpass_config(key):
     return config
 
 
-def loadConfig(configFile):
+def loadConfig(configFile, use_acceptance_config=True):
     """
     Load config.
 
@@ -33,11 +33,15 @@ def loadConfig(configFile):
     if not env.hosts:
         env.hosts = [config['buildmaster']['host']]
 
-    vagrant_config = get_lastpass_config("acceptance@build.clusterhq.com")
-    config['acceptance'] = {
-        'ssh-key': vagrant_config['ssh-key'],
-        'config': yaml.safe_dump(vagrant_config['config']),
-    }
+    if use_acceptance_config:
+        acceptance_config = get_lastpass_config(
+            "acceptance@build.clusterhq.com")
+        config['acceptance'] = {
+            'ssh-key': acceptance_config['ssh-key'],
+            'config': yaml.safe_dump(acceptance_config['config']),
+        }
+    else:
+        config['acceptance'] = {}
     return config
 
 
@@ -172,6 +176,20 @@ def saveConfig():
     local('lpass show --notes "config@build.clusterhq.com" >config.yml.old')
     local('lpass edit --non-interactive '
           '--notes "config@build.clusterhq.com" <config.yml')
+
+
+@task
+def check_config(configFile="staging.yml"):
+    """
+    Check that buildbot can load the configuration.
+    """
+    from os import environ
+    config = loadConfig(configFile, use_acceptance_config=False)
+    environ['BUILDBOT_CONFIG'] = json.dumps(config)
+
+    local(cmd(
+        'buildbot', 'checkconfig', 'config.py'
+    ))
 
 
 @task
