@@ -2,14 +2,14 @@ This is the configuration for ClusterHQ's `Buildbot <http://buildbot.net/>`_.
 
 The Buildbot master is deployed as a Docker container running on an AWS EC2 instance.
 
-Most of the slaves are EC2 latent slaves started by the master. Some
-slaves, such as an OS X slave, must be started manually.
+Most of the slaves are EC2 latent slaves started by the master.
+Some slaves, such as an OS X slave, must be started manually.
 
 Buildbot schedulers start builds triggered by a push to any branch in the Flocker repository or by forced builds.
 After a new push to a branch, Buildbot waits a number of seconds before starting a build,
 in case another push arrives shortly afterwards.
 
-All builds are tested as merges against the Flocker ``master`` branch.
+Most builds are tested as merges against the Flocker ``master`` branch.
 
 Install dependencies
 --------------------
@@ -59,6 +59,7 @@ To make the ``staging`` branch the same as a development branch, run the followi
 
 After pushing a change to ``staging``, it takes about 10 minutes for the Docker image build to finish.
 The status is available `here <https://registry.hub.docker.com/u/clusterhq/build.clusterhq.com/builds_history/46090/>`_.
+You will need to a member of the ``clusterhq`` group on Docker Hub in order to click on build id's to see detailed information about build progress or errors.
 
 Create a staging server
 =======================
@@ -110,7 +111,8 @@ Log in to the EC2 instance with the credentials from the ``auth`` section of the
 
 The staging setup is missing the ability to trigger builds in response to Github pushes.
 
-The staging master will start Linux slaves on AWS EC2 automatically.  To start a Mac OS X slave, see below.
+The staging master will start Linux slaves on AWS EC2 automatically.
+To start a Mac OS X slave, see below.
 
 
 Deploy changes to production server
@@ -123,6 +125,7 @@ The Docker registry will automatically build an image based on the ``master`` br
 
 After pushing a change to ``master``, it takes about 10 minutes for the Docker image build to finish.
 The status is available `here <https://registry.hub.docker.com/u/clusterhq/build.clusterhq.com/builds_history/46090/>`_.
+You will need to a member of the ``clusterhq`` group on Docker Hub in order to click on build id's to see detailed information about build progress or errors.
 
 The production instance is accessed using a key from https://github.com/hybridlogic/HybridDeployment (this repository is not publicly available).
 Add the HybridDeployment master key to your authentication agent::
@@ -168,7 +171,7 @@ Slave AMIs
 There are two slave AMIs.
 The images are built by running ``slave/build-images``.
 This will generate images with ``staging-`` prefixes.
-These can be promoted by rnning ``slave/promote-images``.
+These can be promoted by running ``slave/promote-images``.
 
 The images are based on the offical fedora 20 image (``ami-cc8de6fc``) with ``slave/cloud-init-base.sh``.
 Each image uses `slave/cloud-init.sh` with some substitutions as user-data, to start the buildbot.
@@ -207,14 +210,13 @@ The tests do not run with root or administrator privileges.
 
 Where ``${USERNAME}`` is a user on the OS X machine, and ``${PASSWORD}`` is the password in ``slaves.osx.passwords`` from the ``config.yml`` or ``staging.yml`` file used to deploy the BuildBot master on hostname or IP address ``${MASTER}``.
 
-For testing purposes, or if you do not have root privileges, run the following commands to start a build slave:
+For testing purposes, or if you do not have root privileges, run the following commands to start a build slave (set ``MASTER`` and ``PASSWORD`` as above):
 
 .. code:: shell
 
-   # Set MASTER and PASSWORD as above
    curl -O https://bootstrap.pypa.io/get-pip.py
    python get-pip.py --user
-   ~/Library/Python/2.7/bin/pip install --user buildbot-slave==0.8.10 virtualenv==12.0.7
+   ~/Library/Python/2.7/bin/pip install --user buildbot-slave virtualenv
    ~/Library/Python/2.7/bin/buildslave create-slave ~/flocker-osx "${MASTER}" osx-0 "${PASSWORD}"
    export PATH=$HOME/Library/python/2.7/bin:$PATH
    twistd --nodaemon -y flocker-osx/buildbot.tac
