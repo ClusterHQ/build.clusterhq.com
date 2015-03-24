@@ -27,6 +27,9 @@ touch /root/.ssh/known_hosts
 cat <<"EOF"  > /root/.ssh/id.rsa
 %(id.rsa)s
 EOF
-chmod -R 0600 $HOME/.ssh
+chmod -R 0600 /root/.ssh
+
+eval $(ssh-agent -s)
+ssh-add /root/.ssh
 
 twistd -d /srv/buildslave -y /srv/buildslave/buildbot.tac
