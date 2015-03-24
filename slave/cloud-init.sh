@@ -24,12 +24,12 @@ cat <<"EOF" > $HOME/acceptance.yml
 EOF
 
 touch /root/.ssh/known_hosts
-cat <<"EOF"  > /root/.ssh/id.rsa
+cat <<"EOF"  > /root/.ssh/id_rsa
 %(id.rsa)s
 EOF
 chmod -R 0600 /root/.ssh
 
 eval $(ssh-agent -s)
-ssh-add /root/.ssh
+ssh-add /root/.ssh/id_rsa
 
 twistd -d /srv/buildslave -y /srv/buildslave/buildbot.tac
