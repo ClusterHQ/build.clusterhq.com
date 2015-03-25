@@ -8,20 +8,41 @@ import json
 env.user = 'fedora'
 
 
-def loadConfig(configFile):
+def cmd(*args):
+    return ' '.join(map(shellQuote, args))
+
+
+def get_lastpass_config(key):
+    output = local(cmd('lpass', 'show', '--notes', key),
+                   capture=True)
+    config = yaml.safe_load(output.stdout)
+    return config
+
+
+def loadConfig(configFile, use_acceptance_config=True):
     """
     Load config.
 
     Sets env.hosts, if not already set.
     """
-    config = yaml.safe_load(open(configFile))
+    if configFile is not None:
+        config = yaml.safe_load(open(configFile))
+    else:
+        config = get_lastpass_config("config@build.clusterhq.com")
+
     if not env.hosts:
         env.hosts = [config['buildmaster']['host']]
+
+    if use_acceptance_config:
+        acceptance_config = get_lastpass_config(
+            "acceptance@build.clusterhq.com")
+        config['acceptance'] = {
+            'ssh-key': acceptance_config['ssh-key'],
+            'config': yaml.safe_dump(acceptance_config['config']),
+        }
+    else:
+        config['acceptance'] = {}
     return config
-
-
-def cmd(*args):
-    return ' '.join(map(shellQuote, args))
 
 
 def pull(image):
@@ -97,7 +118,7 @@ def bootstrap():
 
 
 @task
-def start(configFile="config.yml"):
+def start(configFile=None):
     """
     Start buildmaster on fresh host.
     """
@@ -108,7 +129,7 @@ def start(configFile="config.yml"):
 
 
 @task
-def update(configFile="config.yml"):
+def update(configFile=None):
     """
     Update buildmaster to latest image.
     """
@@ -117,7 +138,7 @@ def update(configFile="config.yml"):
 
 
 @task
-def restart(configFile="config.yml"):
+def restart(configFile=None):
     """
     Restart buildmaster with current image.
     """
@@ -126,7 +147,7 @@ def restart(configFile="config.yml"):
 
 
 @task
-def logs(configFile="config.yml", follow=True):
+def logs(configFile=None, follow=True):
     """
     Show logs.
     """
@@ -155,6 +176,20 @@ def saveConfig():
     local('lpass show --notes "config@build.clusterhq.com" >config.yml.old')
     local('lpass edit --non-interactive '
           '--notes "config@build.clusterhq.com" <config.yml')
+
+
+@task
+def check_config(configFile="staging.yml"):
+    """
+    Check that buildbot can load the configuration.
+    """
+    from os import environ
+    config = loadConfig(configFile, use_acceptance_config=False)
+    environ['BUILDBOT_CONFIG'] = json.dumps(config)
+
+    local(cmd(
+        'buildbot', 'checkconfig', 'config.py'
+    ))
 
 
 @task

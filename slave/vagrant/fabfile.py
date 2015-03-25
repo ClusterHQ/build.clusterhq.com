@@ -30,17 +30,6 @@ def configure_gsutil(config):
     put(StringIO(config['certificate']), '/home/buildslave/google.p12')
 
 
-def configure_ssh(ssh_key):
-    sudo('mkdir -p ~/.ssh', user='buildslave')
-    put(StringIO(ssh_key), '/home/buildslave/.ssh/id_rsa', mode=0600)
-    run('chown -R buildslave /home/buildslave/.ssh')
-
-
-def configure_acceptance(config):
-    put(StringIO(yaml.safe_dump(config)),
-        '/home/buildslave/acceptance.yml')
-
-
 @task
 def install(index, password, master='build.staging.clusterhq.com'):
     """
@@ -97,6 +86,4 @@ yum install -y https://kojipkgs.fedoraproject.org//packages/kernel/${KV}/${SV}/$
 @task
 def update_config():
     config = get_vagrant_config()
-    configure_ssh(ssh_key=config['ssh-key'])
-    configure_acceptance(config=config['acceptance'])
     configure_gsutil(config=config['google-certificate'])

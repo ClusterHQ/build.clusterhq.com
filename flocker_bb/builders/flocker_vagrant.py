@@ -204,7 +204,7 @@ def run_acceptance_tests(configuration):
             '--branch', flockerBranch,
             '--build-server', buildbotURL,
             # FIXME: This path shouldn't be hard-coded here.
-            '--config-file', '/home/buildslave/acceptance.yml',
+            '--config-file', '/srv/buildslave/acceptance.yml',
         ] + [
             ['--variant', variant]
             for variant in configuration.variants
@@ -291,10 +291,7 @@ from buildbot.schedulers.triggerable import Triggerable
 from buildbot.changes.filter import ChangeFilter
 
 
-def idleSlave(builder, slaves):
-    idle = [slave for slave in slaves if slave.isAvailable()]
-    if idle:
-        return idle[0]
+from ..steps import idleSlave
 
 
 # Dictionary mapping providers for acceptence testing to a list of
@@ -380,7 +377,7 @@ def getBuilders(slavenames):
         builders.append(BuilderConfig(
             name=configuration.builder_name,
             builddir=configuration.builder_directory,
-            slavenames=slavenames['fedora-vagrant'],
+            slavenames=slavenames['centos-7'],
             category='flocker',
             factory=run_acceptance_tests(configuration),
             nextSlave=idleSlave))

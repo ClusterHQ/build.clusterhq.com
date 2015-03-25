@@ -19,4 +19,21 @@ cp -r ~root/.pip $HOME/.pip
 
 git config --global credential.helper "store"
 
+cat <<"EOF" > $HOME/acceptance.yml
+%(acceptance.yml)s
+EOF
+
+touch /root/.ssh/known_hosts
+cat <<"EOF"  > /root/.ssh/id_rsa
+%(acceptance-ssh-key)s
+EOF
+chmod -R 0600 /root/.ssh
+
+#GAH
+mkdir /srv/buildslave/.ssh
+ssh-keygen -N '' -f $HOME/.ssh/id_rsa_flocker
+
+eval $(ssh-agent -s)
+ssh-add /root/.ssh/id_rsa
+
 twistd -d /srv/buildslave -y /srv/buildslave/buildbot.tac
