@@ -57,10 +57,9 @@ Staging changes
 ---------------
 
 Buildbot changes can be tested on a staging machine.
-The Docker registry will automatically build an image based on the ``staging`` branch, whenever it is updated.
+The docker registry will automatically build an image based on the staging branch, whenever it is updated.
 
-Create a Fedora 20 instance on EC2 and note the IP of this instance.
-
+Create an Fedora 20 spot instance on EC2 and note the IP of this instance.
 In the following example the IP is 54.191.9.106.
 Set the Security Group of this instance to allow inbound traffic as shown below.
 
@@ -73,10 +72,6 @@ Set the Security Group of this instance to allow inbound traffic as shown below.
 
 The Security Group should allow all outbound traffic.
 
-To start a suitable instance, run ``python start-aws.py``.
-Install and configure Python package ``boto`` to access AWS.
-Ensure that the security_group and key_name variables in the file ``start-aws.py`` are set appropriately.
-
 Create staging.yml with the config.yml variables from LastPass.
 Change the buildmaster.host config option to the IP of the EC2 instance.
 Change the github.report_status config option to False.
@@ -84,19 +79,17 @@ Add a buildmaster.docker_tag config option, with the value ``staging``.
 
 Follow the "Deploying changes" setup but there is no need to check for running builds or make an announcement on Zulip.
 
-To start a Buildbot master on this machine run::
+To start a Buildbot slave on this machine run::
 
    $ fab start:staging.yml
 
-To update a master on this machine, run::
+To update a slave on this machine, run::
 
    $ fab update:staging.yml
 
 Log in to 54.191.9.106 with the credentials from the ``auth`` section of the config file.
 
 The staging setup is missing the ability to trigger builds in response to pushes happening.
-
-The staging master will start Linux slaves on AWS EC2 automatically.  To start a Mac OS X slave, see below.
 
 Wheelhouse
 ----------
@@ -158,18 +151,6 @@ To configure this machine run::
 The tests do not run with root or administrator privileges.
 
 Where ${USERNAME} is a user on the OS X machine, and ${PASSWORD} is the password in ``slaves.osx.passwords`` from the ``config.yml`` used to deploy the BuildBot master at ${MASTER}.
-
-For testing purposes, or if you do not have root privileges, run the following commands to start a build slave:
-
-.. code:: shell
-
-   # Set MASTER and PASSWORD as above
-   curl -O https://bootstrap.pypa.io/get-pip.py
-   python get-pip.py --user
-   ~/Library/Python/2.7/bin/pip install --user buildbot-slave==0.8.10 virtualenv==12.0.7
-   ~/Library/Python/2.7/bin/buildslave create-slave ~/flocker-osx "${MASTER}" osx-0 "${PASSWORD}"
-   export PATH=$HOME/Library/python/2.7/bin:$PATH
-   twistd --nodaemon -y flocker-osx/buildbot.tac
 
 Monitoring
 ----------
