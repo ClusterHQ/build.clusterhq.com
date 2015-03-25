@@ -464,7 +464,8 @@ def makeHomebrewRecipeCreationFactory():
 
     recipe_file = Interpolate('Flocker%(kw:revision)s.rb',
                               revision=flockerRevision)
-    recipe_path = resultPath('homebrew', filename=recipe_file)
+    recipe_path = resultPath(
+        'homebrew', discriminator=flockerBranch, filename=recipe_file)
 
     # Build source distribution
     factory.addStep(ShellCommand(
