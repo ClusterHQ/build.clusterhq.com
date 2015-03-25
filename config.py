@@ -131,7 +131,7 @@ addBuilderModule(maint)
 # pushed to these targets. buildbot/status/*.py has a variety to choose from,
 # including web pages, email senders, and IRC bots.
 
-failing_builders = frozenset(privateData['failing_builders'])
+failing_builders = frozenset(privateData.get('failing_builders', ()))
 
 c['status'] = []
 
