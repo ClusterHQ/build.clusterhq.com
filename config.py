@@ -72,7 +72,7 @@ for base, slaveConfig in privateData['slaves'].items():
                         'acceptance.yml':
                             privateData['acceptance'].get('config', ''),
                         'acceptance-ssh-key':
-                            privateData['acceptance'].get('acceptance-ssh-key', ''),
+                            privateData['acceptance'].get('ssh-key', ''),
                         },
                     keepalive_interval=60,
                     tags={
