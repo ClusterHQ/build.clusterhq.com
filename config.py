@@ -196,9 +196,9 @@ c['titleURL'] = "http://www.clusterhq.com/"
 # internal web server (usually the html.WebStatus page) is visible. This
 # typically uses the port number set in the Waterfall 'status' entry, but
 # with an externally-visible host name which the buildbot cannot figure out
-# without some help.  Do not add a '/' to the end. This will be added in code.
+# without some help.
 
-c['buildbotURL'] = "http://%s" % (privateData['buildmaster']['host'],)
+c['buildbotURL'] = "http://%s/" % (privateData['buildmaster']['host'],)
 
 ####### DB URL
 

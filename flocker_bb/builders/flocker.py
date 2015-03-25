@@ -436,6 +436,11 @@ def makeOmnibusFactory(distribution):
 
 
 def makeHomebrewRecipeCreationFactory():
+    """Create the Homebrew recipe from a source distribution.
+
+    This is separate to the recipe testing, to allow it to be done on a
+    non-Mac platform.  Once complete, this triggers the Mac testing.
+    """
     factory = getFlockerFactory(python="python2.7")
     factory.addStep(SetPropertyFromCommand(
         command=["python", "setup.py", "--version"],
@@ -519,6 +524,8 @@ def makeHomebrewRecipeCreationFactory():
 
 
 def makeHomebrewRecipeTestFactory():
+    """Test the Homebrew recipe on an OS X system."""
+
     factory = getFlockerFactory(python="python2.7")
     factory.addSteps(installDependencies())
 
