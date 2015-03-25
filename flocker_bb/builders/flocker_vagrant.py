@@ -323,6 +323,13 @@ class AcceptanceConfiguration(object):
     def builder_directory(self):
         return self.builder_name.replace('/', '-')
 
+    @property
+    def slave_class(self):
+        if self.provider == 'vagrant':
+            return 'fedora-vagrant'
+        else:
+            return 'centos-7'
+
 
 ACCEPTEANCE_CONFIGURATIONS = [
     AcceptanceConfiguration(
@@ -377,7 +384,7 @@ def getBuilders(slavenames):
         builders.append(BuilderConfig(
             name=configuration.builder_name,
             builddir=configuration.builder_directory,
-            slavenames=slavenames['centos-7'],
+            slavenames=slavenames[configuration.slave_class],
             category='flocker',
             factory=run_acceptance_tests(configuration),
             nextSlave=idleSlave))
