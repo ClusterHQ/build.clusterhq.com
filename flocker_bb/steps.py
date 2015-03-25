@@ -381,3 +381,13 @@ def idleSlave(builder, slavebuilders):
         ]
     if idle:
         return random.choice(idle)
+
+
+def slave_environ(var):
+    """
+    Render a environment variable from the slave.
+    """
+    @renderer
+    def render(properties):
+        return properties.getBuild().slavebuilder.slave.slave_environ.get(var)
+    return render

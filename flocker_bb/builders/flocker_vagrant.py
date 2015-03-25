@@ -11,7 +11,8 @@ from ..steps import (
     buildbotURL,
     MasterWriteFile, asJSON,
     flockerBranch,
-    resultPath, resultURL
+    resultPath, resultURL,
+    slave_environ,
     )
 
 # FIXME
@@ -203,8 +204,8 @@ def run_acceptance_tests(configuration):
             '--provider', configuration.provider,
             '--branch', flockerBranch,
             '--build-server', buildbotURL,
-            # FIXME: This path shouldn't be hard-coded here.
-            '--config-file', '/srv/buildslave/acceptance.yml',
+            '--config-file', Interpolate("%(kw:home)s/acceptance.yml",
+                                         home=slave_environ("HOME")),
         ] + [
             ['--variant', variant]
             for variant in configuration.variants
