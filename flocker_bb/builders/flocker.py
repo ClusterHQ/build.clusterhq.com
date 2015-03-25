@@ -363,7 +363,7 @@ def createRepository(distribution, repository_path):
             description=["building", "repo", "metadata"],
             descriptionDone=["build", "repo", "metadata"],
             # FIXME: Don't use shell here.
-            command="dpkg-scanpackages . | gzip > Packages.gz",
+            command="dpkg-scanpackages --multiversion . | gzip > Packages.gz",
             path=repository_path,
             haltOnFailure=True))
     else:
