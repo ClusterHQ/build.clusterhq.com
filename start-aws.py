@@ -37,6 +37,8 @@ def start_instance(
     state = instance.state
     print 'Instance', state
 
+    # Display state as instance starts up, to keep user informed that
+    # things are happening.
     while state != 'running':
         time.sleep(1)
         instance.update()
@@ -60,22 +62,12 @@ if __name__ == '__main__':
         '--key-name', default='hybrid-master', help='AWS key name')
     parser.add_argument(
         '--instance-type', default='m3.medium', help='AWS instance type')
-    parser.add_argument('--instance-name', help='AWS instance name')
+    parser.add_argument(
+        '--instance-name',
+        default='{} BuildBot staging'.format(os.environ['USER']),
+        help='AWS instance name')
     args = parser.parse_args()
-
-    # AWS region
-    aws_region = args.region
-
-    # Name of security group exposing ports for Buildmaster
-    security_group = args.security_group
-
-    # Key name for EC2 host
-    key_name = 'hybrid-master'
-
-    instance_name = args.instance_name
-    if instance_name is None:
-        instance_name = '{} BuildBot staging'.format(os.environ['USER'])
 
     start_instance(
         args.region, args.key_name, args.instance_type, args.security_group,
-        instance_name)
+        args.instance_name)
