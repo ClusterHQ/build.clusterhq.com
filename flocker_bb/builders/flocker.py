@@ -539,7 +539,13 @@ def makeHomebrewRecipeTestFactory():
         description=["running", "homebrew", "test"],
         descriptionDone=["run", "homebrew", "test"],
         command=[
-            virtualenvBinary('python'), "admin/test-brew-recipe", recipe_url
+            virtualenvBinary('python'),
+            b"admin/test-brew-recipe",
+            b"--vmhost", b"192.168.169.100",
+            b"--vmuser", b"ClusterHQVM",
+            b"--vmpath", b"/Users/buildslave/Documents/Virtual Machines.localized/OS X 10.10.vmwarevm/OS X 10.10.vmx",  # noqa
+            b"--vmsnapshot", b"homebrew-clean",
+            recipe_url
             ],
         haltOnFailure=True))
 

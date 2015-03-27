@@ -152,6 +152,10 @@ The tests do not run with root or administrator privileges.
 
 Where ${USERNAME} is a user on the OS X machine, and ${PASSWORD} is the password in ``slaves.osx.passwords`` from the ``config.yml`` used to deploy the BuildBot master at ${MASTER}.
 
+There is a VMware Fusion OSX VM configured, for running homebrew installation tests.
+It is configured with a ``nat`` network, with a static IP address,
+and the buildslave user has a password-less ssh-key that can log in to it.
+
 Monitoring
 ----------
 
