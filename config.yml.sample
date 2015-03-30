@@ -9,9 +9,10 @@ zulip:
     user: "<zulip user>"
     password: "<zulip password>"
     stream: "BuildBot"
+    critical_stream: "Engineering"
 aws:
-    identifier: "<aws user>"
-    secret_identifier: "<aws password>"
+    identifier: "<aws access key id>"
+    secret_identifier: "<aws secret access key>"
 github:
     token: "<github api token>"
     report_status: True
@@ -23,22 +24,25 @@ slaves:
     fedora:
         ami: "buildslave-fedora-20"
         slaves: 3
-	instance_type: "c3.large"
+        instance_type: "c3.large"
     fedora-zfs-head:
         ami: "buildslave-fedora-20-zfs-head"
         slaves: 1
-	instance_type: "c3.large"
+        instance_type: "c3.large"
     ubuntu-14.04:
         ami: "buildslave-ubuntu-14.04"
         slaves: 1
-	instance_type: "c3.large"
+        instance_type: "c3.large"
     centos-7:
         ami: "buildslave-centos-7"
         slaves: 1
         instance_type: "c3.large"
     fedora-vagrant:
-        passwords: ['password']
-# List of builders whose failures shouldn't be reported.
-failing_builders: []
+        passwords: ['<password>']
     osx:
-        passwords: ['password']
+        passwords: ['<password>']
+# List of builders whose failures should not be reported.  Tests listed here
+# will be reported in a separate section of the Buildbot web page, to indicate
+# that they are expected failures.
+failing_builders: []
+
