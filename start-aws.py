@@ -1,3 +1,4 @@
+#!/usr/bin/env python
 import argparse
 import os
 import time
@@ -5,26 +6,31 @@ import time
 import boto.ec2
 
 
-# Usual Fedora 20 image used for most Buildbot infrastructure
+# Usual images used for Buildbot infrastructure
 ec2_image = {
-    'Fedora-x86_64-20-20140407-sda': 'ami-cc8de6fc'
+    'centos': 'ami-c7d092f7',  # CentOS 7 x86_64 (2014_09_29)
+    'fedora': 'ami-cc8de6fc',  # Fedora-x86_64-20-20140407-sda
+    'ubuntu': 'ami-29ebb519',  # ubuntu-trusty-14.04-amd64-server-20150123
 }
 
 
 def start_instance(
-        aws_region, key_name, instance_type, security_group, instance_name):
+        aws_region, key_name, instance_type, security_group, operating_system,
+        instance_name):
 
     conn = boto.ec2.connect_to_region(aws_region)
 
-    # Buildbot master requires 4Gb diskspace.  Set the EBS root disk (disk1)
-    # to be 4Gb instead of default (2Gb).
+    # Buildbot master requires 4Gb diskspace. Fedora default is 2Gb.
+    # Ubuntu default is 8Gb, which cannot be reduced. Set the EBS root
+    # disk (disk1) to be 8Gb instead of default.  This gives plenty of
+    # leeway for future increases.
     disk1 = boto.ec2.blockdevicemapping.EBSBlockDeviceType()
-    disk1.size = 4
+    disk1.size = 8
     diskmap = boto.ec2.blockdevicemapping.BlockDeviceMapping()
     diskmap['/dev/sda1'] = disk1
 
     reservation = conn.run_instances(
-        ec2_image['Fedora-x86_64-20-20140407-sda'],
+        ec2_image[operating_system],
         key_name=key_name,
         instance_type=instance_type,
         security_groups=[security_group],
@@ -59,6 +65,9 @@ if __name__ == '__main__':
         '--security-group', default='Buildbot staging',
         help='AWS security group')
     parser.add_argument(
+        '--os', choices=ec2_image.keys(), default='fedora',
+        help='Operating System')
+    parser.add_argument(
         '--key-name', default='hybrid-master', help='AWS key name')
     parser.add_argument(
         '--instance-type', default='m3.medium', help='AWS instance type')
@@ -70,4 +79,4 @@ if __name__ == '__main__':
 
     start_instance(
         args.region, args.key_name, args.instance_type, args.security_group,
-        args.instance_name)
+        args.os, args.instance_name)
