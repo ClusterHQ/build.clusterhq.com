@@ -29,7 +29,7 @@ TWISTED_GIT = b'https://github.com/twisted/twisted'
 
 flockerBranch = Interpolate("%(src:flocker:branch)s")
 
-buildNumber = Interpolate("%(prop:buildNumber)s")
+buildNumber = Interpolate("build-%(prop:buildnumber)s")
 
 
 report_expected_failures_parameter = BooleanParameter(
