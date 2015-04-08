@@ -295,6 +295,9 @@ from buildbot.changes.filter import ChangeFilter
 from ..steps import idleSlave
 
 
+from buildbot.locks import MasterLock
+
+
 # Dictionary mapping providers for acceptence testing to a list of
 # sets of variants to test on each provider.
 @attributes([
@@ -361,6 +364,14 @@ ACCEPTEANCE_CONFIGURATIONS = [
 ]
 
 
+rackspace_lock = MasterLock("rackspace-lock", maxCount=12)
+ACCEPTANCE_LOCKS = {
+    # 256000M available ram, 8192M per node, 2 nodes per test
+    # We allocate slightly less to avoid using all the RAM.
+    'rackspace': [rackspace_lock.access("counting")],
+}
+
+
 def getBuilders(slavenames):
     builders = [
         BuilderConfig(name='flocker-vagrant-dev-box',
@@ -388,6 +399,7 @@ def getBuilders(slavenames):
             slavenames=slavenames[configuration.slave_class],
             category='flocker',
             factory=run_acceptance_tests(configuration),
+            locks=ACCEPTANCE_LOCKS.get(configuration.provider, []),
             nextSlave=idleSlave))
     return builders
 
