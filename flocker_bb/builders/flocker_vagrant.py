@@ -3,6 +3,7 @@ from buildbot.process.properties import Interpolate, Property, renderer
 from buildbot.steps.python_twisted import Trial
 from buildbot.steps.trigger import Trigger
 from buildbot.steps.transfer import StringDownload
+from buildbot.interfaces import IBuildStepFactory
 
 from ..steps import (
     buildVirtualEnv, virtualenvBinary,
@@ -37,6 +38,24 @@ def getFlockerFactory():
     factory.addSteps(buildVirtualEnv("python2.7", useSystem=True))
     factory.addSteps(installDependencies())
     return factory
+
+
+def destroy_box(path):
+    """
+    Step that destroys the vagrant boxes at the given path.
+
+    :return BuildStep:
+    """
+    return ShellCommand(
+        name='destroy-boxes',
+        description=['destroy', 'boxes'],
+        descriptionDone=['destroy', 'boxes'],
+        command=['vagrant', 'destroy', '-f'],
+        workdir=path,
+        alwaysRun=True,
+        haltOnFailure=False,
+        flunkOnFailure=False,
+    )
 
 
 def buildVagrantBox(box, add=True):
@@ -131,6 +150,12 @@ def buildDevBox():
     """
     factory = getFlockerFactory()
 
+    # We have to insert this before the first step, so we don't
+    # destroy the vagrant meta-data. Normally .addStep adapts
+    # to IBuildStepFactory.
+    factory.steps.insert(0, IBuildStepFactory(
+        destroy_box(path='build/vagrant/dev')))
+
     factory.addSteps(buildVagrantBox('dev', add=True))
 
     factory.addStep(ShellCommand(
@@ -171,6 +196,12 @@ def buildDevBox():
 def buildTutorialBox():
     factory = getFlockerFactory()
 
+    # We have to insert this before the first step, so we don't
+    # destroy the vagrant meta-data. Normally .addStep adapts
+    # to IBuildStepFactory.
+    factory.steps.insert(0, IBuildStepFactory(
+        destroy_box(path='build/vagrant/tutorial')))
+
     factory.addSteps(buildVagrantBox('tutorial', add=True))
     factory.addStep(Trigger(
         name='trigger-vagrant-tests',
@@ -189,6 +220,15 @@ def buildTutorialBox():
 
 def run_acceptance_tests(configuration):
     factory = getFlockerFactory()
+
+    if configuration.provider == 'vagrant':
+        # We have to insert this before the first step, so we don't
+        # destroy the vagrant meta-data. Normally .addStep adapts
+        # to IBuildStepFactory.
+        factory.steps.insert(0, IBuildStepFactory(
+            destroy_box(path='build/admin/vagrant-acceptance-targets/%s'
+                             % configuration.distribution)))
+
     factory.addSteps(_flockerTests(
         kwargs={
             'trialMode': [],
@@ -236,6 +276,10 @@ end
 
 def test_installed_package(box):
     factory = getFlockerFactory()
+
+    factory.addStep(
+        destroy_box(path='test'))
+
     factory.addStep(SetPropertyFromCommand(
         command=["python", "setup.py", "--version"],
         name='check-version',
@@ -254,8 +298,6 @@ def test_installed_package(box):
         description=['initializing', box, 'box'],
         descriptionDone=['initialize', box, 'box'],
         ))
-    # There is no need to destroy the box, since the .vagrant directory
-    # got destroyed.
     factory.addStep(ShellCommand(
         name='start-tutorial-box',
         description=['starting', box, 'box'],
