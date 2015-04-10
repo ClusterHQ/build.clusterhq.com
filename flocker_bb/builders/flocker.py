@@ -19,7 +19,7 @@ from ..steps import (
     pip,
     isMasterBranch, isReleaseBranch,
     resultPath, resultURL,
-    flockerBranch, flockerRevision,
+    flockerRevision,
     )
 
 # This is where temporary files associated with a build will be dumped.
@@ -452,17 +452,17 @@ def makeHomebrewRecipeCreationFactory():
 
     sdist_file = Interpolate('Flocker-%(prop:version)s.tar.gz')
     sdist_path = resultPath('python',
-                            discriminator=flockerBranch,
-                            filename=sdist_file)
+                            discriminator=sdist_file)
     sdist_url = resultURL('python',
-                          isAbsolute=True,
-                          discriminator=flockerBranch,
-                          filename=sdist_file)
+                          discriminator=sdist_file,
+                          isAbsolute=True)
 
     recipe_file = Interpolate('Flocker%(kw:revision)s.rb',
                               revision=flockerRevision)
     recipe_path = resultPath(
-        'homebrew', discriminator=flockerBranch, filename=recipe_file)
+        'homebrew', discriminator=recipe_file)
+    recipe_url = resultURL(
+        'homebrew', discriminator=recipe_file)
 
     # Build source distribution
     factory.addStep(ShellCommand(
@@ -479,7 +479,8 @@ def makeHomebrewRecipeCreationFactory():
     factory.addStep(FileUpload(
         name='upload-sdist',
         slavesrc=Interpolate('dist/Flocker-%(prop:version)s.tar.gz'),
-        masterdest=sdist_path
+        masterdest=sdist_path,
+        url=sdist_url,
     ))
 
     # Build Homebrew recipe from source distribution URL
@@ -501,7 +502,8 @@ def makeHomebrewRecipeCreationFactory():
     factory.addStep(FileUpload(
         name='upload-homebrew-recipe',
         slavesrc=recipe_file,
-        masterdest=recipe_path
+        masterdest=recipe_path,
+        url=recipe_url,
     ))
 
     # Trigger the homebrew-test build
@@ -532,8 +534,7 @@ def makeHomebrewRecipeTestFactory():
                               revision=flockerRevision)
     recipe_url = resultURL('homebrew',
                            isAbsolute=True,
-                           discriminator=flockerBranch,
-                           filename=recipe_file)
+                           discriminator=recipe_file)
     factory.addStep(ShellCommand(
         name='run-homebrew-test',
         description=["running", "homebrew", "test"],

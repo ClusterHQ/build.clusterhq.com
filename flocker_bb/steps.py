@@ -51,13 +51,11 @@ def flockerRevision(build):
     return build.getProperty('got_revision', {}).get('flocker')
 
 
-def _result(kind, prefix, discriminator=buildNumber, filename=None):
+def _result(kind, prefix, discriminator=buildNumber):
     """
     Build a path to results.
     """
     parts = [prefix, kind, flockerBranch, discriminator]
-    if filename is not None:
-        parts.append(filename)
 
     @renderer
     def render(build):
