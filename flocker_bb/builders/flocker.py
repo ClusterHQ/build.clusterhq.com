@@ -565,6 +565,10 @@ def build_wheels_factory(distribution):
         command=[Interpolate(path.join(VIRTUALENV_DIR, "bin/pip")),
                  "wheel",
                  "--wheel-dir", "wheelhouse",
+                 "--find-links", resultURL(
+                     'wheelhouse',
+                     discriminator=Property('distribution'),
+                     isAbsolute=True),
                  "-e", ".[doc,dev,release]",
                  ],
         haltOnFailure=True))
