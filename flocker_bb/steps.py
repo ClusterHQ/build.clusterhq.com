@@ -12,7 +12,7 @@ from buildbot.steps.source.base import Source
 from buildbot.process.factory import BuildFactory
 from buildbot.status.results import SUCCESS
 from buildbot.process import buildstep
-from buildbot.process.properties import renderer
+from buildbot.process.properties import renderer, Property
 from buildbot.schedulers.forcesched import BooleanParameter
 
 from os import path
@@ -342,6 +342,10 @@ def pip(what, packages):
         descriptionDone=["install", what],
         command=[Interpolate(path.join(VIRTUALENV_DIR, "bin/pip")),
                  "install",
+                 "--find-links", resultURL(
+                     'wheelhouse',
+                     discriminator=Property('distribution'),
+                     isAbsolute=True),
                  packages,
                  ],
         haltOnFailure=True)

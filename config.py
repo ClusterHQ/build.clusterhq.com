@@ -80,7 +80,12 @@ for base, slaveConfig in privateData['slaves'].items():
                         'Class': base,
                         'BuildMaster': privateData['buildmaster']['host'],
                         },
-                    ))
+                    properties={
+                        'distribution':
+                            # HACK
+                            'fedora-20' if 'fedora' in base else base
+                    },
+                ))
     else:
         for i, password in enumerate(slaveConfig['passwords']):
             name = '%s-%d' % (base, i)

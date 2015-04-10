@@ -553,15 +553,39 @@ def makeHomebrewRecipeTestFactory():
     return factory
 
 
+def build_wheels_factory(distribution):
+    factory = getFactory("flocker", useSubmodules=False, mergeForward=True)
+    factory.addStep(ShellCommand(
+        name="build-wheels",
+        description=["building", "wheels"],
+        descriptionDone=["build", "wheels"],
+        command=[Interpolate(path.join(VIRTUALENV_DIR, "bin/pip")),
+                 "wheel",
+                 "--wheel-dir", "wheelhouse",
+                 "-e", ".[doc,dev,release]",
+                 ],
+        haltOnFailure=True))
+    factory.addStep(
+        DirectoryUpload(
+            b"wheelhouse",
+            resultPath('wheelhouse', discriminator=distribution),
+            url=resultURL('wheelhouse', discriminator=distribution),
+            name="upload-wheelhouse",
+            ))
+    return factory
+
+
 from buildbot.config import BuilderConfig
 from buildbot.schedulers.basic import AnyBranchScheduler
 from buildbot.schedulers.forcesched import (
     CodebaseParameter, StringParameter, ForceScheduler, FixedParameter)
 from buildbot.schedulers.triggerable import Triggerable
 from buildbot.locks import SlaveLock
+from buildbot.changes.filter import ChangeFilter
 
 from ..steps import report_expected_failures_parameter
 from ..steps import idleSlave
+from ..steps import MergeForward
 
 # A lock to prevent multiple functional tests running at the same time
 functionalLock = SlaveLock('functional-tests')
@@ -645,6 +669,7 @@ def getBuilders(slavenames):
                       factory=makeHomebrewRecipeTestFactory(),
                       nextSlave=idleSlave),
         ]
+
     for distribution in OMNIBUS_DISTRIBUTIONS:
         builders.append(
             BuilderConfig(
@@ -654,6 +679,14 @@ def getBuilders(slavenames):
                 factory=makeOmnibusFactory(
                     distribution=distribution,
                 ),
+                nextSlave=idleSlave,
+                ))
+        builders.append(
+            BuilderConfig(
+                name='flocker/wheelhouse/%s' % (distribution,),
+                slavenames=slavenames[distribution],
+                category='flocker',
+                factory=build_wheels_factory(distribution),
                 nextSlave=idleSlave,
                 ))
 
@@ -672,7 +705,13 @@ BUILDERS = [
     'flocker-admin',
     'flocker/homebrew/create',
 ] + [
-    'flocker-omnibus-%s' % (dist,) for dist in OMNIBUS_DISTRIBUTIONS
+    'flocker-omnibus-%s' % (dist,)
+    for dist in OMNIBUS_DISTRIBUTIONS
+]
+
+WHEEL_BUILDERS = [
+    'flocker/wheelhouse/%s' % (dist,)
+    for dist in OMNIBUS_DISTRIBUTIONS
 ]
 
 
@@ -685,6 +724,19 @@ def getSchedulers():
             codebases={
                 "flocker": {"repository": GITHUB + b"/flocker"},
             },
+        ),
+        AnyBranchScheduler(
+            name="flocker-wheels",
+            treeStableTimer=5,
+            builderNames=WHEEL_BUILDERS,
+            codebases={
+                "flocker": {"repository": GITHUB + b"/flocker"},
+            },
+            change_filter=ChangeFilter(
+                branch_fn=lambda branch:
+                    (MergeForward._isMaster(branch)
+                        or MergeForward._isRelease(branch)),
+            )
         ),
         ForceScheduler(
             name="force-flocker",
@@ -700,7 +752,7 @@ def getSchedulers():
             properties=[
                 report_expected_failures_parameter,
             ],
-            builderNames=BUILDERS,
+            builderNames=BUILDERS + WHEEL_BUILDERS,
             ),
         Triggerable(
             name='trigger/created-homebrew',
