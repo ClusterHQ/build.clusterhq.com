@@ -454,12 +454,14 @@ def makeHomebrewRecipeCreationFactory():
     sdist_path = resultPath('python',
                             discriminator=sdist_file)
     sdist_url = resultURL('python',
-                          isAbsolute=True,
-                          discriminator=sdist_file)
+                          discriminator=sdist_file,
+                          isAbsolute=True)
 
     recipe_file = Interpolate('Flocker%(kw:revision)s.rb',
                               revision=flockerRevision)
     recipe_path = resultPath(
+        'homebrew', discriminator=recipe_file)
+    recipe_url = resultURL(
         'homebrew', discriminator=recipe_file)
 
     # Build source distribution
@@ -477,7 +479,8 @@ def makeHomebrewRecipeCreationFactory():
     factory.addStep(FileUpload(
         name='upload-sdist',
         slavesrc=Interpolate('dist/Flocker-%(prop:version)s.tar.gz'),
-        masterdest=sdist_path
+        masterdest=sdist_path,
+        url=sdist_url,
     ))
 
     # Build Homebrew recipe from source distribution URL
@@ -499,7 +502,8 @@ def makeHomebrewRecipeCreationFactory():
     factory.addStep(FileUpload(
         name='upload-homebrew-recipe',
         slavesrc=recipe_file,
-        masterdest=recipe_path
+        masterdest=recipe_path,
+        url=recipe_url,
     ))
 
     # Trigger the homebrew-test build
