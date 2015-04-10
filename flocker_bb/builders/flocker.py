@@ -555,6 +555,9 @@ def makeHomebrewRecipeTestFactory():
 
 def build_wheels_factory(distribution):
     factory = getFactory("flocker", useSubmodules=False, mergeForward=True)
+    factory.addSteps(buildVirtualEnv("python2.7", useSystem=True))
+    factory.addStep(
+        pip("wheel", ["pip==6.0.8", "wheel"]))
     factory.addStep(ShellCommand(
         name="build-wheels",
         description=["building", "wheels"],
