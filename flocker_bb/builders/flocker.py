@@ -19,7 +19,7 @@ from ..steps import (
     pip,
     isMasterBranch, isReleaseBranch,
     resultPath, resultURL,
-    flockerBranch, flockerRevision,
+    flockerRevision,
     )
 
 # This is where temporary files associated with a build will be dumped.
