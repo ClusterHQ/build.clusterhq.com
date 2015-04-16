@@ -40,7 +40,6 @@ yum install -y \
 	python-devel \
 	python-tox \
 	python-virtualenv \
-	mock \
 	rpmdev \
 	rpmlint \
 	rpm-build \
@@ -66,12 +65,6 @@ gem install fpm
 systemctl enable docker
 systemctl enable geard
 
-
-# Initialize mock yum cache
-# Otherwise, all these packages would need to downloaded on each latent slave.
-export SUDO_UID=99 # nobody
-export SUDO_GID=135 # mock
-mock --init --root fedora-20-x86_64
 
 # Pre-cache docker images
 systemctl start docker

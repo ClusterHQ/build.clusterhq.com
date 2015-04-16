@@ -17,15 +17,13 @@ from flocker_bb import privateData
 USER = privateData['auth']['user'].encode("utf-8")
 PASSWORD = privateData['auth']['password'].encode("utf-8")
 
-from flocker_bb.zulip import createZulip, ZulipLogger
+from flocker_bb.zulip import createZulip
 from twisted.internet import reactor
 
 if 'zulip' in privateData:
     ZULIP_BOT = privateData['zulip']['user']
     ZULIP_KEY = privateData['zulip']['password']
     zulip = createZulip(reactor, ZULIP_BOT, ZULIP_KEY)
-
-    ZulipLogger(zulip=zulip, stream="BuildBot - Operation").start()
 
 
 ####### BUILDSLAVES
@@ -71,6 +69,10 @@ for base, slaveConfig in privateData['slaves'].items():
                         "password": password,
                         'buildmaster_host': privateData['buildmaster']['host'],
                         'buildmaster_port': c['slavePortnum'],
+                        'acceptance.yml':
+                            privateData['acceptance'].get('config', ''),
+                        'acceptance-ssh-key':
+                            privateData['acceptance'].get('ssh-key', ''),
                         },
                     keepalive_interval=60,
                     tags={
@@ -129,11 +131,20 @@ addBuilderModule(maint)
 # pushed to these targets. buildbot/status/*.py has a variety to choose from,
 # including web pages, email senders, and IRC bots.
 
+failing_builders = frozenset(privateData.get('failing_builders', ()))
+
 c['status'] = []
 
 from flocker_bb.github import createGithubStatus
 if privateData['github']['report_status']:
-    c['status'].append(createGithubStatus('flocker', token=privateData['github']['token']))
+    c['status'].append(createGithubStatus(
+        'flocker', token=privateData['github']['token'],
+        failing_builders=failing_builders,
+        ))
+
+
+from flocker_bb.monitoring import Monitor
+c['status'].append(Monitor())
 
 from flocker_bb.boxes import FlockerWebStatus as WebStatus
 from buildbot.status.web import authz
@@ -161,13 +172,20 @@ c['status'].append(WebStatus(
     http_port=80, authz=authz_cfg,
     public_html=sibpath(__file__, 'public_html'),
     jinja_loaders=[jinja2.FileSystemLoader(sibpath(__file__, 'templates'))],
-    change_hook_dialects={'github': True}))
+    change_hook_dialects={'github': True},
+    failing_builders=failing_builders,
+))
 
 
 from flocker_bb.zulip_status import createZulipStatus
 if 'zulip' in privateData:
     ZULIP_STREAM = privateData['zulip'].get('stream', u"BuildBot")
-    c['status'].append(createZulipStatus(zulip, ZULIP_STREAM))
+    CRITICAL_STREAM = privateData['zulip'].get('critical_stream',
+                                               u"Engineering")
+    c['status'].append(createZulipStatus(
+        zulip, ZULIP_STREAM, CRITICAL_STREAM,
+        failing_builders=failing_builders,
+    ))
 
 ####### PROJECT IDENTITY
 

@@ -22,14 +22,17 @@ from buildbot.status.results import (
     SUCCESS, EXCEPTION, FAILURE, WARNINGS, RETRY)
 
 from flocker_bb.buildset_status import BuildsetStatusReceiver
-from characteristic import attributes
+from characteristic import attributes, Attribute
 
 
 import re
 _re_github = re.compile("(?:git@github.com:|https://github.com/)(?P<repo_user>[^/]*)/(?P<repo_name>[^/]*)(?:\.git)?")  # noqa
 
 
-@attributes(['codebase'])
+@attributes([
+    'codebase',
+    Attribute('failing_builders', default_factory=frozenset),
+])
 class GitHubStatus(BuildsetStatusReceiver):
     """
     Send build status to GitHub.
@@ -40,6 +43,8 @@ class GitHubStatus(BuildsetStatusReceiver):
     - When a build stops, report status finished.
 
     :ivar codebase: Codebase to report status for.
+    :ivar failing_builders: List of builders for which results shouldn't
+        be repotrted.
     """
 
     # There are a couple of ways this can be tested.
@@ -97,6 +102,11 @@ class GitHubStatus(BuildsetStatusReceiver):
         Reports to github that a build has started, along with a link to the
         build.
         """
+        if (builderName in self.failing_builders
+                and not build.getProperty("report-expected-failures")):
+            # The failure is expected.
+            return
+
         sourceStamps = [ss.asDict() for ss in build.getSourceStamps()]
         request = self._getSourceStampData(sourceStamps)
         if 'sha' not in request:
@@ -113,11 +123,16 @@ class GitHubStatus(BuildsetStatusReceiver):
 
     def buildFinished(self, builderName, build, results):
         """
-        Notify this receiver that a build has started.
+        Notify this receiver that a build has finished.
 
         Reports to github that a build has finished, along with a link to the
         build, and the build result.
         """
+        if (builderName in self.failing_builders
+                and not build.getProperty("report-expected-failures")):
+            # The failure is expected.
+            return
+
         sourceStamps = [ss.asDict() for ss in build.getSourceStamps()]
         request = self._getSourceStampData(sourceStamps)
 
@@ -187,13 +202,20 @@ class GitHubStatus(BuildsetStatusReceiver):
             })
 
         for buildRequest in buildRequests:
+            builder_name = buildRequest['builderName']
+            properties = {v[0]: v[1] for v in buildRequest['properties']}
+            if (builder_name in self.failing_builders and
+                    not properties.get("report-expected-failures", False)):
+                # The failure is expected.
+                continue
             r = request.copy()
             r.update({
                 'context': self._simplifyBuilderName(
-                    buildRequest['builderName']),
+                    builder_name),
             })
             self._sendStatus(r)
 
 
-def createGithubStatus(codebase, token):
-    return GitHubStatus(codebase=codebase, token=token)
+def createGithubStatus(codebase, token, failing_builders):
+    return GitHubStatus(codebase=codebase, token=token,
+                        failing_builders=failing_builders)

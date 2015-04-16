@@ -4,6 +4,7 @@ from buildbot.config import BuilderConfig
 from buildbot.process.factory import BuildFactory
 from buildbot.schedulers.timed import Periodic
 
+
 def makeCleanOldBuildsFactory():
     """
     Remove build results older than 14 days.
@@ -15,14 +16,13 @@ def makeCleanOldBuildsFactory():
     factory = BuildFactory()
     factory.addStep(MasterShellCommand(
         ['find', path,
-          '-type', 'f', '-mtime', '+14',
-          '-exec', 'unlink', '{}', ';'],
+         '-type', 'f', '-mtime', '+14',
+         '-exec', 'unlink', '{}', ';'],
         description=['Removing', 'old', 'results'],
         descriptionDone=['Remove', 'old', 'results'],
         name='remove-old-results'))
 
     return factory
-
 
 
 def getBuilders(slavenames):
@@ -33,6 +33,7 @@ def getBuilders(slavenames):
             slavenames=slavenames['fedora-vagrant'],
             factory=makeCleanOldBuildsFactory()),
         ]
+
 
 def getSchedulers():
     daily = Periodic(name='daily',

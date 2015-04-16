@@ -1,3 +1,6 @@
+import random
+from collections import Counter
+
 from twisted.internet import defer
 from twisted.python import log
 from twisted.python.filepath import FilePath
@@ -10,10 +13,12 @@ from buildbot.process.factory import BuildFactory
 from buildbot.status.results import SUCCESS
 from buildbot.process import buildstep
 from buildbot.process.properties import renderer
+from buildbot.schedulers.forcesched import BooleanParameter
 
 from os import path
 import re
 import json
+from functools import partial
 
 VIRTUALENV_DIR = '%(prop:workdir)s/venv'
 
@@ -21,6 +26,54 @@ VIRTUALENV_PY = Interpolate("%(prop:workdir)s/../dependencies/virtualenv.py")
 GITHUB = b"https://github.com/ClusterHQ"
 
 TWISTED_GIT = b'https://github.com/twisted/twisted'
+
+flockerBranch = Interpolate("%(src:flocker:branch)s")
+
+buildNumber = Interpolate("build-%(prop:buildnumber)s")
+
+
+report_expected_failures_parameter = BooleanParameter(
+    name="report-expected-failures",
+    label="Report status for builders expected to fail.",
+)
+
+
+@renderer
+def buildbotURL(build):
+    return build.getBuild().build_status.master.status.getBuildbotURL()
+
+
+@renderer
+def flockerRevision(build):
+    """
+    Get the SHA-1 of the checked-out version of flocker.
+    """
+    return build.getProperty('got_revision', {}).get('flocker')
+
+
+def _result(kind, prefix, discriminator=buildNumber):
+    """
+    Build a path to results.
+    """
+    parts = [prefix, kind, flockerBranch, discriminator]
+
+    @renderer
+    def render(build):
+        d = defer.gatherResults(map(build.render, parts))
+        d.addCallback(lambda parts: path.join(*parts))
+        return d
+    return render
+
+resultPath = partial(_result, prefix=path.abspath("private_html"))
+
+
+def resultURL(kind, isAbsolute=False, **kwargs):
+    if isAbsolute:
+        # buildbotURL has a trailing slash, so don't double it here.
+        prefix = Interpolate("%(kw:base)sresults/", base=buildbotURL)
+    else:
+        prefix = '/results/'
+    return _result(kind=kind, prefix=prefix, **kwargs)
 
 
 def buildVirtualEnv(python, useSystem=False):
@@ -70,11 +123,6 @@ def getFactory(codebase, useSubmodules=True, mergeForward=False):
                          name="update-git-submodules"))
 
     return factory
-
-
-@renderer
-def buildbotURL(build):
-    return build.getBuild().build_status.master.status.getBuildbotURL()
 
 
 def virtualenvBinary(command):
@@ -159,7 +207,7 @@ class MergeForward(Source):
         return branch == 'master'
 
     _RELEASE_TAG_RE = re.compile(
-        '^[0-9]+\.[0-9]+\.[0-9]+(?:dev[0-9]+|pre[0-9]+)?$')
+        '^[0-9]+\.[0-9]+\.[0-9]+(?:dev[0-9]+|pre[0-9]+|\+doc[0-9]+)?$')
 
     @classmethod
     def _isRelease(cls, branch):
@@ -209,7 +257,7 @@ class MergeForward(Source):
             d.addCallback(lambda _: self._fetch(merge_branch))
             d.addCallback(lambda _: self._getCommitDate())
             d.addCallback(self._merge)
-            d.addCallback(lambda _: self._getMergeBase())
+            d.addCallback(self._getMergeBase)
 
         d.addCallback(self._setLintVersion)
         d.addCallback(lambda _: SUCCESS)
@@ -233,16 +281,22 @@ class MergeForward(Source):
             'GIT_AUTHOR_DATE': date.strip(),
             'GIT_COMMITTER_DATE': date.strip(),
         })
-        return self._dovccmd(['merge',
-                              '--no-ff', '--no-stat',
-                              'FETCH_HEAD'])
+        # Merge against the requested commit (if this is a triggered build).
+        # Otherwise, merge against the tip of the merge branch.
+        merge_target = self.getProperty('merge_target', 'FETCH_HEAD')
+        d = self._dovccmd(['merge',
+                           '--no-ff', '--no-stat',
+                           '-m', 'Merge forward.',
+                           merge_target])
+        d.addCallback(lambda _: merge_target)
+        return d
 
     def _getPreviousVersion(self):
         return self._dovccmd(['rev-parse', 'HEAD~1'],
                              collectStdout=True)
 
-    def _getMergeBase(self):
-        return self._dovccmd(['merge-base', 'HEAD', 'FETCH_HEAD'],
+    def _getMergeBase(self, merge_target):
+        return self._dovccmd(['rev-parse', merge_target],
                              collectStdout=True)
 
     def _setLintVersion(self, version):
@@ -293,24 +347,61 @@ def pip(what, packages):
         haltOnFailure=True)
 
 
-def isBranch(codebase, branchName, prefix=False):
+def isBranch(codebase, predicate):
     """
     Return C{doStepIf} function checking whether the built branch
     matches the given branch.
 
     @param codebase: Codebase to check
-    @param branchName: Target branch
-    @param prefix: L{bool} indicating whether to check against a prefix
+    @param predicate: L{callable} that takes a branch and returns whether
+        the step should be run.
     """
     def test(step):
         sourcestamp = step.build.getSourceStamp(codebase)
         branch = sourcestamp.branch
-        if prefix:
-            return branch.startswith(branchName)
-        else:
-            return branch == branchName
+        return predicate(branch)
     return test
 
 
 def isMasterBranch(codebase):
-    return isBranch(codebase, 'master')
+    return isBranch(codebase, MergeForward._isMaster)
+
+
+def isReleaseBranch(codebase):
+    return isBranch(codebase, MergeForward._isRelease)
+
+
+def idleSlave(builder, slavebuilders):
+    """
+    Return a slave that has the least number of running builds on it.
+    """
+    # Count the builds on each slave
+    builds = Counter([
+        slavebuilder
+        for slavebuilder in slavebuilders
+        for sb in slavebuilder.slave.slavebuilders.values()
+        if sb.isBusy()
+    ])
+
+    if not builds:
+        # If there are no builds, then everything is idle.
+        idle = slavebuilders
+    else:
+        min_builds = min(builds.values())
+        idle = [
+            slavebuilder
+            for slavebuilder in slavebuilders
+            if builds[slavebuilder] == min_builds
+        ]
+    if idle:
+        return random.choice(idle)
+
+
+def slave_environ(var):
+    """
+    Render a environment variable from the slave.
+    """
+    @renderer
+    def render(properties):
+        return properties.getBuild().slavebuilder.slave.slave_environ.get(var)
+    return render

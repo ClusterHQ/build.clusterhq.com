@@ -32,7 +32,6 @@ apt-get install -y \
 	python-dev \
 	python-tox \
 	python-virtualenv \
-	mock \
 	docker.io \
 	libffi-dev \
 	build-essential \

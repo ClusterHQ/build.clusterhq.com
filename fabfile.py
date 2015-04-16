@@ -1,36 +1,64 @@
-from fabric.api import sudo, task, env, execute, local
+from fabric.api import sudo, task, env, execute, local, put
 from pipes import quote as shellQuote
-import yaml, json
+import yaml
+import json
 
 # We assume we are running on a fedora 20 AWS image.
 # These are setup with an `fedora` user, so hard code that.
 env.user = 'fedora'
 
-def loadConfig(configFile):
+
+def cmd(*args):
+    return ' '.join(map(shellQuote, args))
+
+
+def get_lastpass_config(key):
+    output = local(cmd('lpass', 'show', '--notes', key),
+                   capture=True)
+    config = yaml.safe_load(output.stdout)
+    return config
+
+
+def loadConfig(configFile, use_acceptance_config=True):
     """
     Load config.
 
     Sets env.hosts, if not already set.
     """
-    config = yaml.safe_load(open(configFile))
+    if configFile is not None:
+        config = yaml.safe_load(open(configFile))
+    else:
+        config = get_lastpass_config("config@build.clusterhq.com")
+
     if not env.hosts:
         env.hosts = [config['buildmaster']['host']]
+
+    if use_acceptance_config:
+        acceptance_config = get_lastpass_config(
+            "acceptance@build.clusterhq.com")
+        config['acceptance'] = {
+            'ssh-key': acceptance_config['ssh-key'],
+            'config': yaml.safe_dump(acceptance_config['config']),
+        }
+    else:
+        config['acceptance'] = {}
     return config
 
-
-def cmd(*args):
-    return ' '.join(map(shellQuote, args))
 
 def pull(image):
     sudo(cmd('docker', 'pull', image))
 
+
 def containerExists(name):
-    return sudo(cmd('docker', 'inspect', '-f', 'test', name), quiet=True).succeeded
+    return sudo(cmd('docker', 'inspect',
+                    '-f', 'test', name), quiet=True).succeeded
+
 
 def removeContainer(name):
     if containerExists(name):
         sudo(cmd('docker', 'stop', name))
         sudo(cmd('docker', 'rm', '-f', name))
+
 
 def imageFromConfig(config, baseImage='clusterhq/build.clusterhq.com'):
     """
@@ -66,7 +94,8 @@ def removeUntaggedImages():
     which consume diskspace. This deletes all untagged leaf layers and their
     unreferenced parents.
     """
-    images = [line.split() for line in sudo(cmd("docker", "images")).splitlines()]
+    images = [line.split()
+              for line in sudo(cmd("docker", "images")).splitlines()]
     untagged = [image[2] for image in images if image[0] == '<none>']
     if untagged:
         sudo(cmd('docker', 'rmi', *untagged))
@@ -82,10 +111,14 @@ def bootstrap():
     sudo('systemctl start docker')
 
     if not containerExists('buildmaster-data'):
-        sudo('docker run --name buildmaster-data -v /srv/buildmaster/data busybox /bin/true')
+        sudo(cmd('docker', 'run',
+                 '--name', 'buildmaster-data',
+                 '-v', '/srv/buildmaster/data',
+                 'busybox', '/bin/true'))
+
 
 @task
-def start(configFile="config.yml"):
+def start(configFile=None):
     """
     Start buildmaster on fresh host.
     """
@@ -96,29 +129,32 @@ def start(configFile="config.yml"):
 
 
 @task
-def update(configFile="config.yml"):
+def update(configFile=None):
     """
     Update buildmaster to latest image.
     """
     config = loadConfig(configFile)
     execute(startBuildmaster, config)
 
+
 @task
-def restart(configFile="config.yml"):
+def restart(configFile=None):
     """
     Restart buildmaster with current image.
     """
     config = loadConfig(configFile)
     execute(startBuildmaster, config, shouldPull=False)
 
+
 @task
-def logs(configFile="config.yml", follow=True):
+def logs(configFile=None, follow=True):
     """
     Show logs.
     """
     loadConfig(configFile)
     if follow:
-        execute(sudo, cmd('journalctl', '--follow', 'SYSLOG_IDENTIFIER=buildmaster'))
+        execute(sudo, cmd('journalctl', '--follow',
+                          'SYSLOG_IDENTIFIER=buildmaster'))
     else:
         execute(sudo, cmd('journalctl', 'SYSLOG_IDENTIFIER=buildmaster'))
 
@@ -131,10 +167,48 @@ def getConfig():
     local(cmd('cp', 'config.yml', 'config.yml.bak'))
     local('lpass show --notes "config@build.clusterhq.com" >config.yml')
 
+
 @task
 def saveConfig():
     """
     Put credentials in lastpass.
     """
     local('lpass show --notes "config@build.clusterhq.com" >config.yml.old')
-    local('lpass edit --non-interactive --notes "config@build.clusterhq.com" <config.yml')
+    local('lpass edit --non-interactive '
+          '--notes "config@build.clusterhq.com" <config.yml')
+
+
+@task
+def check_config(configFile="staging.yml"):
+    """
+    Check that buildbot can load the configuration.
+    """
+    from os import environ
+    config = loadConfig(configFile, use_acceptance_config=False)
+    environ['BUILDBOT_CONFIG'] = json.dumps(config)
+
+    local(cmd(
+        'buildbot', 'checkconfig', 'config.py'
+    ))
+
+
+@task
+def startPrometheus():
+    removeContainer('prometheus')
+    if not containerExists('prometheus-data'):
+        sudo(cmd(
+            'docker', 'run',
+            '--name', 'prometheus-data',
+            # https://github.com/prometheus/prometheus/pull/574
+            '-v', '/tmp/metrics',
+            '--entrypoint', '/bin/true',
+            'prom/prometheus'))
+    sudo(cmd('mkdir', '-p', '/srv/prometheus'))
+    put('prometheus.conf', '/srv/prometheus/prometheus.conf', use_sudo=True)
+    sudo(cmd(
+        'docker', 'run', '-d',
+        '--name', 'prometheus',
+        '-p', '9090:9090',
+        '-v', '/srv/prometheus/prometheus.conf:/prometheus.conf',
+        '--volumes-from', 'prometheus-data',
+        'prom/prometheus'))
