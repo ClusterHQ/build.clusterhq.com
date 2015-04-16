@@ -392,6 +392,8 @@ ACCEPTEANCE_CONFIGURATIONS = [
         provider='rackspace', distribution='fedora-20',
         variants={'distro-testing'}),
     AcceptanceConfiguration(
+        provider='rackspace', distribution='ubuntu-14.04'),
+    AcceptanceConfiguration(
         provider='rackspace', distribution='centos-7'),
     AcceptanceConfiguration(
         provider='rackspace', distribution='centos-7',
@@ -403,6 +405,8 @@ ACCEPTEANCE_CONFIGURATIONS = [
         provider='digitalocean', distribution='fedora-20'),
     AcceptanceConfiguration(
         provider='aws', distribution='centos-7'),
+    AcceptanceConfiguration(
+        provider='aws', distribution='ubuntu-14.04'),
 ]
 
 
