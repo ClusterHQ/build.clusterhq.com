@@ -12,9 +12,6 @@ images:
   base-ami: buildslave-centos-7-zfs-head
   size: t2.medium
   deploy:
-    # We need a new enough version of zfs to work on 3.17.
     script: |-
-      SPL_VERSION=0.6.3-52_g52479ec.el7.centos
-      ZFS_VERSION=0.6.3-159_gc944be5.el7.centos
-      sudo yum --enablerepo=zfs-testing --disablerepo=zfs install -y spl-${SPL_VERSION} spl-dkms-${SPL_VERSION} zfs-${ZFS_VERSION} libnvpair1-${ZFS_VERSION} libuutil1-${ZFS_VERSION} libzfs2-${ZFS_VERSION} libzpool2-${ZFS_VERSION} zfs-dkms-${ZFS_VERSION}
+      sudo yum install -y zfs
   username: centos
