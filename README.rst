@@ -191,7 +191,6 @@ Vagrant Builders
 ----------------
 
 The vagrant builders upload the boxes to Amazon S3.
-# TODO create a bucket which does this, and document how it is done
 The bucket (`s3://clusterhq-dev-archive/vagrant`) is set to expire objects after two weeks.
 
 To set this lifecycle setting:
