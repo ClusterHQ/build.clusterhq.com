@@ -151,6 +151,9 @@ class ZulipStatus(BuildsetStatusReceiver):
         Reports to github that a build has finished, along with a link to the
         build, and the build result.
         """
+        if self.critical_stream is None:
+            return
+
         if build.getResults() in (SUCCESS, WARNINGS, RETRY):
             # Not failing.
             return
