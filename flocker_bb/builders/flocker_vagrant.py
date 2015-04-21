@@ -99,7 +99,7 @@ def buildVagrantBox(box, add=True):
                 'vagrant/%(kw:box)s/flocker-%(kw:box)s-%(prop:version)s.box',
                 box=box),
             Interpolate(
-                's3://clusterhq-dev-archive/vagrant/tutorial/%(kw:box)s/',
+                's3://clusterhq-dev-archive/vagrant/tutorial/%(kw:box)s',
                 box=box),
         ],
     ))
