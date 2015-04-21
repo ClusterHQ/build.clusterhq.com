@@ -230,6 +230,11 @@ There is a VMware Fusion OSX VM configured, for running homebrew installation te
 It is configured with a ``nat`` network, with a static IP address,
 and the buildslave user has a password-less ssh-key that can log in to it.
 
+Rackspace OnMetal Slave
+-----------------------
+
+
+
 Monitoring
 ----------
 
