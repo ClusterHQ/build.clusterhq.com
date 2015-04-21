@@ -230,10 +230,23 @@ There is a VMware Fusion OSX VM configured, for running homebrew installation te
 It is configured with a ``nat`` network, with a static IP address,
 and the buildslave user has a password-less ssh-key that can log in to it.
 
-Rackspace OnMetal Slave
------------------------
+Fedora hardware builders
+------------------------
 
+The following builders need to run on bare metal hardware:
+* flocker-vagrant-dev-box
+* flocker-vagrant-tutorial-box
+* flocker/acceptance/vagrant/fedora-20
+* flocker/installed-package/fedora-20
 
+To create a Rackspace OnMetal slave to serve this purpose:
+* Log into https://mycloud.rackspace.com
+* Create Server > OnMetal Server
+* Give the server an appropriate name
+* Image: OnMetal - Fedora 20 (Heisenbug)
+* Flavor: OnMetal Compute
+* An SSH key you have access to
+* Create Server
 
 Monitoring
 ----------
