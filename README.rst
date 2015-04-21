@@ -187,11 +187,12 @@ Each image uses `slave/cloud-init.sh` with some substitutions as user-data, to s
 
 Both images have :file:`salve/cloud-init.sh` run on them at instance creation time.
 
-Google Storage
---------------
+Vagrant builders
+----------------
 
-The vagrant builders upload the boxes to google cloud storage.
-The bucket (`gs://clusterhq-vagrant-buildbot/`) is set to expire objects after two weeks.
+The vagrant builders upload the boxes to Amazon S3.
+# TODO create a bucket which does this, and document how it is done
+The bucket (`s3://clusterhq-dev-archive/vagrant`) is set to expire objects after two weeks.
 The lifecycle configuration file is in :file:`vagrant/clusterhq-vagrant-buildbot.lifecycle.json`.
 It was configured by::
 
