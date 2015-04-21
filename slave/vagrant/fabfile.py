@@ -19,15 +19,14 @@ def get_vagrant_config():
     return config
 
 
-def configure_gsutil(config):
+def configure_boto(config):
     """
-    Install certificate and configuration for gsutil.
+    Install configuration for boto.
 
-    This allows the slave to upload vagrant images to google cloud.
+    This allows the slave to upload vagrant images to S3.
     """
     boto_config = FilePath(__file__).sibling('boto-config.in').getContent()
     put(StringIO(boto_config % config), '/home/buildslave/.boto')
-    put(StringIO(config['certificate']), '/home/buildslave/google.p12')
 
 
 def configure_acceptance():
@@ -78,7 +77,7 @@ yum install -y https://kojipkgs.fedoraproject.org//packages/kernel/${KV}/${SV}/$
     sudo("vagrant plugin install vagrant-reload vagrant-vbguest",
          user='buildslave')
     configure_acceptance()
-    configure_gsutil(config=config['google-certificate'])
+    configure_boto(config=config['boto'])
 
     put(FilePath(__file__).sibling('fedora-vagrant-slave.service').path,
         '/etc/systemd/system/fedora-vagrant-slave.service')
@@ -90,4 +89,4 @@ yum install -y https://kojipkgs.fedoraproject.org//packages/kernel/${KV}/${SV}/$
 @task
 def update_config():
     config = get_vagrant_config()
-    configure_gsutil(config=config['google-certificate'])
+    configure_boto(config=config['boto'])
