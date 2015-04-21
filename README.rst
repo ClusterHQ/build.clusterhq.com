@@ -187,7 +187,7 @@ Each image uses `slave/cloud-init.sh` with some substitutions as user-data, to s
 
 Both images have :file:`salve/cloud-init.sh` run on them at instance creation time.
 
-Vagrant builders
+Vagrant Builders
 ----------------
 
 The vagrant builders upload the boxes to Amazon S3.
