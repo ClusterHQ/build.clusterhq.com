@@ -9,6 +9,7 @@ zulip:
     user: "<zulip user>"
     password: "<zulip password>"
     stream: "BuildBot"
+    # This can be null, to have the go to /dev/null
     critical_stream: "Engineering"
 aws:
     identifier: "<aws access key id>"
