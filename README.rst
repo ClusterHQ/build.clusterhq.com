@@ -239,6 +239,7 @@ The following builders need to run on bare metal hardware:
 * flocker/installed-package/fedora-20
 
 To create a Rackspace OnMetal slave to serve this purpose:
+
 * Log into https://mycloud.rackspace.com
 * Create Server > OnMetal Server
 * Give the server an appropriate name
@@ -246,6 +247,10 @@ To create a Rackspace OnMetal slave to serve this purpose:
 * Flavor: OnMetal Compute
 * An SSH key you have access to
 * Create Server
+
+* When this is complete there will be a command to log into the server, e.g. ``ssh root@${IP_ADDRESS}``.
+* Log into the server.
+* TODO Create a buildslave
 
 Monitoring
 ----------
