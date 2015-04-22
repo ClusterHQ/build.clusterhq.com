@@ -6,7 +6,7 @@ Configuration for a buildslave to run vagrant on.
     This points at the staging buildserver by default.
 """
 
-from fabric.api import run, task, sudo, put, local
+from fabric.api import run, task, sudo, put, local, settings, cd
 from twisted.python.filepath import FilePath
 from StringIO import StringIO
 import yaml
@@ -74,8 +74,9 @@ yum install -y https://kojipkgs.fedoraproject.org//packages/kernel/${KV}/${SV}/$
     put(FilePath(__file__).sibling('start').path,
         '/home/buildslave/fedora-vagrant/start', mode=0755)
 
-    sudo("vagrant plugin install vagrant-reload vagrant-vbguest",
-         user='buildslave')
+    slave_home = FilePath('/home/buildslave')
+    with settings(sudo_user='buildslave', shell_env={'HOME': slave_home.path}), cd(slave_home.path): # noqa
+        sudo("vagrant plugin install vagrant-reload vagrant-vbguest")
     configure_acceptance()
     configure_boto(config=config['boto'])
 
