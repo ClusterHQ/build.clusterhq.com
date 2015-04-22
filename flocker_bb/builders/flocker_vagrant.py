@@ -94,7 +94,7 @@ def buildVagrantBox(box, add=True):
         descriptionDone=['upload', 'base', box, 'box'],
         command=[
             virtualenvBinary('gsutil'),
-            'cp', '-a', 'public-read',
+            'cp',
             Interpolate(
                 'vagrant/%(kw:box)s/flocker-%(kw:box)s-%(prop:version)s.box',
                 box=box),
