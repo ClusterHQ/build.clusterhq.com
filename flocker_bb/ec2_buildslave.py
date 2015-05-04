@@ -66,6 +66,7 @@ from buildbot.buildslave.base import BuildSlave
 from buildbot import config
 
 from flocker_bb.ec2 import EC2
+from machinist import WrongState
 
 
 class EC2BuildSlave(BuildSlave):
@@ -139,11 +140,18 @@ class EC2BuildSlave(BuildSlave):
         d = BuildSlave.attached(self, bot)
 
         def set_timer(result):
+            try:
+                self.properties.setProperty(
+                    'image-id', self.ec2.image_id, "buildslave")
+            except WrongState:
+                # We don't know the image_id, so don't pretend we do.
+                self.properties.setProperty(
+                    'image-id', None, "buildslave")
+                pass
             self._setBuildWaitTimer()
             return result
         d.addCallback(set_timer)
         return d
-
 
     def detached(self, mind):
         BuildSlave.detached(self, mind)

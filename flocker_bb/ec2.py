@@ -6,7 +6,7 @@ from twisted.python import log
 from machinist import (
     TransitionTable, MethodSuffixOutputer,
     trivialInput, constructFiniteStateMachine, Transition,
-    IRichInput)
+    IRichInput, stateful)
 
 
 class Input(Names):
@@ -70,7 +70,7 @@ RequestStart = trivialInput(Input.REQUEST_START)
 
 
 @implementer(IRichInput)
-@attributes(['instance_id'])
+@attributes(['instance_id', 'image_id'])
 class InstanceStarted(object):
     @staticmethod
     def symbol():
@@ -93,6 +93,16 @@ StopFailed = trivialInput(Input.STOP_FAILED)
     'image_tags',
 ], apply_immutable=True)
 class EC2(object):
+
+    def _fsmState(self):
+        """
+        Return the current state of the finite-state machine driving this
+        L{EC2}.
+        """
+        return self._fsm.state
+
+    image_id = stateful(_fsmState, State.ACTIVE)
+
     def __init__(self, access_key, secret_access_token, region):
         # Import these here, so that this can be imported without
         # installng libcloud.
@@ -121,18 +131,23 @@ class EC2(object):
                 self._driver, self.image_name, self.image_tags)
             return self._driver.create_node(
                 name=self.name,
-                image=get_image(self._driver, self.image_name),
                 size=get_size(self._driver, self.size),
+                image=image,
                 ex_keyname=self.keyname,
                 ex_userdata=self.userdata,
-                ex_metadata=self.metadata,
+                ex_metadata=self.instance_tags,
                 ex_securitygroup=self.security_groups,
             )
         d = deferToThread(thread_start)
 
         def started(node):
             self.node = node
-            self._fsm.receive(InstanceStarted(instance_id=node.id))
+            image_id = node.extra['image_id'],
+            self._fsm.receive(InstanceStarted(
+                instance_id=node.id,
+                image_id=image_id,
+            ))
+            self.image_id = image_id
 
         def failed(f):
             log.err(f, "while starting %s" % (self.name,))
