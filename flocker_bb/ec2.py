@@ -182,8 +182,15 @@ def get_image(driver, image_name):
 
     :param driver: The libcloud driver to query for images.
     """
-    try:
-        return [s for s in driver.list_images(ex_owner="self")
-                if s.name == image_name][0]
-    except IndexError:
+    images = [
+        image for
+        image in driver.list_images(ex_owner="self")
+        if image.extra['tags'].get('base-name') == image_name
+    ]
+    if not images:
         raise ValueError("Unknown image.", image_name)
+
+    def key(image):
+        return image.extra.get('timestamp')
+    sorted_images = sorted(images, key=key)
+    return sorted_images[-1]
