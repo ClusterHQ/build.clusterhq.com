@@ -75,12 +75,14 @@ for base, slaveConfig in privateData['slaves'].items():
                             privateData['acceptance'].get('ssh-key', ''),
                         },
                     keepalive_interval=60,
-                    tags={
+                    instance_tags={
                         'Image': slaveConfig['ami'],
                         'Class': base,
                         'BuildMaster': privateData['buildmaster']['host'],
                         },
-                    ))
+                    image_tags=privateData['aws'].get('image_tags', {}),
+                )
+            )
     else:
         for i, password in enumerate(slaveConfig['passwords']):
             name = '%s-%d' % (base, i)

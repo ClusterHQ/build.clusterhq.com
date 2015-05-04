@@ -89,7 +89,8 @@ StopFailed = trivialInput(Input.STOP_FAILED)
     'keyname',
     'security_groups',
     'userdata',
-    'metadata',
+    'instance_tags',
+    'image_tags',
 ], apply_immutable=True)
 class EC2(object):
     def __init__(self, access_key, secret_access_token, region):
@@ -116,6 +117,8 @@ class EC2(object):
         Create a node.
         """
         def thread_start():
+            image = get_image(
+                self._driver, self.image_name, self.image_tags)
             return self._driver.create_node(
                 name=self.name,
                 image=get_image(self._driver, self.image_name),
@@ -176,16 +179,20 @@ def get_size(driver, size_id):
         raise ValueError("Unknown size.", size_id)
 
 
-def get_image(driver, image_name):
+def get_image(driver, image_name, image_tags):
     """
     Return a ``NodeImage`` corresponding to a given name of size.
 
     :param driver: The libcloud driver to query for images.
     """
+    def dict_contains(expected, actual):
+        return set(expected.items()).issubset(set(actual.items()))
+
     images = [
         image for
         image in driver.list_images(ex_owner="self")
         if image.extra['tags'].get('base-name') == image_name
+        and dict_contains(image_tags, image.extra['tags'])
     ]
     if not images:
         raise ValueError("Unknown image.", image_name)

@@ -83,7 +83,8 @@ class EC2BuildSlave(BuildSlave):
                  missing_timeout=60 * 20,
                  build_wait_timeout=60 * 10, properties={}, locks=None,
                  keepalive_interval=None,
-                 tags={}):
+                 instance_tags={},
+                 image_tags={}):
 
         BuildSlave.__init__(
             self, name, password, max_builds, notify_on_missing,
@@ -108,7 +109,8 @@ class EC2BuildSlave(BuildSlave):
             keyname=keypair_name,
             security_groups=[security_name],
             userdata=user_data,
-            metadata=tags,
+            instance_tags=instance_tags,
+            image_tags=image_tags,
         )
 
         self.addService(TimerService(60, self.periodic))
