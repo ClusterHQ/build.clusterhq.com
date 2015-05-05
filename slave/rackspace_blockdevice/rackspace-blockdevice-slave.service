@@ -1,0 +1,15 @@
+[Unit]
+Description=Rackspace Block Device API test slave
+
+[Service]
+ExecStart=/home/buildslave/rackspace-blockdevice/start
+
+WorkingDirectory=/home/buildslave/rackspace-blockdevice
+
+User=buildslave
+Group=buildslave
+
+Restart=always
+
+[Install]
+WantedBy=multi-user.target
