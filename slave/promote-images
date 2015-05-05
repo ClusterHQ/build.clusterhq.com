@@ -15,9 +15,9 @@ def get_images(name):
 def tag_latest_image(name, tags):
     images = get_images(name)
 
-    def key(image):
+    def timestamp(image):
         return image.extra.get('timestamp')
-    latest_image = max(images, key=key)
+    latest_image = max(images, key=timestamp)
 
     driver.ex_create_tags(latest_image, tags=tags)
 

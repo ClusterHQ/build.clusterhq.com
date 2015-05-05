@@ -222,6 +222,6 @@ def get_image(driver, image_name, image_tags):
     if not images:
         raise ValueError("Unknown image.", image_name)
 
-    def key(image):
+    def timestamp(image):
         return image.extra.get('timestamp')
-    return max(images, key=key)
+    return max(images, key=timestamp)
