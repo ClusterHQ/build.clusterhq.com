@@ -70,7 +70,7 @@ RequestStart = trivialInput(Input.REQUEST_START)
 
 
 @implementer(IRichInput)
-@attributes(['instance_id', 'image_id'])
+@attributes(['instance_id', 'image_metadata', 'instance_metadata'])
 class InstanceStarted(object):
     @staticmethod
     def symbol():
@@ -101,7 +101,8 @@ class EC2(object):
         """
         return self._fsm.state
 
-    image_id = stateful(_fsmState, State.ACTIVE)
+    image_metadata = stateful(_fsmState, State.ACTIVE, State.STARTING)
+    instance_metadata = stateful(_fsmState, State.ACTIVE)
 
     def __init__(self, access_key, secret_access_token, region):
         # Import these here, so that this can be imported without
@@ -129,6 +130,11 @@ class EC2(object):
         def thread_start():
             image = get_image(
                 self._driver, self.image_name, self.image_tags)
+            self.image_metadata = {
+                'image_id': image.id,
+                'image_name': image.name,
+                'image_tags': image.extra['tags'],
+            }
             return self._driver.create_node(
                 name=self.name,
                 size=get_size(self._driver, self.size),
@@ -142,12 +148,17 @@ class EC2(object):
 
         def started(node):
             self.node = node
-            image_id = node.extra['image_id']
+            instance_metadata = {
+                'instance_id': node.id,
+                'instance_name': node.name,
+                'instance_tags': node.extra['tags'],
+            }
             self._fsm.receive(InstanceStarted(
                 instance_id=node.id,
-                image_id=image_id,
+                image_metadata=self.image_metadata,
+                instance_metadata=instance_metadata,
             ))
-            self.image_id = image_id
+            self.instance_metadata = instance_metadata
 
         def failed(f):
             log.err(f, "while starting %s" % (self.name,))

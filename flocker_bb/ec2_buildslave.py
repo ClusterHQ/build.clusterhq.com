@@ -139,18 +139,23 @@ class EC2BuildSlave(BuildSlave):
     def attached(self, bot):
         d = BuildSlave.attached(self, bot)
 
-        def set_timer(result):
+        def set_metadata_and_timer(result):
             try:
                 self.properties.setProperty(
-                    'image-id', self.ec2.image_id, "buildslave")
+                    'image_metadata', self.ec2.image_metadata, "buildslave")
             except WrongState:
-                # We don't know the image_id, so don't pretend we do.
                 self.properties.setProperty(
-                    'image-id', None, "buildslave")
-                pass
+                    'image_metadata', None, "buildslave")
+            try:
+                self.properties.setProperty(
+                    'instance_metadata', self.ec2.instance_metadata,
+                    "buildslave")
+            except WrongState:
+                self.properties.setProperty(
+                    'instance_metadata', None, "buildslave")
             self._setBuildWaitTimer()
             return result
-        d.addCallback(set_timer)
+        d.addCallback(set_metadata_and_timer)
         return d
 
     def detached(self, mind):
