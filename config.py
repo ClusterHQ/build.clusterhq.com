@@ -80,7 +80,8 @@ for base, slaveConfig in privateData['slaves'].items():
                         'Class': base,
                         'BuildMaster': privateData['buildmaster']['host'],
                         },
-                    image_tags=privateData['aws'].get('image_tags', {}),
+                    image_tags=privateData['aws'].get(
+                        'image_tags', {"production": "true"}) or {},
                 )
             )
     else:
