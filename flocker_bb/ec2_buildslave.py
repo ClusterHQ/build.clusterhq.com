@@ -133,6 +133,16 @@ class EC2BuildSlave(BuildSlave):
                 self.build_wait_timer.cancel()
             self.build_wait_timer = None
 
+    def attached(self, bot):
+        d = BuildSlave.attached(self, bot)
+
+        def set_timer(result):
+            self._setBuildWaitTimer()
+            return result
+        d.addCallback(set_timer)
+        return d
+
+
     def detached(self, mind):
         BuildSlave.detached(self, mind)
         # If the slave disconnects, assuming it is a problem with the instance,

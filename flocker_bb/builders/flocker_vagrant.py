@@ -401,10 +401,6 @@ ACCEPTEANCE_CONFIGURATIONS = [
     AcceptanceConfiguration(
         provider='rackspace', distribution='centos-7',
         variants={'zfs-testing'}),
-    AcceptanceConfiguration(
-        provider='aws', distribution='centos-7'),
-    AcceptanceConfiguration(
-        provider='aws', distribution='ubuntu-14.04'),
 ]
 
 

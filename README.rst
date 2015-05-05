@@ -263,3 +263,37 @@ It is currently running alongside both ``build.clusterhq.com`` and ``build.stagi
 It can be started by::
 
    fab --hosts=${USERNAME}@${HOST} startPrometheus
+
+Disk Usage and Clearing Space
+=============================
+
+The Buildbot master stores artifacts from previous builds.
+A script is run daily to delete some data which is 14+ days old.
+
+To find where space is being used run::
+
+   $ su -u root
+   $ cd /
+   # The following shows directory contents sorted by size
+   $ du -sk * | sort -n
+   # cd into any suspiciously large directories, probably the largest, and
+   # repeat until the culprit is found.
+   $ cd suspiciously-large-directory
+
+Then fix the problem causing the space to be filled.
+
+A temporary fix is to delete old files.
+The following deletes files which are 7+ days old::
+
+   $ find . -type f -mtime +7 -exec unlink {} \;
+
+Alternatively it is possible to increase the volume size on the Amazon S3 instance hosting the BuildBot master.
+
+The following steps can be used to change a volume size:
+
+- Stop the S3 instance.
+- Snapshot the volume being used by the instance.
+- Create a volume from the snapshot with the desired size.
+- Detach the old volume.
+- Attach the new volume
+- Start the instance.
