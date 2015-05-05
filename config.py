@@ -80,6 +80,7 @@ for base, slaveConfig in privateData['slaves'].items():
                         'Class': base,
                         'BuildMaster': privateData['buildmaster']['host'],
                         },
+                    # Default to requiring production, but treat `None` as {}
                     image_tags=privateData['aws'].get(
                         'image_tags', {"production": "true"}) or {},
                 )

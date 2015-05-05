@@ -142,7 +142,7 @@ class EC2(object):
 
         def started(node):
             self.node = node
-            image_id = node.extra['image_id'],
+            image_id = node.extra['image_id']
             self._fsm.receive(InstanceStarted(
                 instance_id=node.id,
                 image_id=image_id,
