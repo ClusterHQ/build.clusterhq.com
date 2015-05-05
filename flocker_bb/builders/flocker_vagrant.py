@@ -116,7 +116,7 @@ def buildVagrantBox(box, add=True):
                 "providers": [{
                     "name": "virtualbox",
                     "url": Interpolate(
-                        'https://storage.googleapis.com/clusterhq-vagrant-buildbot/'  # noqa
+                        'https://s3.amazonaws.com/clusterhq-dev-archive/vagrant/'  # noqa
                         '%(kw:box)s/flocker-%(kw:box)s-%(prop:version)s.box',
                         box=box),
                 }]
