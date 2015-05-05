@@ -133,8 +133,8 @@ class EC2(object):
             self.image_metadata = {
                 'image_id': image.id,
                 'image_name': image.name,
-                'image_tags': image.extra['tags'],
             }
+            self.image_metadata.update(image.extra['tags'])
             return self._driver.create_node(
                 name=self.name,
                 size=get_size(self._driver, self.size),
@@ -151,7 +151,6 @@ class EC2(object):
             instance_metadata = {
                 'instance_id': node.id,
                 'instance_name': node.name,
-                'instance_tags': node.extra['tags'],
             }
             self._fsm.receive(InstanceStarted(
                 instance_id=node.id,
