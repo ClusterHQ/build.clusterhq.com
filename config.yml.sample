@@ -14,6 +14,11 @@ zulip:
 aws:
     identifier: "<aws access key id>"
     secret_identifier: "<aws secret access key>"
+    # The following tags are looked for in image metadata,
+    # along with "base-name" (from below) and the latest
+    # timestamp.
+    image_tags:
+    #    production: "true"
 github:
     token: "<github api token>"
     report_status: True

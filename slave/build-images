@@ -2,6 +2,7 @@
 
 import sys
 import time
+from datetime import datetime
 
 from common import aws_config, driver, wait_for_image, load_manifest
 
@@ -84,6 +85,7 @@ def build_image(name, base_ami, deploy, username,
 
     See deploy node for arguments.
     """
+    timestamp = datetime.utcnow().strftime('%Y%m%d.%H%M%S')
     print "Deploying %(name)s-build." % dict(name=name)
     node = deploy_node(
         name=name + "-build",
@@ -97,8 +99,16 @@ def build_image(name, base_ami, deploy, username,
     try:
         print "Stopping %(name)s-build." % dict(name=name)
         stop_node(node)
-        print "Creating image %(name)s." % dict(name=name)
-        image = create_image(node, name)
+        ami_name = "%(name)s/%(timestamp)s" % {
+            'name': name,
+            'timestamp': timestamp,
+        }
+        print "Creating image %(name)s." % dict(name=ami_name)
+        image = create_image(node, ami_name)
+        driver.ex_create_tags(image, tags={
+            'base-name': name,
+            'timestamp': timestamp,
+            })
     finally:
         print "Destroying %(name)s-build." % dict(name=name)
         driver.destroy_node(node)
@@ -124,7 +134,7 @@ def process_image(args):
         raise ValueError('Unknown deploy type.')
 
     amis[image_name] = build_image(
-        name='staging-%s' % (image_name,),
+        name=image_name,
         base_ami=base_ami,
         deploy=deploy,
         **args

@@ -66,6 +66,7 @@ from buildbot.buildslave.base import BuildSlave
 from buildbot import config
 
 from flocker_bb.ec2 import EC2
+from machinist import WrongState
 
 
 class EC2BuildSlave(BuildSlave):
@@ -83,7 +84,8 @@ class EC2BuildSlave(BuildSlave):
                  missing_timeout=60 * 20,
                  build_wait_timeout=60 * 10, properties={}, locks=None,
                  keepalive_interval=None,
-                 tags={}):
+                 instance_tags={},
+                 image_tags={}):
 
         BuildSlave.__init__(
             self, name, password, max_builds, notify_on_missing,
@@ -108,7 +110,8 @@ class EC2BuildSlave(BuildSlave):
             keyname=keypair_name,
             security_groups=[security_name],
             userdata=user_data,
-            metadata=tags,
+            instance_tags=instance_tags,
+            image_tags=image_tags,
         )
 
         self.addService(TimerService(60, self.periodic))
@@ -136,12 +139,24 @@ class EC2BuildSlave(BuildSlave):
     def attached(self, bot):
         d = BuildSlave.attached(self, bot)
 
-        def set_timer(result):
+        def set_metadata_and_timer(result):
+            try:
+                self.properties.setProperty(
+                    'image_metadata', self.ec2.image_metadata, "buildslave")
+            except WrongState:
+                self.properties.setProperty(
+                    'image_metadata', None, "buildslave")
+            try:
+                self.properties.setProperty(
+                    'instance_metadata', self.ec2.instance_metadata,
+                    "buildslave")
+            except WrongState:
+                self.properties.setProperty(
+                    'instance_metadata', None, "buildslave")
             self._setBuildWaitTimer()
             return result
-        d.addCallback(set_timer)
+        d.addCallback(set_metadata_and_timer)
         return d
-
 
     def detached(self, mind):
         BuildSlave.detached(self, mind)

@@ -6,7 +6,7 @@ from twisted.python import log
 from machinist import (
     TransitionTable, MethodSuffixOutputer,
     trivialInput, constructFiniteStateMachine, Transition,
-    IRichInput)
+    IRichInput, stateful)
 
 
 class Input(Names):
@@ -70,7 +70,7 @@ RequestStart = trivialInput(Input.REQUEST_START)
 
 
 @implementer(IRichInput)
-@attributes(['instance_id'])
+@attributes(['instance_id', 'image_metadata', 'instance_metadata'])
 class InstanceStarted(object):
     @staticmethod
     def symbol():
@@ -89,9 +89,21 @@ StopFailed = trivialInput(Input.STOP_FAILED)
     'keyname',
     'security_groups',
     'userdata',
-    'metadata',
+    'instance_tags',
+    'image_tags',
 ], apply_immutable=True)
 class EC2(object):
+
+    def _fsmState(self):
+        """
+        Return the current state of the finite-state machine driving this
+        L{EC2}.
+        """
+        return self._fsm.state
+
+    image_metadata = stateful(_fsmState, State.ACTIVE, State.STARTING)
+    instance_metadata = stateful(_fsmState, State.ACTIVE)
+
     def __init__(self, access_key, secret_access_token, region):
         # Import these here, so that this can be imported without
         # installng libcloud.
@@ -116,20 +128,36 @@ class EC2(object):
         Create a node.
         """
         def thread_start():
+            image = get_image(
+                self._driver, self.image_name, self.image_tags)
+            self.image_metadata = {
+                'image_id': image.id,
+                'image_name': image.name,
+            }
+            self.image_metadata.update(image.extra['tags'])
             return self._driver.create_node(
                 name=self.name,
-                image=get_image(self._driver, self.image_name),
                 size=get_size(self._driver, self.size),
+                image=image,
                 ex_keyname=self.keyname,
                 ex_userdata=self.userdata,
-                ex_metadata=self.metadata,
+                ex_metadata=self.instance_tags,
                 ex_securitygroup=self.security_groups,
             )
         d = deferToThread(thread_start)
 
         def started(node):
             self.node = node
-            self._fsm.receive(InstanceStarted(instance_id=node.id))
+            instance_metadata = {
+                'instance_id': node.id,
+                'instance_name': node.name,
+            }
+            self._fsm.receive(InstanceStarted(
+                instance_id=node.id,
+                image_metadata=self.image_metadata,
+                instance_metadata=instance_metadata,
+            ))
+            self.instance_metadata = instance_metadata
 
         def failed(f):
             log.err(f, "while starting %s" % (self.name,))
@@ -176,14 +204,24 @@ def get_size(driver, size_id):
         raise ValueError("Unknown size.", size_id)
 
 
-def get_image(driver, image_name):
+def get_image(driver, image_name, image_tags):
     """
     Return a ``NodeImage`` corresponding to a given name of size.
 
     :param driver: The libcloud driver to query for images.
     """
-    try:
-        return [s for s in driver.list_images(ex_owner="self")
-                if s.name == image_name][0]
-    except IndexError:
+    def dict_contains(expected, actual):
+        return set(expected.items()).issubset(set(actual.items()))
+
+    images = [
+        image for
+        image in driver.list_images(ex_owner="self")
+        if image.extra['tags'].get('base-name') == image_name
+        and dict_contains(image_tags, image.extra['tags'])
+    ]
+    if not images:
         raise ValueError("Unknown image.", image_name)
+
+    def timestamp(image):
+        return image.extra.get('timestamp')
+    return max(images, key=timestamp)
