@@ -1,32 +1,29 @@
 #!/usr/bin/env python
 
 import sys
-from common import aws_config, driver, wait_for_image, load_manifest
+from common import driver, load_manifest
 
 
 def get_images(name):
-    return [s for s in driver.list_images(ex_owner="self") if s.name == name]
+    return [
+        image for
+        image in driver.list_images(ex_owner="self")
+        if image.extra['tags'].get('base-name') == image_name
+    ]
 
 
-def copy_image(source, destination):
-    # Delete old images, before creating new one.
-    # We have to do this fisrt, since duplicate names confuse AWS.
-    old_images = get_images(destination)
-    for image in old_images:
-        driver.delete_image(image)
+def tag_latest_image(name, tags):
+    images = get_images(name)
 
-    image = driver.copy_image(
-        source_region=aws_config['region'],
-        image=get_images(source)[0],
-        name=destination)
+    def key(image):
+        return image.extra.get('timestamp')
+    latest_image = max(images, key=key)
 
-    print "%s: %s" % (destination, image.id)
-    wait_for_image(image)
-    return image.id
+    driver.ex_create_tags(latest_image, tags=tags)
 
 DISTRO = sys.argv[1]
 base, manifest = load_manifest(DISTRO)
 
 for image in manifest['images']:
     image_name = image['name']
-    copy_image('staging-%s' % (image_name,), image_name)
+    tag_latest_image(image_name, tags={'production': 'true'})

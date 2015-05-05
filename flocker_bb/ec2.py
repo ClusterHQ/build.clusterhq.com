@@ -214,5 +214,4 @@ def get_image(driver, image_name, image_tags):
 
     def key(image):
         return image.extra.get('timestamp')
-    sorted_images = sorted(images, key=key)
-    return sorted_images[-1]
+    return max(images, key=key)
