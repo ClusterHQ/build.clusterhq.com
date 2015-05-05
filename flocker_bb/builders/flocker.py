@@ -330,8 +330,6 @@ def makeInternalDocsFactory():
         description=["uploading", "release", "documentation"],
         descriptionDone=["upload", "release", "documentation"],
         command=[
-            # We use s3cmd instead of gsutil here because of
-            # https://github.com/GoogleCloudPlatform/gsutil/issues/247
             "s3cmd", "sync",
             '--verbose',
             '--delete-removed',
