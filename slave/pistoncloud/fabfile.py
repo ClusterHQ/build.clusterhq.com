@@ -6,11 +6,13 @@ Configuration for a buildslave to run on PistonCloud
     This points at the staging buildserver by default.
 """
 
-from fabric.api import run, task, sudo, put
+from fabric.api import task, sudo, put, env
 from twisted.python.filepath import FilePath
 from StringIO import StringIO
 import yaml
 
+# http://stackoverflow.com/a/9685171
+env.use_ssh_config = True
 
 def configure_acceptance():
     put(StringIO(yaml.safe_dump({'metadata': {'creator': 'buildbot'}})),
