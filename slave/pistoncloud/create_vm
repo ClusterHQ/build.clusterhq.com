@@ -1,0 +1,22 @@
+#!/bin/sh
+# A script to bring up an OpenStack VM on PistonCloud.
+
+# m1.large
+FLAVOR=4
+# SC_Centos7
+IMAGE=ab32525b-f565-49ca-9595-48cdb5eaa794
+# sc-mdl-net1
+NET_ID=0002fdfb-2131-4ccf-9041-ff44ef35d3a5
+# Insert your key here using ``nova keypair-add``
+KEYPAIR_NAME=clusterhq_richardw
+
+nova boot \
+    --image $IMAGE \
+    --flavor ${FLAVOR} \
+    --nic net-id=$NET_ID \
+    --key-name ${KEYPAIR_NAME} \
+    # SSH authentication fails unless this is included.
+    --config-drive true \
+    # Wait for the machine to become active.
+    --poll \
+    clusterhq_flocker_buildslave
