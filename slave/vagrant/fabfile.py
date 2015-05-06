@@ -43,6 +43,8 @@ def install(index, password, master='build.staging.clusterhq.com'):
 
     run("wget -O /etc/yum.repos.d/virtualbox.repo http://download.virtualbox.org/virtualbox/rpm/fedora/virtualbox.repo")  # noqa
 
+    run("wget -O /etc/yum.repos.d/s3tools.repo http://s3tools.org/repo/RHEL_6/s3tools.repo")  # noqa
+
     run("""
 UNAME_R=$(uname -r)
 PV=${UNAME_R%.*}
@@ -64,6 +66,7 @@ yum install -y https://kojipkgs.fedoraproject.org//packages/kernel/${KV}/${SV}/$
         "python-devel",
         "python-virtualenv",
         "openssl-devel",
+        "s3cmd",
         "https://clusterhq.s3.amazonaws.com/phantomjs-fedora-20/phantomjs-1.9.8-1.x86_64.rpm",  # noqa
     ]
     run("yum install -y " + " ".join(packages))
