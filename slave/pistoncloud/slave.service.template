@@ -1,0 +1,15 @@
+[Unit]
+Description=ClusterHQ buildslave ({buildslave_name})
+
+[Service]
+ExecStart=/home/buildslave/{buildslave_name}/start
+
+WorkingDirectory=/home/buildslave/{buildslave_name}
+
+User=buildslave
+Group=buildslave
+
+Restart=always
+
+[Install]
+WantedBy=multi-user.target
