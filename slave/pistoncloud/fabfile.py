@@ -18,7 +18,7 @@ def configure_acceptance():
 
 
 @task
-def install(index, password, master='build.staging.clusterhq.com'):
+def install(index, buildslave_name, password, master='build.staging.clusterhq.com'):
     """
     Install a buildslave for running cinder block device API tests against
     Rackspace OpenStack API.
@@ -34,16 +34,34 @@ def install(index, password, master='build.staging.clusterhq.com'):
     ]
     run("yum install -y " + " ".join(packages))
     run("useradd buildslave")
-    sudo("buildslave create-slave /home/buildslave/rackspace_blockdevice %(master)s rackspace-blockdevice-%(index)s %(password)s"  # noqa
-         % {'index': index, 'password': password, 'master': master},
-         user='buildslave')
-    put(FilePath(__file__).sibling('start').path,
-        '/home/buildslave/rackspace_blockdevice/start', mode=0755)
+    sudo(
+        "buildslave create-slave /home/buildslave/%(buildslave_name) %(master)s %(buildslave_name)-%(index)s %(password)s"  # noqa
+        % {
+            'buildslave_name': buildslave_name,
+            'index': index,
+            'password': password,
+            'master': master
+        },
+        user='buildslave'
+    )
+    put(
+        FilePath(__file__).sibling('start').path,
+        '/home/buildslave/{buildslave_name}/start'.format(
+            buildslave_name=buildslave_name
+        ),
+        mode=0755
+    )
 
     configure_acceptance()
 
-    put(FilePath(__file__).sibling('rackspace-blockdevice-slave.service').path,
-        '/etc/systemd/system/rackspace-blockdevice-slave.service')
+    service_filename = u'{buildslave_name}-slave.service'.format(
+        buildslave_name=buildslave_name
+    )
 
-    run('systemctl start rackspace-blockdevice-slave')
-    run('systemctl enable rackspace-blockdevice-slave')
+    put(
+        FilePath(__file__).sibling('slave.service').path,
+        u'/etc/systemd/system/{}'.format(service_filename)
+    )
+
+    run('systemctl start {}'.format(service_filename))
+    run('systemctl enable {}'.format(service_filename))
