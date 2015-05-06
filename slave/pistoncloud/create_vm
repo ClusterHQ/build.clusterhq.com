@@ -6,6 +6,8 @@ FLAVOR=4
 # SC_Centos7
 IMAGE=ab32525b-f565-49ca-9595-48cdb5eaa794
 # sc-mdl-net1
+# XXX: The DNS server for this network doesn't resolve external hostnames.
+# Need to update to Google DNS.
 NET_ID=0002fdfb-2131-4ccf-9041-ff44ef35d3a5
 # Insert your key here using ``nova keypair-add``
 KEYPAIR_NAME=clusterhq_richardw
