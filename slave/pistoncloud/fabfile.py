@@ -18,6 +18,18 @@ def configure_acceptance():
     put(StringIO(yaml.safe_dump({'metadata': {'creator': 'buildbot'}})),
         '/home/buildslave/acceptance.yml')
 
+def put_template(template, replacements, remote_path, **put_kwargs):
+    local_file = template.temporarySibling()
+    try:
+        with local_file.open('w') as f:
+            content = template.getContent().format(
+                **replacements
+            )
+            f.write(content)
+
+        put(local_file.path, remote_path, **put_kwargs)
+    finally:
+        local_file.remove()
 
 @task
 def install(index, buildslave_name, password, master='build.staging.clusterhq.com'):
@@ -46,12 +58,17 @@ def install(index, buildslave_name, password, master='build.staging.clusterhq.co
         },
         user='buildslave'
     )
-    put(
-        FilePath(__file__).sibling('start').path,
-        '/home/buildslave/{buildslave_name}/start'.format(
+
+    put_template(
+        template=FilePath(__file__).sibling('start.template'),
+        replacements=dict(
             buildslave_name=buildslave_name
         ),
-        mode=0755
+        remote_path='/home/buildslave/{buildslave_name}/start'.format(
+            buildslave_name=buildslave_name
+        ),
+        mode=0755,
+        use_sudo=True,
     )
 
     configure_acceptance()
@@ -60,14 +77,14 @@ def install(index, buildslave_name, password, master='build.staging.clusterhq.co
         buildslave_name=buildslave_name
     )
 
-    service_file_template = FilePath(__file__).sibling('slave.service.template')
-    local_service_file = service_file_template.temporarySibling()
-    try:
-        with local_service_file.open('w') as f:
-            service_file_content = service_file_template.getContent().format(
-                buildslave_name=buildslave_name
-            )
-            f.write(service_file_content)
+    put_template(
+        template=FilePath(__file__).sibling('slave.service.template'),
+        replacements=dict(
+            buildslave_name=buildslave_name
+        ),
+        remote_path=u'/etc/systemd/system/{}'.format(remote_service_filename),
+        use_sudo=True,
+    )
 
         put(
             local_service_file.path,
