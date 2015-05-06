@@ -648,11 +648,11 @@ def getBuilders(slavenames):
                       slavenames=slavenames['clusterhq_pistoncloud_buildslave'],
                       category='flocker',
                       factory=makeFactory(
-                          python=u'python2.7',
-                          tests=[
-                              'flocker.node.agents.functional.test_cinder',
-                              'flocker.node.agents.functional.test_cinder_behaviour',
-                          ]
+                          python=b'python2.7',
+                          trialArgs=[
+                              b'--testmodule'
+                          ],
+                          tests=[b'flocker/node/agents/cinder.py']
                       ),
                       nextSlave=idleSlave),
 
