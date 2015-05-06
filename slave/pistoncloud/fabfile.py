@@ -86,12 +86,31 @@ def install(index, buildslave_name, password, master='build.staging.clusterhq.co
         use_sudo=True,
     )
 
-        put(
-            local_service_file.path,
-            u'/etc/systemd/system/{}'.format(remote_service_filename)
-        )
-    finally:
-        local_service_file.remove()
+    sudo('systemctl start {}'.format(remote_service_filename))
+    sudo('systemctl enable {}'.format(remote_service_filename))
 
-    run('systemctl start {}'.format(remote_service_filename))
-    run('systemctl enable {}'.format(remote_service_filename))
+@task
+def uninstall(buildslave_name):
+    """
+    Uninstall the buildslave and its service files.
+    """
+    remote_service_filename = u'{buildslave_name}-slave.service'.format(
+        buildslave_name=buildslave_name
+    )
+
+    sudo(
+        'systemctl stop {}'.format(remote_service_filename),
+        warn_only=True,
+    )
+    sudo(
+        'systemctl disable {}'.format(remote_service_filename),
+        warn_only=True,
+    )
+    sudo(
+        u'rm /etc/systemd/system/{}'.format(remote_service_filename),
+        warn_only=True,
+    )
+    sudo(
+        "userdel --remove buildslave",
+        warn_only=True,
+    )
