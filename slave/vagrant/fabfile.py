@@ -19,14 +19,17 @@ def get_vagrant_config():
     return config
 
 
-def configure_boto(config):
+def configure_s3cmd(config):
     """
-    Install configuration for boto.
+    Install configuration for s3cmd.
 
     This allows the slave to upload vagrant images to S3.
     """
     boto_config = FilePath(__file__).sibling('boto-config.in').getContent()
-    put(StringIO(boto_config % config), '/home/buildslave/.boto')
+    put(StringIO(boto_config.format(
+        aws_access_key_id=config['aws_access_key_id'],
+        aws_secret_access_key=config['aws_secret_access_key'],
+        )), '/root/.s3cfg')
 
 
 def configure_acceptance():
@@ -81,7 +84,7 @@ yum install -y https://kojipkgs.fedoraproject.org//packages/kernel/${KV}/${SV}/$
     with settings(sudo_user='buildslave', shell_env={'HOME': slave_home.path}), cd(slave_home.path): # noqa
         sudo("vagrant plugin install vagrant-reload vagrant-vbguest")
     configure_acceptance()
-    configure_boto(config=config['boto'])
+    configure_s3cmd(config=config['boto'])
 
     put(FilePath(__file__).sibling('fedora-vagrant-slave.service').path,
         '/etc/systemd/system/fedora-vagrant-slave.service')
