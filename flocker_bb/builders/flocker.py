@@ -644,6 +644,18 @@ def getBuilders(slavenames):
                       category='flocker',
                       factory=makeHomebrewRecipeTestFactory(),
                       nextSlave=idleSlave),
+        BuilderConfig(name='flocker-openstack-pistoncloud',
+                      slavenames=slavenames['pistoncloud_buildslave'],
+                      category='flocker',
+                      factory=makeFactory(
+                          python=u'python2.7',
+                          tests=[
+                              'flocker.node.agents.functional.test_cinder',
+                              'flocker.node.agents.functional.test_cinder_behaviour',
+                          ]
+                      ),
+                      nextSlave=idleSlave),
+
         ]
     for distribution in OMNIBUS_DISTRIBUTIONS:
         builders.append(
@@ -671,6 +683,7 @@ BUILDERS = [
     'flocker-zfs-head',
     'flocker-admin',
     'flocker/homebrew/create',
+    'flocker-openstack-pistoncloud',
 ] + [
     'flocker-omnibus-%s' % (dist,) for dist in OMNIBUS_DISTRIBUTIONS
 ]
