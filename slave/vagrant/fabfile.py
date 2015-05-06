@@ -96,4 +96,4 @@ yum install -y https://kojipkgs.fedoraproject.org//packages/kernel/${KV}/${SV}/$
 @task
 def update_config():
     config = get_vagrant_config()
-    configure_boto(config=config['boto'])
+    configure_s3cmd(config=config['boto'])
