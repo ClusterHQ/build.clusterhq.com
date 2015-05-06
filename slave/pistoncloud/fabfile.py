@@ -54,14 +54,25 @@ def install(index, buildslave_name, password, master='build.staging.clusterhq.co
 
     configure_acceptance()
 
-    service_filename = u'{buildslave_name}-slave.service'.format(
+    remote_service_filename = u'{buildslave_name}-slave.service'.format(
         buildslave_name=buildslave_name
     )
 
-    put(
-        FilePath(__file__).sibling('slave.service').path,
-        u'/etc/systemd/system/{}'.format(service_filename)
-    )
+    service_file_template = FilePath(__file__).sibling('slave.service.template')
+    local_service_file = service_file_template.temporarySibling()
+    try:
+        with local_service_file.open('w') as f:
+            service_file_content = service_file_template.getContent().format(
+                buildslave_name=buildslave_name
+            )
+            f.write(service_file_content)
 
-    run('systemctl start {}'.format(service_filename))
-    run('systemctl enable {}'.format(service_filename))
+        put(
+            local_service_file.path,
+            u'/etc/systemd/system/{}'.format(remote_service_filename)
+        )
+    finally:
+        local_service_file.remove()
+
+    run('systemctl start {}'.format(remote_service_filename))
+    run('systemctl enable {}'.format(remote_service_filename))
