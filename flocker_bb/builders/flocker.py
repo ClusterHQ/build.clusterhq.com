@@ -645,7 +645,7 @@ def getBuilders(slavenames):
                       factory=makeHomebrewRecipeTestFactory(),
                       nextSlave=idleSlave),
         BuilderConfig(name='flocker-openstack-pistoncloud',
-                      slavenames=slavenames['pistoncloud_buildslave'],
+                      slavenames=slavenames['clusterhq_pistoncloud_buildslave'],
                       category='flocker',
                       factory=makeFactory(
                           python=u'python2.7',
