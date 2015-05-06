@@ -15,8 +15,12 @@ import yaml
 env.use_ssh_config = True
 
 def configure_acceptance():
-    put(StringIO(yaml.safe_dump({'metadata': {'creator': 'buildbot'}})),
-        '/home/buildslave/acceptance.yml')
+    put(
+        StringIO(yaml.safe_dump({'metadata': {'creator': 'buildbot'}})),
+        '/home/buildslave/acceptance.yml',
+        use_sudo=True,
+    )
+
 
 def put_template(template, replacements, remote_path, **put_kwargs):
     local_file = template.temporarySibling()
@@ -46,16 +50,19 @@ def install(index, buildslave_name, password, master='build.staging.clusterhq.co
         "python-virtualenv",
         "openssl-devel",
     ]
-    run("yum install -y " + " ".join(packages))
-    run("useradd buildslave")
+    sudo("yum install -y " + " ".join(packages))
+    sudo("useradd buildslave")
     sudo(
-        "buildslave create-slave /home/buildslave/%(buildslave_name) %(master)s %(buildslave_name)-%(index)s %(password)s"  # noqa
-        % {
-            'buildslave_name': buildslave_name,
-            'index': index,
-            'password': password,
-            'master': master
-        },
+        u"buildslave create-slave "
+        u"/home/buildslave/{buildslave_name} "
+        u"{master} "
+        u"{buildslave_name}-{index} "
+        u"{password}".format(
+            buildslave_name=buildslave_name,
+            index=index,
+            password=password,
+            master=master,
+        ),
         user='buildslave'
     )
 
