@@ -6,7 +6,8 @@ Configuration for a buildslave to run on PistonCloud
     This points at the staging buildserver by default.
 """
 
-from fabric.api import task, sudo, put, env
+from fabric.api import task, sudo, put, env, run
+from fabric.context_managers import shell_env
 from twisted.python.filepath import FilePath
 from StringIO import StringIO
 import yaml
@@ -34,6 +35,48 @@ def put_template(template, replacements, remote_path, **put_kwargs):
         put(local_file.path, remote_path, **put_kwargs)
     finally:
         local_file.remove()
+
+
+@task
+def new_server(
+        buildslave_name,
+        # Eg clusterhq_richardw
+        keypair_name,
+        # Be careful here! If our script has bugs we don't want to accidentally
+        # modify VMs or resources of another more important tenant
+        tenant_name=u"sc-mdl-1",
+        # m1.large
+        flavor=u'4',
+        # SC_Centos7
+        image=u'ab32525b-f565-49ca-9595-48cdb5eaa794',
+        # sc-mdl-net1
+        # XXX: The DNS server for this network doesn't resolve external hostnames.
+        # Need to update to Google DNS.
+        net_id=u'0002fdfb-2131-4ccf-9041-ff44ef35d3a5',
+        tennant_name=u'sc-mdl-1',
+):
+    """
+    Start a new nova based VM and wait for it to boot.
+
+    Run this on the
+    """
+    with shell_env(OS_TENANT_NAME=tenant_name):
+        run(
+            u' '.join(
+                [
+                    'nova boot',
+                    '--image', image,
+                    '--flavor', flavor,
+                    '--nic', u'net-id={}'.format(net_id),
+                    '--key-name', keypair_name,
+                    # SSH authentication fails unless this is included.
+                    '--config-drive', 'true',
+                    # Wait for the machine to become active.
+                    '--poll',
+                    buildslave_name
+                ]
+            )
+        )
 
 @task
 def install(index, buildslave_name, password, master='build.staging.clusterhq.com'):
