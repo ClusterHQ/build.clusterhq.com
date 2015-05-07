@@ -660,7 +660,11 @@ def getBuilders(slavenames):
                                       'flocker/node/agents/cinder.py'
                                   )
                               ),
-                          ]
+                          ],
+                          env={
+                              b"CLOUD_CONFIG_FILE":
+                              '/home/buildslave/acceptance.yml',
+                          },
                       ),
                       nextSlave=idleSlave),
         ]
