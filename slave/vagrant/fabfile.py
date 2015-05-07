@@ -29,7 +29,7 @@ def configure_s3cmd(config):
     put(StringIO(s3_config.format(
         aws_access_key_id=config['aws_access_key_id'],
         aws_secret_access_key=config['aws_secret_access_key'],
-        )), '/root/.s3cfg')
+        )), '/home/buildslave/.s3cfg')
 
 
 def configure_acceptance():
