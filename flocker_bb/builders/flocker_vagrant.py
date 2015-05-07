@@ -93,13 +93,13 @@ def buildVagrantBox(box, add=True):
         description=['uploading', 'base', box, 'box'],
         descriptionDone=['upload', 'base', box, 'box'],
         command=[
-            virtualenvBinary('gsutil'),
-            'cp', '-a', 'public-read',
+            '/bin/s3cmd',
+            'put',
             Interpolate(
                 'vagrant/%(kw:box)s/flocker-%(kw:box)s-%(prop:version)s.box',
                 box=box),
             Interpolate(
-                'gs://clusterhq-vagrant-buildbot/%(kw:box)s/',
+                's3://clusterhq-dev-archive/vagrant/%(kw:box)s/',
                 box=box),
         ],
     ))
@@ -116,7 +116,7 @@ def buildVagrantBox(box, add=True):
                 "providers": [{
                     "name": "virtualbox",
                     "url": Interpolate(
-                        'https://storage.googleapis.com/clusterhq-vagrant-buildbot/'  # noqa
+                        'https://s3.amazonaws.com/clusterhq-dev-archive/vagrant/'  # noqa
                         '%(kw:box)s/flocker-%(kw:box)s-%(prop:version)s.box',
                         box=box),
                 }]

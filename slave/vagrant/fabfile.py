@@ -6,7 +6,7 @@ Configuration for a buildslave to run vagrant on.
     This points at the staging buildserver by default.
 """
 
-from fabric.api import run, task, sudo, put, local
+from fabric.api import run, task, sudo, put, local, settings, cd
 from twisted.python.filepath import FilePath
 from StringIO import StringIO
 import yaml
@@ -19,15 +19,17 @@ def get_vagrant_config():
     return config
 
 
-def configure_gsutil(config):
+def configure_s3cmd(config):
     """
-    Install certificate and configuration for gsutil.
+    Install configuration for s3cmd.
 
-    This allows the slave to upload vagrant images to google cloud.
+    This allows the slave to upload vagrant images to S3.
     """
-    boto_config = FilePath(__file__).sibling('boto-config.in').getContent()
-    put(StringIO(boto_config % config), '/home/buildslave/.boto')
-    put(StringIO(config['certificate']), '/home/buildslave/google.p12')
+    s3_config = FilePath(__file__).sibling('s3-config.in').getContent()
+    put(StringIO(s3_config.format(
+        aws_access_key_id=config['aws_access_key_id'],
+        aws_secret_access_key=config['aws_secret_access_key'],
+        )), '/home/buildslave/.s3cfg')
 
 
 def configure_acceptance():
@@ -43,6 +45,8 @@ def install(index, password, master='build.staging.clusterhq.com'):
     config = get_vagrant_config()
 
     run("wget -O /etc/yum.repos.d/virtualbox.repo http://download.virtualbox.org/virtualbox/rpm/fedora/virtualbox.repo")  # noqa
+
+    run("wget -O /etc/yum.repos.d/s3tools.repo http://s3tools.org/repo/RHEL_6/s3tools.repo")  # noqa
 
     run("""
 UNAME_R=$(uname -r)
@@ -65,6 +69,7 @@ yum install -y https://kojipkgs.fedoraproject.org//packages/kernel/${KV}/${SV}/$
         "python-devel",
         "python-virtualenv",
         "openssl-devel",
+        "s3cmd",
         "https://clusterhq.s3.amazonaws.com/phantomjs-fedora-20/phantomjs-1.9.8-1.x86_64.rpm",  # noqa
     ]
     run("yum install -y " + " ".join(packages))
@@ -75,10 +80,11 @@ yum install -y https://kojipkgs.fedoraproject.org//packages/kernel/${KV}/${SV}/$
     put(FilePath(__file__).sibling('start').path,
         '/home/buildslave/fedora-vagrant/start', mode=0755)
 
-    sudo("vagrant plugin install vagrant-reload vagrant-vbguest",
-         user='buildslave')
+    slave_home = FilePath('/home/buildslave')
+    with settings(sudo_user='buildslave', shell_env={'HOME': slave_home.path}), cd(slave_home.path): # noqa
+        sudo("vagrant plugin install vagrant-reload vagrant-vbguest")
     configure_acceptance()
-    configure_gsutil(config=config['google-certificate'])
+    configure_s3cmd(config=config['boto'])
 
     put(FilePath(__file__).sibling('fedora-vagrant-slave.service').path,
         '/etc/systemd/system/fedora-vagrant-slave.service')
@@ -90,4 +96,4 @@ yum install -y https://kojipkgs.fedoraproject.org//packages/kernel/${KV}/${SV}/$
 @task
 def update_config():
     config = get_vagrant_config()
-    configure_gsutil(config=config['google-certificate'])
+    configure_s3cmd(config=config['boto'])

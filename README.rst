@@ -187,15 +187,19 @@ Each image uses `slave/cloud-init.sh` with some substitutions as user-data, to s
 
 Both images have :file:`salve/cloud-init.sh` run on them at instance creation time.
 
-Google Storage
---------------
+Vagrant Builders
+----------------
 
-The vagrant builders upload the boxes to google cloud storage.
-The bucket (`gs://clusterhq-vagrant-buildbot/`) is set to expire objects after two weeks.
-The lifecycle configuration file is in :file:`vagrant/clusterhq-vagrant-buildbot.lifecycle.json`.
-It was configured by::
+The vagrant builders upload the boxes to Amazon S3.
+The bucket (`s3://clusterhq-dev-archive/vagrant`) is set to expire objects after two weeks.
 
-  gsutil lifecycle set vagrant/clusterhq-vagrant-buildbot.lifecycle.json gs://clusterhq-vagrant-buildbot/
+To set this lifecycle setting:
+
+* Right click on the bucket,
+* Properties,
+* Lifecycle > Add rule,
+* "Apply the Rule to", select "A Prefix" and fill in "vagrant/",
+* Choose "Action on Objects" "Permanently Delete Only", after 14 days.
 
 Mac OS X Buildslave
 -------------------
@@ -224,6 +228,31 @@ For testing purposes, or if you do not have root privileges, run the following c
 There is a VMware Fusion OSX VM configured, for running homebrew installation tests.
 It is configured with a ``nat`` network, with a static IP address,
 and the buildslave user has a password-less ssh-key that can log in to it.
+
+Fedora hardware builders
+------------------------
+
+The following builders need to run on Fedora 20 on bare metal hardware:
+
+* flocker-vagrant-dev-box
+* flocker-vagrant-tutorial-box
+* flocker/acceptance/vagrant/fedora-20
+* flocker/installed-package/fedora-20
+
+To create a Rackspace OnMetal slave to serve this purpose:
+
+* Log into https://mycloud.rackspace.com,
+* Create Server > OnMetal Server,
+* Give the server an appropriate name,
+* Choose the following options: Image: OnMetal - Fedora 20 (Heisenbug), Flavor: OnMetal Compute, An SSH key you have access to
+* Create Server,
+* When this is complete there will be a command to log into the server, e.g. ``ssh root@${ONMETAL_IP_ADDRESS}``.
+
+To configure any Fedora 20 bare metal machine (e.g. on OnMetal as above)::
+
+   fab -f slave/vagrant/fabfile.py --hosts=root@${ONMETAL_IP_ADDRESS} install:0,${PASSWORD},${MASTER}
+
+Where ``${PASSWORD}`` is the password in ``slaves.fedora-vagrant.passwords`` from the ``config.yml`` or ``staging.yml`` file used to deploy the BuildBot master on hostname or IP address ``${MASTER}``.
 
 Monitoring
 ----------
