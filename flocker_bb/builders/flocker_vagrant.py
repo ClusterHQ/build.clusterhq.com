@@ -93,7 +93,7 @@ def buildVagrantBox(box, add=True):
         description=['uploading', 'base', box, 'box'],
         descriptionDone=['upload', 'base', box, 'box'],
         command=[
-            's3cmd',
+            '/bin/s3cmd',
             'put',
             Interpolate(
                 'vagrant/%(kw:box)s/flocker-%(kw:box)s-%(prop:version)s.box',
