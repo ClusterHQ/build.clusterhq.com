@@ -645,7 +645,9 @@ def getBuilders(slavenames):
                       factory=makeHomebrewRecipeTestFactory(),
                       nextSlave=idleSlave),
         BuilderConfig(name='flocker-openstack-pistoncloud',
-                      slavenames=slavenames['clusterhq_pistoncloud_buildslave'],
+                      slavenames=slavenames[
+                          'clusterhq_pistoncloud_buildslave'
+                      ],
                       category='flocker',
                       factory=makeFactory(
                           python=b'python2.7',
@@ -662,8 +664,9 @@ def getBuilders(slavenames):
                               ),
                           ],
                           env={
-                              b"CLOUD_CONFIG_FILE":
-                              '/home/buildslave/acceptance.yml',
+                              b"CLOUD_CONFIG_FILE": [
+                                  '/home/buildslave/acceptance.yml',
+                              ]
                           },
                       ),
                       nextSlave=idleSlave),
