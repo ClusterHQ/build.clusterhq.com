@@ -85,6 +85,7 @@ def install(index, buildslave_name, password, master='build.staging.clusterhq.co
     Rackspace OpenStack API.
     """
     packages = [
+        "epel-release",
         "https://kojipkgs.fedoraproject.org/packages/buildbot/0.8.10/1.fc22/noarch/buildbot-slave-0.8.10-1.fc22.noarch.rpm",  # noqa
         "git",
         "libffi-devel",
@@ -92,6 +93,23 @@ def install(index, buildslave_name, password, master='build.staging.clusterhq.co
         "python-devel",
         "python-virtualenv",
         "openssl-devel",
+        "python-tox",
+        "rpmdev",
+        "rpmlint",
+        "rpm-build",
+        "docker-io",
+        "geard",
+        "libffi-devel",
+        "@buildsys-build",
+        "kernel-headers",
+        "kernel-devel",
+        "openssl-devel",
+        "wget",
+        "curl",
+        "apt",
+        "dpkg",
+        "dpkg-dev",
+        "enchant",
     ]
     sudo("yum install -y " + " ".join(packages))
     sudo("useradd buildslave")
