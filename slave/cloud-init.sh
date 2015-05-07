@@ -22,6 +22,10 @@ git config --global credential.helper "store"
 cat <<"EOF" > $HOME/acceptance.yml
 %(acceptance.yml)s
 EOF
+export FLOCKER_FUNCTIONAL_TEST_CLOUD_CONFIG_FILE=$HOME/acceptance.yml
+
+# This will need to change if we ever have latent slaves on non-AWS.
+export FLOCKER_FUNCTIONAL_TEST_CLOUD_PROVIDER=aws
 
 touch /root/.ssh/known_hosts
 cat <<"EOF"  > /root/.ssh/id_rsa
