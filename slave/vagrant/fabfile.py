@@ -25,8 +25,8 @@ def configure_s3cmd(config):
 
     This allows the slave to upload vagrant images to S3.
     """
-    boto_config = FilePath(__file__).sibling('boto-config.in').getContent()
-    put(StringIO(boto_config.format(
+    s3_config = FilePath(__file__).sibling('s3-config.in').getContent()
+    put(StringIO(s3_config.format(
         aws_access_key_id=config['aws_access_key_id'],
         aws_secret_access_key=config['aws_secret_access_key'],
         )), '/root/.s3cfg')
