@@ -652,10 +652,17 @@ def getBuilders(slavenames):
                           trialArgs=[
                               b'--testmodule'
                           ],
-                          tests=[b'flocker/node/agents/cinder.py']
+                          tests=[
+                              Interpolate(
+                                  path.join(
+                                      VIRTUALENV_DIR,
+                                      "lib", "python2.7", "site-packages",
+                                      'flocker/node/agents/cinder.py'
+                                  )
+                              ),
+                          ]
                       ),
                       nextSlave=idleSlave),
-
         ]
     for distribution in OMNIBUS_DISTRIBUTIONS:
         builders.append(
