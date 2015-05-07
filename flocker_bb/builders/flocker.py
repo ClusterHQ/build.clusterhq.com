@@ -181,7 +181,7 @@ def installTwistedTrunk():
     return steps
 
 
-def makeFactory(python, tests=None, twistedTrunk=False):
+def makeFactory(python, tests=None, twistedTrunk=False, **kwargs):
     """
     Make a new build factory which can do a flocker build.
 
@@ -199,7 +199,7 @@ def makeFactory(python, tests=None, twistedTrunk=False):
     if twistedTrunk:
         factory.addSteps(installTwistedTrunk())
 
-    factory.addSteps(_flockerTests(kwargs={}, tests=tests))
+    factory.addSteps(_flockerTests(kwargs=kwargs, tests=tests))
 
     return factory
 
