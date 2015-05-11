@@ -595,7 +595,13 @@ def getBuilders(slavenames):
         BuilderConfig(name='flocker-osx-10.10',
                       slavenames=slavenames['osx'],
                       category='flocker',
-                      factory=makeFactory(b'python2.7'),
+                      factory=makeFactory(
+                          b'python2.7', tests=[
+                              b'flocker.cli',
+                              b'flocker.common',
+                              b'flocker.ca',
+                          ],
+                      ),
                       nextSlave=idleSlave),
         BuilderConfig(name='flocker-zfs-head',
                       slavenames=slavenames['fedora-zfs-head'],
