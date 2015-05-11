@@ -93,7 +93,9 @@ Make the following changes to the ``staging.yml`` file:
 
 #. To prevent reports being published to the Flocker Github repository, change the ``github.report_status`` config option to ``False``.
 
-#. To use the staging Docker image, add a ``buildmaster.docker_tag`` config option with the value ``staging``.
+#. Optionally, if you want to use an alternate Docker image (perhaps downloaded from Docker hub),
+   add a ``buildmaster.docker_tag`` config option with the name of the tag (eg ``staging``).
+   Note: If you use a well-known tag like ``staging`` then you are sharing it with anyone else doing buildbot work.
 
 
 Start staging server
@@ -103,9 +105,13 @@ To start a Buildbot master on this machine run::
 
    $ fab start:staging.yml
 
-To update a slave on this machine, run::
+To update the Buildbot master on this machine so it is running the image tagged on Docker hub by ``buildmaster.docker_tag`` run::
 
    $ fab update:staging.yml
+
+To update the Buildbot master so it is running against the image tagged by ``buildmaster.docker_tag`` without pulling a new version from Docker hub run::
+
+   $ fab restart:staging.yml
 
 Log in to the EC2 instance with the credentials from the ``auth`` section of the config file.
 
@@ -114,6 +120,17 @@ The staging setup is missing the ability to trigger builds in response to Github
 The staging master will start Linux slaves on AWS EC2 automatically.
 To start a Mac OS X slave, see below.
 
+Create a staging Docker image
+=============================
+
+You can have Docker hub build new images for you by pushing to the ``staging`` branch on github
+(Docker hub is configured to perform automated builds of this branch and tag them ``staging``).
+
+To avoid conflicting with other developers, you can also check out ``build.clusterhq.com`` on the Buildbot master host and build new Docker images there manually::
+
+  ~/build.clusterhq.com$ docker build -t clusterhq/build.clusterhq.com:<yourtag> .
+
+Then use the fab ``restart`` command to start the Buildbot master against the newly tagged image.
 
 Deploy changes to production server
 -----------------------------------
