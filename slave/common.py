@@ -27,7 +27,7 @@ def wait_for_image(image):
             raise
 
 
-def load_manifest(name):
+def load_manifest(name, provider):
     """
     Load a manifest describing a set of images.
 
@@ -35,5 +35,7 @@ def load_manifest(name):
         and a dictionary with the manifest.
     """
     base = FilePath(__file__).sibling(name)
-    manifest = yaml.safe_load(base.child('manifest.yml').getContent())
+    manifest = yaml.safe_load(
+        base.descendant([provider, 'manifest.yml']).getContent()
+    )
     return base, manifest
