@@ -43,24 +43,6 @@ Test changes on staging server
 
 Changes to the Buildbot master can be tested on a staging machine.
 
-Create a staging Docker image
-=============================
-
-To create a new staging image in the Docker registry, update the ``staging`` branch and push to Github.
-The Docker registry will automatically build an image based on the ``staging`` branch of https://github.com/ClusterHQ/build.clusterhq.com whenever it is updated.
-To make the ``staging`` branch the same as a development branch, run the following commands::
-
-   git checkout staging
-   git pull
-   git reset --hard <other-branch>
-   git reset --soft HEAD@{1}
-   git commit
-   git push
-
-After pushing a change to ``staging``, it takes about 10 minutes for the Docker image build to finish.
-The status is available `here <https://registry.hub.docker.com/u/clusterhq/build.clusterhq.com/builds_history/46090/>`_.
-You will need to a member of the ``clusterhq`` group on Docker Hub in order to click on build id's to see detailed information about build progress or errors.
-
 Create a staging server
 =======================
 
@@ -131,6 +113,26 @@ To avoid conflicting with other developers, you can also check out ``build.clust
   ~/build.clusterhq.com$ docker build -t clusterhq/build.clusterhq.com:<yourtag> .
 
 Then use the fab ``restart`` command to start the Buildbot master against the newly tagged image.
+
+Using Automated Docker Hub Builds
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+To create a new staging image in the Docker registry, update the ``staging`` branch and push to Github.
+The Docker registry will automatically build an image based on the ``staging`` branch of https://github.com/ClusterHQ/build.clusterhq.com whenever it is updated.
+To make the ``staging`` branch the same as a development branch, run the following commands::
+
+   git checkout staging
+   git pull
+   git reset --hard <other-branch>
+   git reset --soft HEAD@{1}
+   git commit
+   git push
+
+After pushing a change to ``staging``, it takes about 10 minutes for the Docker image build to finish.
+The status is available `here <https://registry.hub.docker.com/u/clusterhq/build.clusterhq.com/builds_history/46090/>`_.
+You will need to a member of the ``clusterhq`` group on Docker Hub in order to click on build id's to see detailed information about build progress or errors.
+
+Remember this is a shared resource and may encounter problems if another developer attempts this at the same time.
 
 Deploy changes to production server
 -----------------------------------
