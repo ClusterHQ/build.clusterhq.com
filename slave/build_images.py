@@ -2,6 +2,7 @@
 
 import sys
 import time
+from uuid import UUID
 from datetime import datetime
 import yaml
 from common import (
@@ -238,6 +239,12 @@ def process_image_aws(manifest_base, images, args):
 def process_image_rackspace(manifest_base, images, args):
     image_name = args.pop('name')
     base_image = args.pop('base-image')
+
+    try:
+        UUID(base_image)
+    except ValueError:
+        base_image = images[base_image]
+
     step = args.pop('deploy')
     if 'script' in step:
         deploy = ScriptDeployment(step['script'])
