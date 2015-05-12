@@ -11,7 +11,8 @@ images:
 - name: buildslave-centos-7
   base-image: buildslave-centos-7-zfs-head
   size: general1-8
+  ssh_username: root
   deploy:
     script: |-
       sudo yum install -y zfs
-  ssh_username: root
+  userdata: null
