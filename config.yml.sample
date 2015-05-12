@@ -19,6 +19,11 @@ aws:
     # timestamp.
     image_tags:
     #    production: "true"
+
+rackspace:
+     username: "<rackspace username>"
+     api_key: "<rackspace api key>"
+
 github:
     token: "<github api token>"
     report_status: True
@@ -47,6 +52,8 @@ slaves:
         passwords: ['<password>']
     osx:
         passwords: ['<password>']
+    rackspace-blockdevice:
+        openstack-image: "buildslave-centos-7-zfs-head"
 # List of builders whose failures should not be reported.  Tests listed here
 # will be reported in a separate section of the Buildbot web page, to indicate
 # that they are expected failures.
