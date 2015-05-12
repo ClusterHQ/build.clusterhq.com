@@ -11,14 +11,19 @@ driver = get_driver(Provider.EC2)(
     region=aws_config['region'])
 
 
-def wait_for_image(image):
+def wait_for_image(driver, image):
     """
     Wait for an image to be available.
     """
     while True:
         try:
-            while driver.get_image(image.id).extra['state'] != 'available':
-                time.sleep(1)
+            while True:
+                state = driver.get_image(image.id).extra['state']
+                if state != 'available':
+                    print "STATE: ", state, " IMAGE: ", image
+                    time.sleep(1)
+                else:
+                    break
             else:
                 return
         except IndexError:

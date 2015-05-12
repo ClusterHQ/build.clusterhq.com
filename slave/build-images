@@ -3,7 +3,7 @@
 import sys
 import time
 from datetime import datetime
-
+import yaml
 from common import wait_for_image, load_manifest
 
 from libcloud.compute.base import NodeImage
@@ -74,6 +74,41 @@ def deploy_node_aws(driver, name, base_ami, deploy, username, userdata=None,
     return node
 
 
+def deploy_node_rackspace(driver, name, base_image, deploy, ssh_username, userdata,
+                          size, private_key_file, keyname):
+    """
+    Deploy a node.
+
+    :param driver: The libcloud driver.
+    :param str name: The name of the node.
+    :param str base_ami: The name of the ami to use.
+    :param Deployment deploy: The libcloud ``ScriptDeployment`` to run on the
+        node.
+    :param bytes userdata: User data to pass to the instance.
+    :param bytes size: The name of the size to use.
+    :param int disk_size: The size of disk to allocate.
+    """
+    node = driver.deploy_node(
+        name=name,
+        image=NodeImage(id=base_image, name=None, driver=driver),
+        size=get_size(driver, size),
+        ex_keyname=keyname,
+        ssh_key=private_key_file,
+        ssh_username=ssh_username,
+        # Deploy stuff
+        deploy=deploy,
+        ex_userdata=userdata,
+    )
+    if deploy.exit_status:
+        print deploy.stdout
+        print deploy.stderr
+        print
+        print "Deploy failed."
+#        driver.destroy_node(node)
+        sys.exit(1)
+    return node
+
+
 def stop_node(driver, node):
     driver.ex_stop_node(node)
     while driver.list_nodes(
@@ -83,7 +118,7 @@ def stop_node(driver, node):
 
 def create_image(driver, node, name):
     image = driver.create_image(node, name)
-    wait_for_image(image)
+    wait_for_image(driver, image)
     return image
 
 
@@ -129,6 +164,59 @@ def build_image_aws(name, base_ami, deploy, username,
     return image.id
 
 
+def build_image_rackspace(name, base_image, deploy, **kwargs):
+    """
+    Build an image by deploying a node, and then snapshoting the image.
+
+    See deploy node for arguments.
+    """
+    from libcloud.compute.providers import get_driver, Provider
+    rackspace = get_driver(Provider.RACKSPACE)
+    username = kwargs.pop('username')
+    api_key = kwargs.pop('api_key')
+    region = kwargs.pop('region')
+    driver = rackspace(username, api_key, region=region)
+
+    timestamp = datetime.utcnow().strftime('%Y%m%d.%H%M%S')
+    print "Deploying %(name)s-build." % dict(name=name)
+    node = deploy_node_rackspace(
+        driver,
+        name=name + "-build",
+        base_image=base_image,
+        deploy=deploy,
+        **kwargs
+    )
+    try:
+        image_name = "%(name)s/%(timestamp)s" % {
+            'name': name,
+            'timestamp': timestamp,
+        }
+        print "Creating image %(name)s." % dict(name=image_name)
+        # Perhaps we should use reboot=True for ec2 too
+        # Then we can drop the stop step.
+        image = driver.create_image(node, name, reboot=True)
+        wait_for_image(driver, image)
+
+        driver.ex_create_tags(
+            resource_ids=[image.id],
+            resource_type='Snapshot',
+            tags={
+                'base-name': name,
+                'timestamp': timestamp,
+            }
+        )
+    finally:
+        print "Destroying %(name)s-build." % dict(name=name)
+        driver.destroy_node(node)
+
+    print "%(name)s: %(id)s" % dict(name=name, id=image.id)
+    return image.id
+
+
+
+# class SlowScriptDeployment(ScriptDeployment):
+#     def run(*args, **kwargs):
+
 def process_image_aws(args):
     global amis
     image_name = args.pop('name')
@@ -154,25 +242,31 @@ def process_image_aws(args):
 
 
 def process_image_rackspace(args):
-    global amis
+    global rackspace_images
 
     image_name = args.pop('name')
-    base_ami = args.pop('base-ami')
-    if not base_ami.startswith('ami-'):
-        base_ami = amis[base_ami]
-
+    base_image = args.pop('base-image')
     step = args.pop('deploy')
     if 'script' in step:
         deploy = ScriptDeployment(step['script'])
     elif 'file' in step:
         deploy = ScriptDeployment(
-            base.child(step['file']).getContent())
+            base.child(step['file']).getContent()
+            # To ensure a consistent state before taking a snapshot
+            + b'\n'
+            + b'sync'
+            + b'\n'
+        )
     else:
         raise ValueError('Unknown deploy type.')
 
-    amis[image_name] = build_image_aws(
+    rackspace_config = yaml.safe_load(open("rackspace_config.yml"))
+
+    args.update(rackspace_config)
+
+    rackspace_images[image_name] = build_image_rackspace(
         name=image_name,
-        base_ami=base_ami,
+        base_image=base_image,
         deploy=deploy,
         **args
     )
@@ -189,5 +283,7 @@ PROVIDER = sys.argv[2]
 base, manifest = load_manifest(DISTRO, PROVIDER)
 
 amis = {}
+rackspace_images = {}
+
 for image in manifest['images']:
-    process_image_aws(image)
+    image_processors[PROVIDER](image)

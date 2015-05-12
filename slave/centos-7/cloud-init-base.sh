@@ -3,8 +3,9 @@
 set -e
 
 # This script is run as a libcloud ScriptDeployment.
-# On fedora, this is run as the user fedora, so switch to root.
-if [ -z "$SUDO_COMMAND" ]
+# Sometimes this is run as the user centos instead of root.
+# Call this script via sudo in that case.
+if [[ $(id -u) -ne 0 && -z "$SUDO_COMMAND" ]]
 then
       sudo $0 $*
       exit $?
