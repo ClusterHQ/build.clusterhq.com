@@ -1,0 +1,12 @@
+# Configuration for the scripts in slave/
+
+# Credentials
+username: "<username>"
+api_key: "<secret_access_token>"
+
+# Region slug
+region: "dfw"
+
+# SSH Key details
+private_key_file: "/path/to/private/key"
+keyname: "<your_keyname>"

@@ -1,0 +1,17 @@
+images:
+- name: buildslave-centos-7-zfs-head
+  base-ami: ami-c7d092f7
+  size: t2.medium
+  username: centos
+  deploy:
+    file: cloud-init-base.sh
+  # Fedora 20 doesn't allow sudo without a terminal by default, so enable it.
+  userdata: "#!/bin/sh\nsed -i '/Defaults    requiretty/d' /etc/sudoers"
+
+# - name: buildslave-centos-7
+#   base-ami: buildslave-centos-7-zfs-head
+#   size: t2.medium
+#   deploy:
+#     script: |-
+#       sudo yum install -y zfs
+#   username: centos
