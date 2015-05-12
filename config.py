@@ -37,54 +37,73 @@ from flocker_bb.password import generate_password
 from flocker_bb.ec2_buildslave import EC2BuildSlave
 from buildbot.buildslave import BuildSlave
 
-cloudInit = FilePath(__file__).sibling("slave").child("cloud-init.sh").getContent()
+cloudInit = FilePath(__file__).sibling("slave").child(
+    "cloud-init.sh").getContent()
 
 c['slaves'] = []
 SLAVENAMES = {}
 
+
+def get_cloud_init(name, base, password, privateData, slavePortnum):
+    return cloudInit % {
+        "github_token": privateData['github']['token'],
+        "coveralls_token": privateData['coveralls']['token'],
+        "name": name,
+        "base": base,
+        "password": password,
+        'buildmaster_host': privateData['buildmaster']['host'],
+        'buildmaster_port': slavePortnum,
+        'acceptance.yml':
+        privateData['acceptance'].get('config', ''),
+        'acceptance-ssh-key':
+        privateData['acceptance'].get('ssh-key', ''),
+    }
+
+
 for base, slaveConfig in privateData['slaves'].items():
     SLAVENAMES[base] = []
-    if 'ami' in slaveConfig:
+    if "openstack-image" in slaveConfig:
+        password = generate_password(32)
+        c['slaves'].append(rackspace_slave(
+            name=base,
+            password=password,
+            config=slaveConfig,
+            credentials=privateData['rackspace'],
+            user_data=get_cloud_init(
+                base, base, password, privateData, c['slavePortnum']
+            ),
+            build_wait_timeout=50*60,
+            keepalive_interval=60,
+            buildmaster=privateData['buildmaster']['host'],
+            image_tags=privateData['rackspace'].get(
+                'image_tags', {"production": "true"}
+            ) or {},
+        ))
+    elif 'ami' in slaveConfig:
         for i in range(slaveConfig['slaves']):
             name = '%s-%d' % (base, i)
             password = generate_password(32)
 
             SLAVENAMES[base].append(name)
-            c['slaves'].append(
-                EC2BuildSlave(
-                    name, password,
-                    instance_type=slaveConfig['instance_type'],
-                    build_wait_timeout=50*60,
-                    image_name=slaveConfig['ami'],
-                    region='us-west-2',
-                    security_name='ssh',
-                    keypair_name='hybrid-master',
-                    identifier=privateData['aws']['identifier'],
-                    secret_identifier=privateData['aws']['secret_identifier'],
-                    user_data=cloudInit % {
-                        "github_token": privateData['github']['token'],
-                        "coveralls_token": privateData['coveralls']['token'],
-                        "name": name,
-                        "base": base,
-                        "password": password,
-                        'buildmaster_host': privateData['buildmaster']['host'],
-                        'buildmaster_port': c['slavePortnum'],
-                        'acceptance.yml':
-                            privateData['acceptance'].get('config', ''),
-                        'acceptance-ssh-key':
-                            privateData['acceptance'].get('ssh-key', ''),
-                        },
-                    keepalive_interval=60,
-                    instance_tags={
-                        'Image': slaveConfig['ami'],
-                        'Class': base,
-                        'BuildMaster': privateData['buildmaster']['host'],
-                        },
-                    # Default to requiring production, but treat `None` as {}
-                    image_tags=privateData['aws'].get(
-                        'image_tags', {"production": "true"}) or {},
-                )
-            )
+            c['slaves'].append(ec2_slave(
+                name=name,
+                password=password,
+                config=slaveConfig,
+                credentials=privateData['aws'],
+                user_data=get_cloud_init(
+                    name, base, password, privateData, c['slavePortnum']
+                ),
+                region='us-west-2',
+                keypair_name='hybrid-master',
+                security_name='ssh',
+                build_wait_timeout=50*60,
+                keepalive_interval=60,
+                buildmaster=privateData['buildmaster']['host'],
+                # Default to requiring production, but treat `None` as {}
+                image_tags=privateData['aws'].get(
+                    'image_tags', {"production": "true"}
+                ) or {},
+            ))
     else:
         for i, password in enumerate(slaveConfig['passwords']):
             name = '%s-%d' % (base, i)
