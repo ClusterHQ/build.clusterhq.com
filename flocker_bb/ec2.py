@@ -82,18 +82,8 @@ InstanceStopped = trivialInput(Input.INSTANCE_STOPPED)
 StopFailed = trivialInput(Input.STOP_FAILED)
 
 
-@attributes([
-    'name',
-    'image_name',
-    'size',
-    'keyname',
-    'security_groups',
-    'userdata',
-    'instance_tags',
-    'image_tags',
-], apply_immutable=True)
-class EC2(object):
-
+@attributes(['_driver',], apply_immutable=True)
+class InstanceBooter(object):
     def _fsmState(self):
         """
         Return the current state of the finite-state machine driving this
@@ -104,7 +94,7 @@ class EC2(object):
     image_metadata = stateful(_fsmState, State.ACTIVE, State.STARTING)
     instance_metadata = stateful(_fsmState, State.ACTIVE)
 
-    def __init__(self, access_key, secret_access_token, region):
+    def __init__(self, ):
         # Import these here, so that this can be imported without
         # installng libcloud.
         from libcloud.compute.providers import get_driver, Provider
@@ -121,29 +111,16 @@ class EC2(object):
             inputContext={}, world=MethodSuffixOutputer(self))
 
     def identifier(self):
-        return self.name
+        return self._driver.name
 
     def output_START(self, context):
         """
         Create a node.
         """
         def thread_start():
-            image = get_image(
-                self._driver, self.image_name, self.image_tags)
-            self.image_metadata = {
-                'image_id': image.id,
-                'image_name': image.name,
-            }
-            self.image_metadata.update(image.extra['tags'])
-            return self._driver.create_node(
-                name=self.name,
-                size=get_size(self._driver, self.size),
-                image=image,
-                ex_keyname=self.keyname,
-                ex_userdata=self.userdata,
-                ex_metadata=self.instance_tags,
-                ex_securitygroup=self.security_groups,
-            )
+            self.image_metadata = self._driver.get_image_metadata()
+
+            return self._driver.create_node()
         d = deferToThread(thread_start)
 
         def started(node):
@@ -160,7 +137,7 @@ class EC2(object):
             self.instance_metadata = instance_metadata
 
         def failed(f):
-            log.err(f, "while starting %s" % (self.name,))
+            log.err(f, "while starting %s" % (self.identifier(),))
             self._fsm.receive(StartFailed())
 
         d.addCallbacks(started, failed)
@@ -177,11 +154,8 @@ class EC2(object):
             # Assume the instance is already gone.
             del self.node
             self._fsm.receive(InstanceStopped())
-            log.err(f, "while stopping %s" % (self.name,))
-            log.msg(
-                format="EC2 Instance [%(instance_id)s](https://us-west-2.console.aws.amazon.com/ec2/v2/home?region=us-west-2#Instances:instanceId=%(instance_id)s) failed to stop.",  # noqa
-                instance_id=instance_id,
-                zulip_subject="EC2 Instances")
+            log.err(f, "while stopping %s" % (self.identifier(),))
+            log.msg(instance_id=instance_id, **self._driver.log_failure_arguments())
 
         d.addCallbacks(stopped, failed)
 
@@ -190,6 +164,14 @@ class EC2(object):
 
     def stop(self):
         self._fsm.receive(RequestStop())
+
+#
+"""
+"""
+
+from zope.interface import Interface, Attribute
+
+
 
 
 def get_size(driver, size_id):
@@ -225,3 +207,142 @@ def get_image(driver, image_name, image_tags):
     def timestamp(image):
         return image.extra.get('timestamp')
     return max(images, key=timestamp)
+
+
+class ICloudDriver(Interface):
+    """
+    A thin layer on top of libcloud NodeDriver.
+    """
+    def create():
+        """
+        :return: libcloud Node
+        """
+    def get_image_metadata():
+        """
+        """
+
+@attributes(['_driver', 'instance_type', 'region', 'keypair_name', 'security_name', 'image_id', 'username', 'api_key', 'image_tags', 'instance_tags'])
+class EC2CloudDriver(object):
+    """
+    """
+
+    def log_failure_arguments():
+        return dict(
+            format="EC2 Instance [%(instance_id)s](https://us-west-2.console.aws.amazon.com/ec2/v2/home?region=us-west-2#Instances:instanceId=%(instance_id)s) failed to stop.",  # noqa
+            zulip_subject="EC2 Instances"
+        )
+
+    def get_image_metadata(self):
+        image = get_image(
+            self._driver, self.image_id, self.image_tags
+        )
+
+        image_metadata = {
+            'image_id': image.id,
+            'image_name': image.name,
+        }
+        image_metadata.update(image.extra['tags'])
+        return image_metadata
+
+
+    def create(self):
+        """
+        """
+        return self.driver.create_node(
+            name=self.name,
+            size=get_size(self._driver, self.size),
+            image=image,
+            ex_keyname=self.keyname,
+            ex_userdata=self.userdata,
+            ex_metadata=self.instance_tags,
+            ex_securitygroup=self.security_groups,
+        )
+
+
+@attributes(['driver', 'flavor', 'region', 'keypair_name', 'image', 'username', 'api_key', 'image_tags'])
+class RackspaceCloudDriver(object):
+    """
+    """
+
+    def create(self):
+        """
+        """
+        
+
+    def from_driver_parameters(cls, region, username, api_key, **kwargs):
+        """
+        """
+        from libcloud.compute.providers import get_driver, Provider
+        rackspace = get_driver(Provider.RACKSPACE)
+        driver = rackspace(username, api_key, region)
+        return cls(
+            driver=driver, 
+            region=region, 
+            username=username, 
+            api_key=api_key, 
+            **kwargs
+        )
+        
+    
+def rackspace_slave(name, password, config, credentials, user_data, buildmaster, image_tags, build_wait_timeout, keepalive_interval, image_tags):
+    driver = RackspaceCloudDriver.from_driver_parameters(
+        # Hardcoded rackspace flavor...for now
+        flavor='general1-8',
+        region='dfw',
+        keypair_name='richardw-testing',
+        image=config['openstack-image'],
+        username=credentials['username'],
+        api_key=credentials['api_key'],
+        image_tags=image_tags,
+        user_data=user_data,
+        instance_tags={
+            'Image': config['openstack-image'],
+            # maybe shouldn't be mangled
+            'Class': name,
+            'Buildmaster': buildmaster
+        }
+    )
+    instance_booter = InstanceBooter(
+        driver=driver
+    )
+    return OnDemandBuildslave(
+        name=name,
+        password=password,
+        instance_booter=instance_booter,
+        build_wait_timeout=build_wait_timeout,
+        keepalive_interval=keepalive_interval,
+    )
+    
+
+def ec2_slave(name, password, config, credentials, user_data, region, keypair_name, security_name, build_wait_timeout, keepalive_interval, buildmaster, image_tags):
+    """
+    """
+    driver = EC2CloudDriver.from_driver_parameters(
+        # Hardcoded rackspace flavor...for now
+        instance_type=config['instance_type'],
+        region=region,
+        keypair_name=keypair_name,
+        security_name=security_name,
+        image_id=config['ami'],
+        username=credentials['username'],
+        api_key=credentials['api_key'],
+        user_data=user_data,
+        image_tags=image_tags,
+        instance_tags={
+            'Image': config['ami'],
+            # maybe shouldn't be mangled
+            'Class': name,
+            'Buildmaster': buildmaster
+        }
+    )
+    instance_booter = InstanceBooter(
+        driver=driver
+    )
+    return OnDemandBuildslave(
+        name=name,
+        password=password,
+        instance_booter=instance_booter,
+        build_wait_timeout=build_wait_timeout,
+        keepalive_interval=keepalive_interval,
+    )
+
