@@ -1,0 +1,17 @@
+images:
+- name: buildslave-centos-7-zfs-head
+  base-image: "af2606d8-14a8-4ba7-a2f7-04fa3660251d"
+  size: general1-8
+  ssh_username: root
+  deploy:
+    file: cloud-init-base.sh
+  userdata: null
+
+
+- name: buildslave-centos-7
+  base-image: buildslave-centos-7-zfs-head
+  size: general1-8
+  deploy:
+    script: |-
+      sudo yum install -y zfs
+  ssh_username: root
