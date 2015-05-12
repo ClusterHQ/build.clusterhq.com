@@ -164,19 +164,22 @@ def build_image_aws(name, base_ami, deploy, username,
     return image.id
 
 
+def rackspace_driver(username, api_key, region):
+    from libcloud.compute.providers import get_driver, Provider
+    rackspace = get_driver(Provider.RACKSPACE)
+    return rackspace(username, api_key, region=region)
+
+
 def build_image_rackspace(name, base_image, deploy, **kwargs):
     """
     Build an image by deploying a node, and then snapshoting the image.
 
     See deploy node for arguments.
     """
-    from libcloud.compute.providers import get_driver, Provider
-    rackspace = get_driver(Provider.RACKSPACE)
     username = kwargs.pop('username')
     api_key = kwargs.pop('api_key')
     region = kwargs.pop('region')
-    driver = rackspace(username, api_key, region=region)
-
+    driver = rackspace_driver(username, api_key, region)
     timestamp = datetime.utcnow().strftime('%Y%m%d.%H%M%S')
     print "Deploying %(name)s-build." % dict(name=name)
     node = deploy_node_rackspace(
@@ -192,19 +195,11 @@ def build_image_rackspace(name, base_image, deploy, **kwargs):
             'timestamp': timestamp,
         }
         print "Creating image %(name)s." % dict(name=image_name)
-        # Perhaps we should use reboot=True for ec2 too
-        # Then we can drop the stop step.
-        image = driver.create_image(node, name, reboot=True)
+        image = driver.create_image(node, name, metadata={
+            'base-name': name,
+            'timestamp': timestamp,
+        })
         wait_for_image(driver, image)
-
-        driver.ex_create_tags(
-            resource_ids=[image.id],
-            resource_type='Snapshot',
-            tags={
-                'base-name': name,
-                'timestamp': timestamp,
-            }
-        )
     finally:
         print "Destroying %(name)s-build." % dict(name=name)
         driver.destroy_node(node)
