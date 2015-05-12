@@ -273,12 +273,13 @@ image_processors = {
 }
 
 
-DISTRO = sys.argv[1]
-PROVIDER = sys.argv[2]
-base, manifest = load_manifest(DISTRO, PROVIDER)
+def main():
+    DISTRO = sys.argv[1]
+    PROVIDER = sys.argv[2]
+    base, manifest = load_manifest(DISTRO, PROVIDER)
 
-amis = {}
-rackspace_images = {}
+    amis = {}
+    rackspace_images = {}
 
-for image in manifest['images']:
-    image_processors[PROVIDER](image)
+    for image in manifest['images']:
+        image_processors[PROVIDER](image)
