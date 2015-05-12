@@ -65,27 +65,27 @@ from twisted.internet import reactor
 from buildbot.buildslave.base import BuildSlave
 from buildbot import config
 
-from flocker_bb.ec2 import EC2
 from machinist import WrongState
 
 
-class EC2BuildSlave(BuildSlave):
+class OnDemandBuildSlave(BuildSlave):
 
     instance = image = None
     _poll_resolution = 5  # hook point for tests
 
     build_wait_timer = None
 
-    def __init__(self, name, password, instance_type, image_name,
-                 identifier, secret_identifier,
-                 user_data, region,
-                 keypair_name, security_name,
+    def __init__(self,
+                 # On-Demand related stuff
+                 name, password, instance_booter,
+                 build_wait_timeout=60 * 10,
+                 keepalive_interval=None,
+
+                 # Generic stuff for the base class
                  max_builds=None, notify_on_missing=[],
                  missing_timeout=60 * 20,
-                 build_wait_timeout=60 * 10, properties={}, locks=None,
-                 keepalive_interval=None,
-                 instance_tags={},
-                 image_tags={}):
+                 properties={}, locks=None,
+                 ):
 
         BuildSlave.__init__(
             self, name, password, max_builds, notify_on_missing,
@@ -100,19 +100,7 @@ class EC2BuildSlave(BuildSlave):
 
         self.building = set()
 
-        self.ec2 = EC2(
-            access_key=identifier,
-            secret_access_token=secret_identifier,
-            region=region,
-            name=name,
-            image_name=image_name,
-            size=instance_type,
-            keyname=keypair_name,
-            security_groups=[security_name],
-            userdata=user_data,
-            instance_tags=instance_tags,
-            image_tags=image_tags,
-        )
+        self.instance_booter = instance_booter
 
         self.addService(TimerService(60, self.periodic))
 
@@ -126,7 +114,7 @@ class EC2BuildSlave(BuildSlave):
         self.building.discard(sb.builder_name)
         if not self.building:
             if self.build_wait_timeout == 0:
-                self.ec2.stop()
+                self.instance_booter.stop()
             else:
                 self._setBuildWaitTimer()
 
@@ -142,13 +130,17 @@ class EC2BuildSlave(BuildSlave):
         def set_metadata_and_timer(result):
             try:
                 self.properties.setProperty(
-                    'image_metadata', self.ec2.image_metadata, "buildslave")
+                    'image_metadata',
+                    self.instance_booter.image_metadata,
+                    "buildslave"
+                )
             except WrongState:
                 self.properties.setProperty(
                     'image_metadata', None, "buildslave")
             try:
                 self.properties.setProperty(
-                    'instance_metadata', self.ec2.instance_metadata,
+                    'instance_metadata',
+                    self.instance_booter.instance_metadata,
                     "buildslave")
             except WrongState:
                 self.properties.setProperty(
@@ -162,24 +154,24 @@ class EC2BuildSlave(BuildSlave):
         BuildSlave.detached(self, mind)
         # If the slave disconnects, assuming it is a problem with the instance,
         # and stop it.
-        self.ec2.stop()
+        self.instance_booter.stop()
 
     def _setBuildWaitTimer(self):
         self._clearBuildWaitTimer()
         self.build_wait_timer = reactor.callLater(
-            self.build_wait_timeout, self.ec2.stop)
+            self.build_wait_timeout, self.instance_booter.stop)
 
     def requestSubmitted(self, request):
         builder_names = [b.name for b in
                          self.botmaster.getBuildersForSlave(self.slavename)]
         if request['buildername'] in builder_names:
-            self.ec2.start()
+            self.instance_booter.start()
 
     def startService(self):
         BuildSlave.startService(self)
 
         self._shutdown_callback_handle = reactor.addSystemEventTrigger(
-            'before', 'shutdown', self.ec2.stop)
+            'before', 'shutdown', self.instance_booter.stop)
 
         self.master.subscribeToBuildRequests(self.requestSubmitted)
 
@@ -193,4 +185,4 @@ class EC2BuildSlave(BuildSlave):
             b.name for b in
             self.botmaster.getBuildersForSlave(self.slavename)])
         if pending_builders & our_builders:
-            self.ec2.start()
+            self.instance_booter.start()
