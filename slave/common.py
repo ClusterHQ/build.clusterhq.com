@@ -40,7 +40,18 @@ def load_manifest(name, provider):
         and a dictionary with the manifest.
     """
     base = FilePath(__file__).sibling(name)
-    manifest = yaml.safe_load(
-        base.descendant([provider, 'manifest.yml']).getContent()
-    )
+    if not base.isdir():
+        raise Exception(
+            "Unsupported distro {}: {} is not a directory".format(
+                name, base.path
+            )
+        )
+    platform = base.child(provider)
+    if not platform.isdir():
+        raise Exception(
+            "Unsupported platform {}: {} is not a directory".foramt(
+                provider, platform.path
+            )
+        )
+    manifest = yaml.safe_load(platform.child('manifest.yml').getContent())
     return base, manifest
