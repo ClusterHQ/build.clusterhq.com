@@ -4,7 +4,9 @@ import sys
 import time
 from datetime import datetime
 import yaml
-from common import wait_for_image, load_manifest
+from common import (
+    wait_for_image, rackspace_is_ready, load_manifest
+)
 
 from libcloud.compute.base import NodeImage
 from libcloud.compute.deployment import ScriptDeployment
@@ -74,8 +76,8 @@ def deploy_node_aws(driver, name, base_ami, deploy, username, userdata=None,
     return node
 
 
-def deploy_node_rackspace(driver, name, base_image, deploy, ssh_username, userdata,
-                          size, private_key_file, keyname):
+def deploy_node_rackspace(driver, name, base_image, deploy, ssh_username,
+                          userdata, size, private_key_file, keyname):
     """
     Deploy a node.
 
@@ -167,7 +169,9 @@ def build_image_aws(name, base_ami, deploy, username,
 def rackspace_driver(username, api_key, region):
     from libcloud.compute.providers import get_driver, Provider
     rackspace = get_driver(Provider.RACKSPACE)
-    return rackspace(username, api_key, region=region)
+    driver = rackspace(username, api_key, region=region)
+    driver.is_ready = rackspace_is_ready
+    return driver
 
 
 def build_image_rackspace(name, base_image, deploy, **kwargs):
@@ -208,27 +212,22 @@ def build_image_rackspace(name, base_image, deploy, **kwargs):
     return image.id
 
 
-
-# class SlowScriptDeployment(ScriptDeployment):
-#     def run(*args, **kwargs):
-
-def process_image_aws(args):
-    global amis
+def process_image_aws(manifest_base, images, args):
     image_name = args.pop('name')
     base_ami = args.pop('base-ami')
     if not base_ami.startswith('ami-'):
-        base_ami = amis[base_ami]
+        base_ami = images[base_ami]
 
     step = args.pop('deploy')
     if 'script' in step:
         deploy = ScriptDeployment(step['script'])
     elif 'file' in step:
         deploy = ScriptDeployment(
-            base.child(step['file']).getContent())
+            manifest_base.child(step['file']).getContent())
     else:
         raise ValueError('Unknown deploy type.')
 
-    amis[image_name] = build_image_aws(
+    images[image_name] = build_image_aws(
         name=image_name,
         base_ami=base_ami,
         deploy=deploy,
@@ -236,9 +235,7 @@ def process_image_aws(args):
     )
 
 
-def process_image_rackspace(args):
-    global rackspace_images
-
+def process_image_rackspace(manifest_base, images, args):
     image_name = args.pop('name')
     base_image = args.pop('base-image')
     step = args.pop('deploy')
@@ -246,7 +243,7 @@ def process_image_rackspace(args):
         deploy = ScriptDeployment(step['script'])
     elif 'file' in step:
         deploy = ScriptDeployment(
-            base.child(step['file']).getContent()
+            manifest_base.child(step['file']).getContent()
             # To ensure a consistent state before taking a snapshot
             + b'\n'
             + b'sync'
@@ -259,7 +256,7 @@ def process_image_rackspace(args):
 
     args.update(rackspace_config)
 
-    rackspace_images[image_name] = build_image_rackspace(
+    images[image_name] = build_image_rackspace(
         name=image_name,
         base_image=base_image,
         deploy=deploy,
@@ -278,8 +275,7 @@ def main():
     PROVIDER = sys.argv[2]
     base, manifest = load_manifest(DISTRO, PROVIDER)
 
-    amis = {}
-    rackspace_images = {}
+    images = {}
 
     for image in manifest['images']:
-        image_processors[PROVIDER](image)
+        image_processors[PROVIDER](base, images, image)

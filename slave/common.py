@@ -5,10 +5,29 @@ from twisted.python.filepath import FilePath
 
 aws_config = yaml.safe_load(open("aws_config.yml"))
 
+
+def aws_is_ready(image):
+    return (
+        image.extra['state'] == "available",
+        image.extra['state'],
+    )
+
+
+def rackspace_is_ready(image):
+    return (
+        image.extra['status'] == "ACTIVE",
+        image.extra['status'],
+    )
+
+
 driver = get_driver(Provider.EC2)(
     key=aws_config['access_key'],
     secret=aws_config['secret_access_token'],
     region=aws_config['region'])
+
+
+# EAT.  IT.
+driver.is_ready = aws_is_ready
 
 
 def wait_for_image(driver, image):
@@ -18,14 +37,12 @@ def wait_for_image(driver, image):
     while True:
         try:
             while True:
-                state = driver.get_image(image.id).extra['state']
-                if state != 'available':
-                    print "STATE: ", state, " IMAGE: ", image
-                    time.sleep(1)
-                else:
-                    break
-            else:
-                return
+                image = driver.get_image(image.id)
+                ready, reason = driver.is_ready(image)
+                if ready:
+                    return
+                print "Image not ready:", reason, image
+                time.sleep(1)
         except IndexError:
             time.sleep(1)
         except:
@@ -49,7 +66,7 @@ def load_manifest(name, provider):
     platform = base.child(provider)
     if not platform.isdir():
         raise Exception(
-            "Unsupported platform {}: {} is not a directory".foramt(
+            "Unsupported platform {}: {} is not a directory".format(
                 provider, platform.path
             )
         )
