@@ -95,6 +95,7 @@ def _new_server(
                 ]
             )
         )
+        run('nova list | grep {!r}'.format(buildslave_name))
 
 
 @task

@@ -285,10 +285,8 @@ With this ``ssh-config`` file saved to ``~/.ssh/config``, run::
 
    fab -f slave/pistoncloud/fabfile.py new_server:clusterhq_flocker_buildslave,clusterhq_richardw
 
-Then find the IP address of the new machine::
+Then IP address of the new machine will be printed at the end::
 
-   $ ssh pistoncloud-novahost
-   [pistoncloud-novahost ~] $ nova list  | grep clusterhq_flocker_buildslave
    | ad6c426c-c862-4ab4-8ee8-941f6425dd77 | clusterhq_flocker_buildslave            | ACTIVE | tmz-mdl-net1=172.19.139.35 |
 
 
