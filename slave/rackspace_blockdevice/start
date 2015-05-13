@@ -1,5 +1,0 @@
-#!/bin/sh
-exec /usr/bin/twistd \
-    --nodaemon \
-    --pidfile= \
-    --python=/home/buildslave/rackspace_blockdevice/buildbot.tac
