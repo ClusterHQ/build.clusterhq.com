@@ -3,6 +3,8 @@
 """
 Tests for ``flocker_bb.ec2``.
 """
+import os
+
 import yaml
 
 from twisted.python.filepath import FilePath
@@ -14,7 +16,11 @@ from flocker_bb import __file__ as flocker_bb_dir
 from flocker_bb.ec2 import ec2_slave, ICloudDriver, rackspace_slave
 from flocker_bb.password import generate_password
 
-sample_config = FilePath(flocker_bb_dir).parent().sibling('config.yml.sample')
+sample_config_path = os.environ.get('BUILDBOT_CONFIG_PATH')
+if sample_config_path is None:
+    sample_config = FilePath(flocker_bb_dir).parent().sibling('config.yml.sample')
+else:
+    sample_config = FilePath(sample_config_path)
 
 
 def ec2_slave_config():
