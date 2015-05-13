@@ -219,6 +219,7 @@ class ICloudDriver(Interface):
 class EC2CloudDriver(object):
     """
     """
+    @classmethod
     def from_driver_parameters(
             cls, region, identifier, secret_identifier, **kwargs):
         """
@@ -231,10 +232,7 @@ class EC2CloudDriver(object):
             region=region
         )
 
-        return cls(
-            driver=driver,
-            **kwargs
-        )
+        return cls(driver=driver, **kwargs)
 
     def log_failure_arguments():
         return dict(
@@ -288,6 +286,7 @@ class RackspaceCloudDriver(object):
         """
         """
 
+    @classmethod
     def from_driver_parameters(
             cls, region, username, api_key, **kwargs):
         """
