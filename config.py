@@ -64,7 +64,7 @@ for base, slaveConfig in privateData['slaves'].items():
     SLAVENAMES[base] = []
     if "openstack-image" in slaveConfig:
         password = generate_password(32)
-        c['slaves'].append(rackspace_slave(
+        slave = rackspace_slave(
             name=base,
             password=password,
             config=slaveConfig,
@@ -78,14 +78,15 @@ for base, slaveConfig in privateData['slaves'].items():
             image_tags=privateData['rackspace'].get(
                 'image_tags', {"production": "true"}
             ) or {},
-        ))
+        )
+        c['slaves'].append(slave)
     elif 'ami' in slaveConfig:
         for i in range(slaveConfig['slaves']):
             name = '%s-%d' % (base, i)
             password = generate_password(32)
 
             SLAVENAMES[base].append(name)
-            c['slaves'].append(ec2_slave(
+            slave = ec2_slave(
                 name=name,
                 password=password,
                 config=slaveConfig,
@@ -103,7 +104,8 @@ for base, slaveConfig in privateData['slaves'].items():
                 image_tags=privateData['aws'].get(
                     'image_tags', {"production": "true"}
                 ) or {},
-            ))
+            )
+            c['slaves'].append(slave)
     else:
         for i, password in enumerate(slaveConfig['passwords']):
             name = '%s-%d' % (base, i)

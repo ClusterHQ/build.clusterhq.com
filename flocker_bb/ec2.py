@@ -1,4 +1,4 @@
-from zope.interface import implementer
+from zope.interface import implementer, Interface
 from twisted.python.constants import Names, NamedConstant
 from twisted.internet.threads import deferToThread
 from characteristic import attributes
@@ -8,6 +8,7 @@ from machinist import (
     trivialInput, constructFiniteStateMachine, Transition,
     IRichInput, stateful)
 from ec2_buildslave import OnDemandBuildslave
+
 
 class Input(Names):
     REQUEST_START = NamedConstant()
@@ -82,7 +83,7 @@ InstanceStopped = trivialInput(Input.INSTANCE_STOPPED)
 StopFailed = trivialInput(Input.STOP_FAILED)
 
 
-@attributes(['_driver',], apply_immutable=True)
+@attributes(['_driver'], apply_immutable=True)
 class InstanceBooter(object):
     """
     """
@@ -150,7 +151,9 @@ class InstanceBooter(object):
             del self.node
             self._fsm.receive(InstanceStopped())
             log.err(f, "while stopping %s" % (self.identifier(),))
-            log.msg(instance_id=instance_id, **self._driver.log_failure_arguments())
+            log.msg(
+                instance_id=instance_id, **self._driver.log_failure_arguments()
+            )
 
         d.addCallbacks(stopped, failed)
 
@@ -159,14 +162,6 @@ class InstanceBooter(object):
 
     def stop(self):
         self._fsm.receive(RequestStop())
-
-#
-"""
-"""
-
-from zope.interface import Interface
-
-
 
 
 def get_size(driver, size_id):
@@ -216,14 +211,22 @@ class ICloudDriver(Interface):
         """
         """
 
-@attributes(['_driver', 'instance_type', 'region', 'keypair_name', 'security_name', 'image_id', 'username', 'api_key', 'image_tags', 'instance_tags'])
+
+@attributes(
+    ['_driver', 'instance_type', 'region', 'keypair_name', 'security_name',
+     'image_id', 'username', 'api_key', 'image_tags', 'instance_tags']
+)
 class EC2CloudDriver(object):
     """
     """
 
     def log_failure_arguments():
         return dict(
-            format="EC2 Instance [%(instance_id)s](https://us-west-2.console.aws.amazon.com/ec2/v2/home?region=us-west-2#Instances:instanceId=%(instance_id)s) failed to stop.",  # noqa
+            format=(
+                "EC2 Instance [%(instance_id)s]"
+                "(https://us-west-2.console.aws.amazon.com/ec2/v2/home?region=us-west-2#Instances:instanceId=%(instance_id)s) "  # noqa
+                "failed to stop."
+            ),
             zulip_subject="EC2 Instances"
         )
 
@@ -238,7 +241,6 @@ class EC2CloudDriver(object):
         }
         image_metadata.update(image.extra['tags'])
         return image_metadata
-
 
     def create(self):
         """
@@ -258,7 +260,10 @@ class EC2CloudDriver(object):
         )
 
 
-@attributes(['driver', 'flavor', 'region', 'keypair_name', 'image', 'username', 'api_key', 'image_tags'])
+@attributes(
+    ['driver', 'flavor', 'region', 'keypair_name', 'image', 'username',
+     'api_key', 'image_tags']
+)
 class RackspaceCloudDriver(object):
     """
     """
@@ -267,8 +272,8 @@ class RackspaceCloudDriver(object):
         """
         """
         
-
-    def from_driver_parameters(cls, region, username, api_key, **kwargs):
+    def from_driver_parameters(
+            cls, region, username, api_key, **kwargs):
         """
         """
         from libcloud.compute.providers import get_driver, Provider
@@ -283,7 +288,9 @@ class RackspaceCloudDriver(object):
         )
         
     
-def rackspace_slave(name, password, config, credentials, user_data, buildmaster, image_tags, build_wait_timeout, keepalive_interval):
+def rackspace_slave(
+        name, password, config, credentials, user_data, buildmaster,
+        image_tags, build_wait_timeout, keepalive_interval):
     driver = RackspaceCloudDriver.from_driver_parameters(
         # Hardcoded rackspace flavor...for now
         flavor='general1-8',
@@ -313,7 +320,10 @@ def rackspace_slave(name, password, config, credentials, user_data, buildmaster,
     )
     
 
-def ec2_slave(name, password, config, credentials, user_data, region, keypair_name, security_name, build_wait_timeout, keepalive_interval, buildmaster, image_tags):
+def ec2_slave(
+        name, password, config, credentials, user_data, region, keypair_name,
+        security_name, build_wait_timeout, keepalive_interval, buildmaster,
+        image_tags):
     """
     """
     driver = EC2CloudDriver.from_driver_parameters(
