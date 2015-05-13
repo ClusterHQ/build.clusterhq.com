@@ -44,16 +44,16 @@ def new_server(
         keypair_name,
         # Be careful here! If our script has bugs we don't want to accidentally
         # modify VMs or resources of another more important tenant
-        tenant_name=u"sc-mdl-1",
+        tenant_name=u"tmz-mdl-1",
         # m1.large
         flavor=u'4',
         # SC_Centos7
         image=u'ab32525b-f565-49ca-9595-48cdb5eaa794',
-        # sc-mdl-net1
-        # XXX: The DNS server for this network doesn't resolve external hostnames.
-        # Need to update to Google DNS.
-        net_id=u'0002fdfb-2131-4ccf-9041-ff44ef35d3a5',
-        tennant_name=u'sc-mdl-1',
+        # tmz-mdl-net1
+        # The network with a route to the nova keystone server address
+        # XXX: The DNS server for this network doesn't resolve external
+        # hostnames.  Need to update to Google DNS.
+        net_id=u'74632532-1629-44b4-a464-dd31657f46a3',
 ):
     """
     Start a new nova based VM and wait for it to boot.
