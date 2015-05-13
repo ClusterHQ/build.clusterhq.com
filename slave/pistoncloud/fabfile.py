@@ -62,12 +62,12 @@ def new_server(
     """
     with shell_env(OS_TENANT_NAME=tenant_name):
         run(
-            u' '.join(
+            ' '.join(
                 [
                     'nova boot',
                     '--image', image,
                     '--flavor', flavor,
-                    '--nic', u'net-id={}'.format(net_id),
+                    '--nic', 'net-id=' + net_id,
                     '--key-name', keypair_name,
                     # SSH authentication fails unless this is included.
                     '--config-drive', 'true',
