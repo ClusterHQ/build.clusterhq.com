@@ -7,7 +7,7 @@ from machinist import (
     TransitionTable, MethodSuffixOutputer,
     trivialInput, constructFiniteStateMachine, Transition,
     IRichInput, stateful)
-
+from ec2_buildslave import OnDemandBuildslave
 
 class Input(Names):
     REQUEST_START = NamedConstant()
@@ -84,6 +84,9 @@ StopFailed = trivialInput(Input.STOP_FAILED)
 
 @attributes(['_driver',], apply_immutable=True)
 class InstanceBooter(object):
+    """
+    """
+
     def _fsmState(self):
         """
         Return the current state of the finite-state machine driving this
@@ -94,15 +97,7 @@ class InstanceBooter(object):
     image_metadata = stateful(_fsmState, State.ACTIVE, State.STARTING)
     instance_metadata = stateful(_fsmState, State.ACTIVE)
 
-    def __init__(self, ):
-        # Import these here, so that this can be imported without
-        # installng libcloud.
-        from libcloud.compute.providers import get_driver, Provider
-        self._driver = get_driver(Provider.EC2)(
-            key=access_key,
-            secret=secret_access_token,
-            region=region)
-
+    def __init__(self):
         self._fsm = constructFiniteStateMachine(
             inputs=Input, outputs=Output, states=State, table=table,
             initial=State.IDLE,
@@ -169,7 +164,7 @@ class InstanceBooter(object):
 """
 """
 
-from zope.interface import Interface, Attribute
+from zope.interface import Interface
 
 
 
@@ -248,6 +243,10 @@ class EC2CloudDriver(object):
     def create(self):
         """
         """
+        image = get_image(
+            self._driver, self.image_id, self.image_tags
+        )
+
         return self.driver.create_node(
             name=self.name,
             size=get_size(self._driver, self.size),
@@ -284,7 +283,7 @@ class RackspaceCloudDriver(object):
         )
         
     
-def rackspace_slave(name, password, config, credentials, user_data, buildmaster, image_tags, build_wait_timeout, keepalive_interval, image_tags):
+def rackspace_slave(name, password, config, credentials, user_data, buildmaster, image_tags, build_wait_timeout, keepalive_interval):
     driver = RackspaceCloudDriver.from_driver_parameters(
         # Hardcoded rackspace flavor...for now
         flavor='general1-8',
