@@ -35,7 +35,7 @@ yum install -y \
 	rpmdevtools \
 	rpmlint \
 	rpm-build \
-	docker-io \
+	docker \
 	libffi-devel \
 	@buildsys-build \
 	openssl-devel \
