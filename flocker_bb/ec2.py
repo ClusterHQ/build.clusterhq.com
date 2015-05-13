@@ -213,8 +213,8 @@ class ICloudDriver(Interface):
 
 
 @attributes(
-    ['_driver', 'instance_type', 'keypair_name', 'security_name',
-     'image_id', 'image_tags', 'instance_tags']
+    ['driver', 'instance_type', 'keypair_name', 'security_name',
+     'image_id', 'image_tags', 'user_data', 'instance_tags']
 )
 class EC2CloudDriver(object):
     """
@@ -246,7 +246,7 @@ class EC2CloudDriver(object):
 
     def get_image_metadata(self):
         image = get_image(
-            self._driver, self.image_id, self.image_tags
+            self.driver, self.image_id, self.image_tags
         )
 
         image_metadata = {
@@ -260,7 +260,7 @@ class EC2CloudDriver(object):
         """
         """
         image = get_image(
-            self._driver, self.image_id, self.image_tags
+            self.driver, self.image_id, self.image_tags
         )
 
         return self.driver.create_node(
@@ -342,16 +342,18 @@ def ec2_slave(
     """
     """
     driver = EC2CloudDriver.from_driver_parameters(
-        # Hardcoded rackspace flavor...for now
-        instance_type=config['instance_type'],
+        # libcloud ec2 driver parameters
         region=region,
+        identifier=credentials['identifier'],
+        secret_identifier=credentials['secret_identifier'],
+
+        # Other
+        instance_type=config['instance_type'],
         keypair_name=keypair_name,
         security_name=security_name,
         image_id=config['ami'],
-        identifier=credentials['identifier'],
-        secret_identifier=credentials['secret_identifier'],
-        user_data=user_data,
         image_tags=image_tags,
+        user_data=user_data,
         instance_tags={
             'Image': config['ami'],
             # maybe shouldn't be mangled
