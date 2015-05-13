@@ -14,5 +14,5 @@ images:
   ssh_username: root
   deploy:
     script: |-
-      sudo yum install -y zfs
+      yum install -y zfs
   userdata: null
