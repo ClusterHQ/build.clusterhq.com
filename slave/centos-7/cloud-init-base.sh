@@ -11,8 +11,8 @@ then
       exit $?
 fi
 
-systemd disable firewalld.service
-systemd stop firewalld.service
+systemctl disable firewalld
+systemctl stop firewalld
 
 yum install -y http://archive.zfsonlinux.org/epel/zfs-release.el7.noarch.rpm
 
