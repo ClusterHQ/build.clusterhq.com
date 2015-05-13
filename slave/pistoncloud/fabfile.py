@@ -6,7 +6,7 @@ Configuration for a buildslave to run on PistonCloud
     This points at the staging buildserver by default.
 """
 
-from fabric.api import task, sudo, put, env, run
+from fabric.api import sudo, task, env, execute, put, run
 from fabric.context_managers import shell_env
 from twisted.python.filepath import FilePath
 from StringIO import StringIO
@@ -37,8 +37,17 @@ def put_template(template, replacements, remote_path, **put_kwargs):
         local_file.remove()
 
 
-@task
-def new_server(
+def set_google_dns():
+    put(
+        StringIO("echo 'nameserver 8.8.4.4' > /etc/resolv.conf"),
+        '/etc/NetworkManager/dispatcher.d/10-google-dns',
+        use_sudo=True,
+        mode=0755,
+    )
+    sudo('systemctl restart NetworkManager')
+
+
+def _new_server(
         buildslave_name,
         # Eg clusterhq_richardw
         keypair_name,
@@ -57,8 +66,6 @@ def new_server(
 ):
     """
     Start a new nova based VM and wait for it to boot.
-
-    Run this on the
     """
     with shell_env(OS_TENANT_NAME=tenant_name):
         run(
@@ -78,12 +85,19 @@ def new_server(
             )
         )
 
+
 @task
-def install(index, buildslave_name, password, master='build.staging.clusterhq.com'):
+def new_server(buildslave_name, keypair_name):
+    env.hosts = ['pistoncloud-novahost']
+    execute(_new_server, buildslave_name, keypair_name)
+
+
+def _install(index, buildslave_name, password, master='build.staging.clusterhq.com'):
     """
     Install a buildslave for running cinder block device API tests against
     Rackspace OpenStack API.
     """
+    set_google_dns()
     packages = [
         "epel-release",
         "https://kojipkgs.fedoraproject.org/packages/buildbot/0.8.10/1.fc22/noarch/buildbot-slave-0.8.10-1.fc22.noarch.rpm",  # noqa
@@ -157,8 +171,18 @@ def install(index, buildslave_name, password, master='build.staging.clusterhq.co
     sudo('systemctl start {}'.format(remote_service_filename))
     sudo('systemctl enable {}'.format(remote_service_filename))
 
+
 @task
-def uninstall(buildslave_name):
+def install(index, buildslave_name, password, master='build.staging.clusterhq.com'):
+    """
+    Install a buildslave for running cinder block device API tests against
+    Rackspace OpenStack API.
+    """
+    env.hosts = ['pistoncloud-buildslave']
+    execute(_install, index, buildslave_name, password, master)
+
+
+def _uninstall(buildslave_name):
     """
     Uninstall the buildslave and its service files.
     """
@@ -182,3 +206,12 @@ def uninstall(buildslave_name):
         "userdel --remove buildslave",
         warn_only=True,
     )
+
+
+@task
+def uninstall(buildslave_name):
+    """
+    Uninstall the buildslave and its service files.
+    """
+    env.hosts = ['pistoncloud-buildslave']
+    execute(_uninstall, buildslave_name)
