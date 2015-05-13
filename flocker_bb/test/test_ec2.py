@@ -17,9 +17,10 @@ sample_config = FilePath(flocker_bb_dir).parent().sibling('config.yml.sample')
 
 
 def ec2_slave_config():
-    for slave_config in yaml.load(sample_config.open())['slaves']:
+    all_config = yaml.load(sample_config.open())
+    for slave_name, slave_config in all_config['slaves'].items():
         if u'ami' in slave_config:
-            return slave_config
+            return slave_name, slave_config
 
 
 def ec2_credentials():
@@ -34,10 +35,11 @@ class EC2SlaveTests(SynchronousTestCase):
     def test_constructor(self):
         """
         """
+        slave_name, slave_config = ec2_slave_config()
         ec2_slave(
-            name=u'ec2-slave-0',
+            name=slave_name,
             password=generate_password(32),
-            config=ec2_slave_config(),
+            config=slave_config,
             credentials=ec2_credentials(),
             user_data=u'',
             region=u'us-west-2',
@@ -46,5 +48,5 @@ class EC2SlaveTests(SynchronousTestCase):
             build_wait_timeout=50*60,
             keepalive_interval=60,
             buildmaster=sample_build_master(),
-            image_tags=ec2_credentials()['image_tags'],
+            image_tags=ec2_credentials().get('image_tags', {}),
         )
