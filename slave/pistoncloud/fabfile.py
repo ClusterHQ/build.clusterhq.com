@@ -15,6 +15,9 @@ import yaml
 # http://stackoverflow.com/a/9685171
 env.use_ssh_config = True
 
+BUILDSLAVE_NAME = "clusterhq_flocker_buildslave"
+
+
 def configure_acceptance():
     put(
         StringIO(yaml.safe_dump({'metadata': {'creator': 'buildbot'}})),
@@ -59,7 +62,6 @@ def set_google_dns():
 
 
 def _new_server(
-        buildslave_name,
         # Eg clusterhq_richardw
         keypair_name,
         # Be careful here! If our script has bugs we don't want to accidentally
@@ -91,20 +93,20 @@ def _new_server(
                     '--config-drive', 'true',
                     # Wait for the machine to become active.
                     '--poll',
-                    buildslave_name
+                    BUILDSLAVE_NAME
                 ]
             )
         )
-        run('nova list | grep {!r}'.format(buildslave_name))
+        run('nova list | grep {!r}'.format(BUILDSLAVE_NAME))
 
 
 @task
-def new_server(buildslave_name, keypair_name):
+def new_server(keypair_name):
     env.hosts = ['pistoncloud-novahost']
-    execute(_new_server, buildslave_name, keypair_name)
+    execute(_new_server, keypair_name)
 
 
-def _install(index, buildslave_name, password, master='build.staging.clusterhq.com'):
+def _install(index, password, master='build.staging.clusterhq.com'):
     """
     Install a buildslave for running cinder block device API tests against
     Rackspace OpenStack API.
@@ -130,9 +132,9 @@ def _install(index, buildslave_name, password, master='build.staging.clusterhq.c
         u"buildslave create-slave "
         u"/home/buildslave/{buildslave_name} "
         u"{master} "
-        u"{buildslave_name}-{index} "
+        u"{BUILDSLAVE_NAME}-{index} "
         u"{password}".format(
-            buildslave_name=buildslave_name,
+            buildslave_name=BUILDSLAVE_NAME,
             index=index,
             password=password,
             master=master,
@@ -143,10 +145,10 @@ def _install(index, buildslave_name, password, master='build.staging.clusterhq.c
     put_template(
         template=FilePath(__file__).sibling('start.template'),
         replacements=dict(
-            buildslave_name=buildslave_name
+            buildslave_name=BUILDSLAVE_NAME
         ),
         remote_path='/home/buildslave/{buildslave_name}/start'.format(
-            buildslave_name=buildslave_name
+            buildslave_name=BUILDSLAVE_NAME
         ),
         mode=0755,
         use_sudo=True,
@@ -155,13 +157,13 @@ def _install(index, buildslave_name, password, master='build.staging.clusterhq.c
     configure_acceptance()
 
     remote_service_filename = u'{buildslave_name}-slave.service'.format(
-        buildslave_name=buildslave_name
+        buildslave_name=BUILDSLAVE_NAME
     )
 
     put_template(
         template=FilePath(__file__).sibling('slave.service.template'),
         replacements=dict(
-            buildslave_name=buildslave_name
+            buildslave_name=BUILDSLAVE_NAME
         ),
         remote_path=u'/etc/systemd/system/{}'.format(remote_service_filename),
         use_sudo=True,
@@ -172,21 +174,21 @@ def _install(index, buildslave_name, password, master='build.staging.clusterhq.c
 
 
 @task
-def install(index, buildslave_name, password, master='build.staging.clusterhq.com'):
+def install(index, password, master='build.staging.clusterhq.com'):
     """
     Install a buildslave for running cinder block device API tests against
     Rackspace OpenStack API.
     """
     env.hosts = ['pistoncloud-buildslave']
-    execute(_install, index, buildslave_name, password, master)
+    execute(_install, index, password, master)
 
 
-def _uninstall(buildslave_name):
+def _uninstall():
     """
     Uninstall the buildslave and its service files.
     """
     remote_service_filename = u'{buildslave_name}-slave.service'.format(
-        buildslave_name=buildslave_name
+        buildslave_name=BUILDSLAVE_NAME
     )
 
     sudo(
@@ -208,9 +210,9 @@ def _uninstall(buildslave_name):
 
 
 @task
-def uninstall(buildslave_name):
+def uninstall():
     """
     Uninstall the buildslave and its service files.
     """
     env.hosts = ['pistoncloud-buildslave']
-    execute(_uninstall, buildslave_name)
+    execute(_uninstall)
