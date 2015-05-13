@@ -7,7 +7,7 @@ from machinist import (
     TransitionTable, MethodSuffixOutputer,
     trivialInput, constructFiniteStateMachine, Transition,
     IRichInput, stateful)
-from ec2_buildslave import OnDemandBuildslave
+from flocker_bb.ec2_buildslave import OnDemandBuildSlave
 
 
 class Input(Names):
@@ -311,7 +311,7 @@ def rackspace_slave(
     instance_booter = InstanceBooter(
         driver=driver
     )
-    return OnDemandBuildslave(
+    return OnDemandBuildSlave(
         name=name,
         password=password,
         instance_booter=instance_booter,
