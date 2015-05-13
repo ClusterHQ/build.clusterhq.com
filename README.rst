@@ -283,7 +283,7 @@ Here is an example of such a file::
 
 With this ``ssh-config`` file saved to ``~/.ssh/config``, run::
 
-   fab -f slave/pistoncloud/fabfile.py new_server:clusterhq_richardw
+   fab -f slave/pistoncloud/fabfile.py create_server:clusterhq_richardw
 
 Then IP address of the new machine will be printed at the end::
 
@@ -304,7 +304,7 @@ Check that you can log in to the new buildslave::
 
 Now configure the new server by running the following ``fabric`` task::
 
-   fab -f slave/pistoncloud/fabfile.py install:0,${PASSWORD},${BUILDMASTER}
+   fab -f slave/pistoncloud/fabfile.py configure:0,${PASSWORD},${BUILDMASTER}
 
 Where ``${PASSWORD}`` is the password in ``slaves.piston_buildslave.passwords`` from the ``config.yml`` or ``staging.yml`` file,
 and ``${MASTER}`` is the IP address of the BuildBot master that you want this buildslave to connect to.

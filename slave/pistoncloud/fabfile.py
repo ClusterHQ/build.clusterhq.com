@@ -64,8 +64,7 @@ def set_google_dns():
     )
 
 
-def _new_server(
-        # Eg clusterhq_richardw
+def _create_server(
         keypair_name,
         # m1.large
         flavor=u'4',
@@ -77,9 +76,6 @@ def _new_server(
         # hostnames.  Need to update to Google DNS.
         net_id=u'74632532-1629-44b4-a464-dd31657f46a3',
 ):
-    """
-    Start a new nova based VM and wait for it to boot.
-    """
     with shell_env(OS_TENANT_NAME=TENANT_NAME):
         run(
             ' '.join(
@@ -101,30 +97,33 @@ def _new_server(
 
 
 @task
-def new_server(keypair_name):
+def create_server(keypair_name):
+    """
+    Create a PistonCloud buildslave VM and wait for it to boot.
+    Finally print its IP address.
+
+    :param str keypair_name: The name of an SSH keypair that has been
+        registered on the PistonCloud nova tenant.
+    """
     env.hosts = ['pistoncloud-novahost']
-    execute(_new_server, keypair_name)
+    execute(_create_server, keypair_name)
 
 
 def _delete_server():
-    """
-    Delete the buildslave machine.
-    """
     with shell_env(OS_TENANT_NAME=TENANT_NAME):
         run('nova delete ' + BUILDSLAVE_NAME)
 
 
 @task
 def delete_server():
+    """
+    Delete the PistonCloud buildslave VM.
+    """
     env.hosts = ['pistoncloud-novahost']
     execute(_delete_server)
 
 
-def _install(index, password, master='build.staging.clusterhq.com'):
-    """
-    Install a buildslave for running cinder block device API tests against
-    Rackspace OpenStack API.
-    """
+def _configure(index, password, master='build.staging.clusterhq.com'):
     set_google_dns()
     packages = [
         "epel-release",
@@ -188,19 +187,15 @@ def _install(index, password, master='build.staging.clusterhq.com'):
 
 
 @task
-def install(index, password, master='build.staging.clusterhq.com'):
+def configure(index, password, master='build.staging.clusterhq.com'):
     """
-    Install a buildslave for running cinder block device API tests against
-    Rackspace OpenStack API.
+    Install and configure the buildslave on the PistonCloud buildslave VM.
     """
     env.hosts = ['pistoncloud-buildslave']
-    execute(_install, index, password, master)
+    execute(_configure, index, password, master)
 
 
 def _uninstall():
-    """
-    Uninstall the buildslave and its service files.
-    """
     remote_service_filename = u'{buildslave_name}-slave.service'.format(
         buildslave_name=BUILDSLAVE_NAME
     )
@@ -226,7 +221,7 @@ def _uninstall():
 @task
 def uninstall():
     """
-    Uninstall the buildslave and its service files.
+    Uninstall the buildslave packages from the PistonCloud buildslave VM.
     """
     env.hosts = ['pistoncloud-buildslave']
     execute(_uninstall)
