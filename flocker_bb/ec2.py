@@ -83,7 +83,7 @@ InstanceStopped = trivialInput(Input.INSTANCE_STOPPED)
 StopFailed = trivialInput(Input.STOP_FAILED)
 
 
-@attributes(['_driver'], apply_immutable=True)
+@attributes(['driver'], apply_immutable=True)
 class InstanceBooter(object):
     """
     """
@@ -107,16 +107,16 @@ class InstanceBooter(object):
             inputContext={}, world=MethodSuffixOutputer(self))
 
     def identifier(self):
-        return self._driver.name
+        return self.driver.name
 
     def output_START(self, context):
         """
         Create a node.
         """
         def thread_start():
-            self.image_metadata = self._driver.get_image_metadata()
+            self.image_metadata = self.driver.get_image_metadata()
 
-            return self._driver.create_node()
+            return self.driver.create_node()
         d = deferToThread(thread_start)
 
         def started(node):
@@ -152,7 +152,7 @@ class InstanceBooter(object):
             self._fsm.receive(InstanceStopped())
             log.err(f, "while stopping %s" % (self.identifier(),))
             log.msg(
-                instance_id=instance_id, **self._driver.log_failure_arguments()
+                instance_id=instance_id, **self.driver.log_failure_arguments()
             )
 
         d.addCallbacks(stopped, failed)
