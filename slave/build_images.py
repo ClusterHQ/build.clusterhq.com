@@ -107,7 +107,7 @@ def deploy_node_rackspace(driver, name, base_image, deploy, ssh_username,
         print deploy.stderr
         print
         print "Deploy failed."
-#        driver.destroy_node(node)
+        driver.destroy_node(node)
         sys.exit(1)
     return node
 
