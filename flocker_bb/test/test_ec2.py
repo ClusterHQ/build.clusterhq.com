@@ -40,7 +40,14 @@ def sample_build_master():
 
 
 class OnDemandBuildSlaveTestsMixin(object):
+    """
+    Tests for ``OnDemandBuildSlave`` factory functions.
+    """
     def test_driver_interface(self):
+        """
+        ``buildslave`` has an instance_booter with a driver
+        implementing the ``ICloudDriver`` interface.
+        """
         self.assertTrue(
             verifyObject(
                 ICloudDriver,
@@ -88,4 +95,3 @@ class RackspaceSlaveTests(OnDemandBuildSlaveTestsMixin, SynchronousTestCase):
             buildmaster=sample_build_master(),
             image_tags=credentials.get('image_tags', {}),
         )
-
