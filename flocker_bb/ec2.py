@@ -213,7 +213,7 @@ class ICloudDriver(Interface):
 
 
 @attributes(
-    ['driver', 'instance_type', 'keypair_name', 'security_name',
+    ['driver', 'name', 'instance_type', 'keypair_name', 'security_name',
      'image_id', 'image_tags', 'user_data', 'instance_tags']
 )
 class EC2CloudDriver(object):
@@ -324,10 +324,9 @@ def rackspace_slave(
         }
     )
     instance_booter = InstanceBooter(
-        driver=driver
+        driver=driver,
     )
     return OnDemandBuildSlave(
-        name=name,
         password=password,
         instance_booter=instance_booter,
         build_wait_timeout=build_wait_timeout,
@@ -348,6 +347,7 @@ def ec2_slave(
         secret_identifier=credentials['secret_identifier'],
 
         # Other
+        name=name,
         instance_type=config['instance_type'],
         keypair_name=keypair_name,
         security_name=security_name,
@@ -365,7 +365,6 @@ def ec2_slave(
         driver=driver
     )
     return OnDemandBuildSlave(
-        name=name,
         password=password,
         instance_booter=instance_booter,
         build_wait_timeout=build_wait_timeout,

@@ -77,7 +77,7 @@ class OnDemandBuildSlave(BuildSlave):
 
     def __init__(self,
                  # On-Demand related stuff
-                 name, password, instance_booter,
+                 password, instance_booter,
                  build_wait_timeout=60 * 10,
                  keepalive_interval=None,
 
@@ -86,10 +86,14 @@ class OnDemandBuildSlave(BuildSlave):
                  missing_timeout=60 * 20,
                  properties={}, locks=None,
                  ):
-
+        # XXX: Not too sure about this.
+        # Name is the name assigned to the VM created by our libcloud driver,
+        # so it seems reasonable to use that for the buildslave name too.
+        name = instance_booter.driver.name
         BuildSlave.__init__(
-            self, name, password, max_builds, notify_on_missing,
-            missing_timeout, properties, locks)
+            self, name, password, max_builds,
+            notify_on_missing, missing_timeout, properties, locks
+        )
         if build_wait_timeout < 0:
             config.error("%s: %s: Can't wait for negative time."
                          % (self.__class__, name))
