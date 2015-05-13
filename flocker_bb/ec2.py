@@ -283,13 +283,10 @@ class EC2CloudDriver(object):
     ['driver', 'name', 'flavor', 'keypair_name', 'image', 'image_tags',
      'instance_tags', 'user_data']
 )
+@implementer(ICloudDriver)
 class RackspaceCloudDriver(object):
     """
     """
-    def create(self):
-        """
-        """
-
     @classmethod
     def from_driver_parameters(
             cls, region, username, api_key, **kwargs):
@@ -299,6 +296,32 @@ class RackspaceCloudDriver(object):
         rackspace = get_driver(Provider.RACKSPACE)
         driver = rackspace(username, api_key, region)
         return cls(driver=driver, **kwargs)
+
+    def create(self):
+        """
+        """
+
+    def get_image_metadata(self):
+        image = get_image(
+            self.driver, self.image_id, self.image_tags
+        )
+
+        image_metadata = {
+            'image_id': image.id,
+            'image_name': image.name,
+        }
+        image_metadata.update(image.extra['tags'])
+        return image_metadata
+
+    def log_failure_arguments(self):
+        return dict(
+            format=(
+                "Rackspace Instance [%(instance_id)s]"
+                "(https://rackspace.com/cloudy/console/?instanceId=%(instance_id)s) "  # noqa
+                "failed to stop."
+            ),
+            zulip_subject="Rackspace Instances"
+        )
 
 
 def rackspace_slave(
