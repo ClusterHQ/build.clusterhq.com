@@ -254,6 +254,68 @@ To configure any Fedora 20 bare metal machine (e.g. on OnMetal as above)::
 
 Where ``${PASSWORD}`` is the password in ``slaves.fedora-vagrant.passwords`` from the ``config.yml`` or ``staging.yml`` file used to deploy the BuildBot master on hostname or IP address ``${MASTER}``.
 
+PistonCloud
+-----------
+
+The following builders need to run on Centos-7 on PistonCloud:
+
+* flocker-openstack-pistoncloud
+
+To create this machine you'll need to access various machines within pistoncloud via an "SSH jump host".
+
+The machines are referred to here as:
+ * pistoncloud-jumphost: The server through which you will connect to servers inside the pistoncloud network.
+ * pistoncloud-novahost: The server which has ``novaclient`` and associated command line tools installed.
+ * pistoncloud-buildslave: The server which we have created to run the ClusterHQ buildslave.
+
+The easiest way to access these machines is to create an SSH config file containing the hostnames and usernames that you will use to access the machines.
+Here is an example of such a file::
+
+   Host pistoncloud-jumphost
+        IdentityFile ~/.ssh/id_rsa_pistoncloud
+        User <jumphost_username>
+        HostName <jumphost_public_hostname_or_ip_address>
+
+   Host pistoncloud-novahost
+        User <novahost_username>
+        HostName <novahost_public_hostname_or_ip_address>
+        ProxyCommand ssh pistoncloud-jumphost nc %h %p
+
+With this ``ssh-config`` file saved to ``~/.ssh/config``, run::
+
+   fab -f slave/pistoncloud/fabfile.py new_server:clusterhq_flocker_buildslave,clusterhq_richardw
+
+Then find the IP address of the new machine::
+
+   $ ssh pistoncloud-novahost
+   [pistoncloud-novahost ~] $ nova list  | grep clusterhq_flocker_buildslave
+   | ad6c426c-c862-4ab4-8ee8-941f6425dd77 | clusterhq_flocker_buildslave            | ACTIVE | tmz-mdl-net1=172.19.139.35 |
+
+
+Add that address to your ssh config file::
+
+   Host pistoncloud-buildslave
+        IdentityFile ~/.ssh/id_rsa_pistoncloud_buildslave
+        User <buildbot_username>
+        HostName <buildbot_internal_ip_address_from_previous_step>
+        ProxyCommand ssh pistoncloud-novahost nc %h %p
+
+Check that you can log in to the new buildslave::
+
+   ssh pistoncloud-buildslave
+
+Now configure the new server by running the following ``fabric`` task::
+
+   fab -f slave/pistoncloud/fabfile.py install:0,clusterhq_pistoncloud_buildslave,${PASSWORD},${BUILDMASTER}
+
+Where ``${PASSWORD}`` is the password in ``slaves.piston_buildslave.passwords`` from the ``config.yml`` or ``staging.yml`` file,
+and ``${MASTER}`` is the IP address of the BuildBot master that you want this buildslave to connect to.
+
+This step will install:
+ * the buildbot buildslave package on the server and
+ * a ``buildslave`` user account and
+ * a ``clusterhq_pistoncloud_buildslave`` systemd service which will be started automatically.
+
 Monitoring
 ----------
 
