@@ -207,6 +207,10 @@ class ICloudDriver(Interface):
         """
         :return: libcloud Node
         """
+    def log_failure_arguments():
+        """
+        """
+
     def get_image_metadata():
         """
         """
@@ -216,6 +220,7 @@ class ICloudDriver(Interface):
     ['driver', 'name', 'instance_type', 'keypair_name', 'security_name',
      'image_id', 'image_tags', 'user_data', 'instance_tags']
 )
+@implementer(ICloudDriver)
 class EC2CloudDriver(object):
     """
     """
@@ -234,7 +239,7 @@ class EC2CloudDriver(object):
 
         return cls(driver=driver, **kwargs)
 
-    def log_failure_arguments():
+    def log_failure_arguments(self):
         return dict(
             format=(
                 "EC2 Instance [%(instance_id)s]"
