@@ -34,7 +34,7 @@ if 'zulip' in privateData:
 c['slavePortnum'] = 9989
 
 from flocker_bb.password import generate_password
-from flocker_bb.ec2_buildslave import EC2BuildSlave
+from flocker_bb.ec2 import rackspace_slave, ec2_slave
 from buildbot.buildslave import BuildSlave
 
 cloudInit = FilePath(__file__).sibling("slave").child(
