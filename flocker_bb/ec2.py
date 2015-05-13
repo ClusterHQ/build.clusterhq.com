@@ -280,13 +280,12 @@ class EC2CloudDriver(object):
 
 
 @attributes(
-    ['driver', 'flavor', 'region', 'keypair_name', 'image', 'username',
-     'api_key', 'image_tags']
+    ['driver', 'name', 'flavor', 'keypair_name', 'image', 'image_tags',
+     'instance_tags', 'user_data']
 )
 class RackspaceCloudDriver(object):
     """
     """
-
     def create(self):
         """
         """
@@ -299,20 +298,14 @@ class RackspaceCloudDriver(object):
         from libcloud.compute.providers import get_driver, Provider
         rackspace = get_driver(Provider.RACKSPACE)
         driver = rackspace(username, api_key, region)
-        return cls(
-            driver=driver,
-            region=region,
-            username=username,
-            api_key=api_key,
-            **kwargs
-        )
+        return cls(driver=driver, **kwargs)
 
 
 def rackspace_slave(
         name, password, config, credentials, user_data, buildmaster,
         image_tags, build_wait_timeout, keepalive_interval):
     driver = RackspaceCloudDriver.from_driver_parameters(
-        # Hardcoded rackspace flavor...for now
+        name=name,
         flavor='general1-8',
         region='dfw',
         keypair_name='richardw-testing',
