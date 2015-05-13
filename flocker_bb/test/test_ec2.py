@@ -3,14 +3,15 @@
 """
 Tests for ``flocker_bb.ec2``.
 """
+import yaml
 
 from twisted.python.filepath import FilePath
 from twisted.trial.unittest import SynchronousTestCase
 
-import yaml
+from zope.interface.verify import verifyObject
 
 from flocker_bb import __file__ as flocker_bb_dir
-from flocker_bb.ec2 import ec2_slave
+from flocker_bb.ec2 import ec2_slave, ICloudDriver
 from flocker_bb.password import generate_password
 
 sample_config = FilePath(flocker_bb_dir).parent().sibling('config.yml.sample')
@@ -31,12 +32,12 @@ def sample_build_master():
     return yaml.load(sample_config.open())['buildmaster']
 
 
-class EC2SlaveTests(SynchronousTestCase):
-    def test_constructor(self):
+class EC22SlaveTests(SynchronousTestCase):
+    def setUp(self):
         """
         """
         slave_name, slave_config = ec2_slave_config()
-        ec2_slave(
+        self.buildslave = ec2_slave(
             name=slave_name,
             password=generate_password(32),
             config=slave_config,
@@ -49,4 +50,12 @@ class EC2SlaveTests(SynchronousTestCase):
             keepalive_interval=60,
             buildmaster=sample_build_master(),
             image_tags=ec2_credentials().get('image_tags', {}),
+        )
+
+    def test_driver_interface(self):
+        self.assertTrue(
+            verifyObject(
+                ICloudDriver,
+                self.buildslave.instance_booter.driver
+            )
         )
