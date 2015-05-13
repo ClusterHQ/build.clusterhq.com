@@ -16,6 +16,9 @@ import yaml
 env.use_ssh_config = True
 
 BUILDSLAVE_NAME = "clusterhq_flocker_buildslave"
+# Be careful here! If our script has bugs we don't want to accidentally
+# modify VMs or resources of another more important tenant
+TENANT_NAME = "tmz-mdl-1"
 
 
 def configure_acceptance():
@@ -64,9 +67,6 @@ def set_google_dns():
 def _new_server(
         # Eg clusterhq_richardw
         keypair_name,
-        # Be careful here! If our script has bugs we don't want to accidentally
-        # modify VMs or resources of another more important tenant
-        tenant_name=u"tmz-mdl-1",
         # m1.large
         flavor=u'4',
         # SC_Centos7
@@ -80,7 +80,7 @@ def _new_server(
     """
     Start a new nova based VM and wait for it to boot.
     """
-    with shell_env(OS_TENANT_NAME=tenant_name):
+    with shell_env(OS_TENANT_NAME=TENANT_NAME):
         run(
             ' '.join(
                 [
@@ -104,6 +104,20 @@ def _new_server(
 def new_server(keypair_name):
     env.hosts = ['pistoncloud-novahost']
     execute(_new_server, keypair_name)
+
+
+def _delete_server():
+    """
+    Delete the buildslave machine.
+    """
+    with shell_env(OS_TENANT_NAME=TENANT_NAME):
+        run('nova delete ' + BUILDSLAVE_NAME)
+
+
+@task
+def delete_server():
+    env.hosts = ['pistoncloud-novahost']
+    execute(_delete_server)
 
 
 def _install(index, password, master='build.staging.clusterhq.com'):
