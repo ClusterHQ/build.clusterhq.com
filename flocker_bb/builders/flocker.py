@@ -661,12 +661,6 @@ def getBuilders(slavenames):
                                   )
                               ),
                           ],
-                          env={
-                              b"FLOCKER_FUNCTIONAL_TEST_CLOUD_CONFIG_FILE":
-                              b'/home/buildslave/acceptance.yml',
-                              b"FLOCKER_FUNCTIONAL_TEST_CLOUD_PROVIDER":
-                              b'openstack',
-                          },
                       ),
                       nextSlave=idleSlave),
         ]
