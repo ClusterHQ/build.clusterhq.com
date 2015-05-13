@@ -213,12 +213,28 @@ class ICloudDriver(Interface):
 
 
 @attributes(
-    ['_driver', 'instance_type', 'region', 'keypair_name', 'security_name',
-     'image_id', 'username', 'api_key', 'image_tags', 'instance_tags']
+    ['_driver', 'instance_type', 'keypair_name', 'security_name',
+     'image_id', 'image_tags', 'instance_tags']
 )
 class EC2CloudDriver(object):
     """
     """
+    def from_driver_parameters(
+            cls, region, identifier, secret_identifier, **kwargs):
+        """
+        """
+        from libcloud.compute.providers import get_driver, Provider
+        ec2_driver_factory = get_driver(Provider.EC2)
+        driver = ec2_driver_factory(
+            key=identifier,
+            secret=secret_identifier,
+            region=region
+        )
+
+        return cls(
+            driver=driver,
+            **kwargs
+        )
 
     def log_failure_arguments():
         return dict(
@@ -271,7 +287,7 @@ class RackspaceCloudDriver(object):
     def create(self):
         """
         """
-        
+
     def from_driver_parameters(
             cls, region, username, api_key, **kwargs):
         """
@@ -280,14 +296,14 @@ class RackspaceCloudDriver(object):
         rackspace = get_driver(Provider.RACKSPACE)
         driver = rackspace(username, api_key, region)
         return cls(
-            driver=driver, 
-            region=region, 
-            username=username, 
-            api_key=api_key, 
+            driver=driver,
+            region=region,
+            username=username,
+            api_key=api_key,
             **kwargs
         )
-        
-    
+
+
 def rackspace_slave(
         name, password, config, credentials, user_data, buildmaster,
         image_tags, build_wait_timeout, keepalive_interval):
@@ -318,7 +334,7 @@ def rackspace_slave(
         build_wait_timeout=build_wait_timeout,
         keepalive_interval=keepalive_interval,
     )
-    
+
 
 def ec2_slave(
         name, password, config, credentials, user_data, region, keypair_name,
@@ -333,8 +349,8 @@ def ec2_slave(
         keypair_name=keypair_name,
         security_name=security_name,
         image_id=config['ami'],
-        username=credentials['username'],
-        api_key=credentials['api_key'],
+        identifier=credentials['identifier'],
+        secret_identifier=credentials['secret_identifier'],
         user_data=user_data,
         image_tags=image_tags,
         instance_tags={
@@ -347,11 +363,10 @@ def ec2_slave(
     instance_booter = InstanceBooter(
         driver=driver
     )
-    return OnDemandBuildslave(
+    return OnDemandBuildSlave(
         name=name,
         password=password,
         instance_booter=instance_booter,
         build_wait_timeout=build_wait_timeout,
         keepalive_interval=keepalive_interval,
     )
-
