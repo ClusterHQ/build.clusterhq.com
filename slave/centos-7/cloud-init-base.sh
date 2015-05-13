@@ -11,6 +11,9 @@ then
       exit $?
 fi
 
+systemd disable firewalld.service
+systemd stop firewalld.service
+
 yum install -y http://archive.zfsonlinux.org/epel/zfs-release.el7.noarch.rpm
 
 # For updated kernel (?)
