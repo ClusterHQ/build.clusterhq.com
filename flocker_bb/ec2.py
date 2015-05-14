@@ -224,6 +224,14 @@ class ICloudDriver(Interface):
 class EC2CloudDriver(object):
     """
     """
+    _INSTANCE_URL = (
+        "https://%(region)s.console.aws.amazon.com/ec2/v2/home?"
+        "region=%(region)s#Instances:instanceId=%(instance_id)s)"
+    )
+    _FAILED_MSG_FORMAT = (
+        "EC2 Instance [%(instance_id)s](" + _INSTANCE_URL + ") failed to stop."
+    )
+
     @classmethod
     def from_driver_parameters(
             cls, region, identifier, secret_identifier, **kwargs):
@@ -237,15 +245,12 @@ class EC2CloudDriver(object):
             region=region
         )
 
-        return cls(driver=driver, **kwargs)
+        return cls(driver=driver, region=region, **kwargs)
 
     def log_failure_arguments(self):
         return dict(
-            format=(
-                "EC2 Instance [%(instance_id)s]"
-                "(https://us-west-2.console.aws.amazon.com/ec2/v2/home?region=us-west-2#Instances:instanceId=%(instance_id)s) "  # noqa
-                "failed to stop."
-            ),
+            format=self._FAILED_MSG_FORMAT,
+            region=self.region,
             zulip_subject="EC2 Instances"
         )
 
@@ -280,13 +285,19 @@ class EC2CloudDriver(object):
 
 
 @attributes(
-    ['driver', 'name', 'flavor', 'keypair_name', 'image', 'image_tags',
+    ['driver', 'name', 'flavor', 'keypair_name', 'image_id', 'image_tags',
      'instance_tags', 'user_data']
 )
 @implementer(ICloudDriver)
 class RackspaceCloudDriver(object):
     """
     """
+    _FAILED_MSG_FORMAT = (
+        "Rackspace Instance [%(instance_id)s]"
+        "(https://rackspace.com/cloudy/console/?instanceId=%(instance_id)s) "
+        "failed to stop."
+    )
+
     @classmethod
     def from_driver_parameters(
             cls, region, username, api_key, **kwargs):
@@ -315,11 +326,7 @@ class RackspaceCloudDriver(object):
 
     def log_failure_arguments(self):
         return dict(
-            format=(
-                "Rackspace Instance [%(instance_id)s]"
-                "(https://rackspace.com/cloudy/console/?instanceId=%(instance_id)s) "  # noqa
-                "failed to stop."
-            ),
+            format=self._FAILED_MSG_FORMAT,
             zulip_subject="Rackspace Instances"
         )
 

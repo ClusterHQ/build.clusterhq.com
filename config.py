@@ -53,10 +53,8 @@ def get_cloud_init(name, base, password, privateData, slavePortnum):
         "password": password,
         'buildmaster_host': privateData['buildmaster']['host'],
         'buildmaster_port': slavePortnum,
-        'acceptance.yml':
-        privateData['acceptance'].get('config', ''),
-        'acceptance-ssh-key':
-        privateData['acceptance'].get('ssh-key', ''),
+        'acceptance.yml': privateData['acceptance'].get('config', ''),
+        'acceptance-ssh-key': privateData['acceptance'].get('ssh-key', ''),
     }
 
 
