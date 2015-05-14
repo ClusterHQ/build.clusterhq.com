@@ -25,8 +25,11 @@ EOF
 export FLOCKER_FUNCTIONAL_TEST_CLOUD_CONFIG_FILE=$HOME/acceptance.yml
 
 # This will need to change if we ever have latent slaves on non-AWS.
-export FLOCKER_FUNCTIONAL_TEST_CLOUD_PROVIDER=aws
-export FLOCKER_FUNCTIONAL_TEST_AWS_AVAILABILITY_ZONE=$(curl -s http://169.254.169.254/latest/meta-data/placement/availability-zone)
+export FLOCKER_FUNCTIONAL_TEST_CLOUD_PROVIDER=%(FLOCKER_FUNCTIONAL_TEST_CLOUD_PROVIDER)s
+
+if [[ "${FLOCKER_FUNCTIONAL_TEST_CLOUD_PROVIDER}" == "aws" ]]; then
+    export FLOCKER_FUNCTIONAL_TEST_AWS_AVAILABILITY_ZONE=$(curl -s http://169.254.169.254/latest/meta-data/placement/availability-zone)
+fi
 
 touch /root/.ssh/known_hosts
 cat <<"EOF"  > /root/.ssh/id_rsa

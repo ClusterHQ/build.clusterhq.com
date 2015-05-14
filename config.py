@@ -44,13 +44,14 @@ c['slaves'] = []
 SLAVENAMES = {}
 
 
-def get_cloud_init(name, base, password, privateData, slavePortnum):
+def get_cloud_init(name, base, password, provider, privateData, slavePortnum):
     return cloudInit % {
         "github_token": privateData['github']['token'],
         "coveralls_token": privateData['coveralls']['token'],
         "name": name,
         "base": base,
         "password": password,
+        "FLOCKER_FUNCTIONAL_TEST_CLOUD_PROVIDER": provider,
         'buildmaster_host': privateData['buildmaster']['host'],
         'buildmaster_port': slavePortnum,
         'acceptance.yml': privateData['acceptance'].get('config', ''),
@@ -68,7 +69,10 @@ for base, slaveConfig in privateData['slaves'].items():
             config=slaveConfig,
             credentials=privateData['rackspace'],
             user_data=get_cloud_init(
-                base, base, password, privateData, c['slavePortnum']
+                base, base, password,
+                provider="openstack",
+                privateData=privateData,
+                slavePortnum=c['slavePortnum'],
             ),
             build_wait_timeout=50*60,
             keepalive_interval=60,
@@ -90,7 +94,10 @@ for base, slaveConfig in privateData['slaves'].items():
                 config=slaveConfig,
                 credentials=privateData['aws'],
                 user_data=get_cloud_init(
-                    name, base, password, privateData, c['slavePortnum']
+                    name, base, password,
+                    provider="aws",
+                    privateData=privateData,
+                    slavePortnum=c['slavePortnum'],
                 ),
                 region='us-west-2',
                 keypair_name='hybrid-master',
