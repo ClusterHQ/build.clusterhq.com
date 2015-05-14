@@ -688,6 +688,7 @@ BUILDERS = [
     'flocker-zfs-head',
     'flocker-admin',
     'flocker/homebrew/create',
+    'flocker-storage-backend-cinder',
 ] + [
     'flocker-omnibus-%s' % (dist,) for dist in OMNIBUS_DISTRIBUTIONS
 ]
