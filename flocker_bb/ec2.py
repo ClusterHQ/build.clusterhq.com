@@ -10,6 +10,9 @@ from machinist import (
 from flocker_bb.ec2_buildslave import OnDemandBuildSlave
 
 
+BASE_NAME_TAG = "base_name"
+
+
 class Input(Names):
     REQUEST_START = NamedConstant()
     INSTANCE_STARTED = NamedConstant()
@@ -176,27 +179,35 @@ def get_size(driver, size_id):
         raise ValueError("Unknown size.", size_id)
 
 
-def get_image(driver, image_name, image_tags):
+def get_newest_tagged_image(images, name, tags, get_tags):
     """
-    Return a ``NodeImage`` corresponding to a given name of size.
+    Return the newest image from ``images`` with a matching name and tags.
 
-    :param driver: The libcloud driver to query for images.
+    :param list images: Images loaded from a libcloud driver.
+    :param bytes name: An image name to match.
+    :param dict tags: Extra tags which should be present on the image.
+    :param get_tags: A one-argument callable which returns the tags on an
+        image.
+
+    :return: The new image from ``images`` which matches the given criteria.
     """
+    required_tags = tags.copy()
+    required_tags[BASE_NAME_TAG] = name
+
     def dict_contains(expected, actual):
         return set(expected.items()).issubset(set(actual.items()))
 
-    images = [
-        image for
-        image in driver.list_images(ex_owner="self")
-        if image.extra['tags'].get('base-name') == image_name
-        and dict_contains(image_tags, image.extra['tags'])
-    ]
-    if not images:
-        raise ValueError("Unknown image.", image_name)
-
     def timestamp(image):
-        return image.extra.get('timestamp')
-    return max(images, key=timestamp)
+        return get_tags(image).get('timestamp')
+
+    matching_images = [
+        image for
+        image in images
+        if dict_contains(required_tags, get_tags(image))
+    ]
+    if matching_images:
+        return max(matching_images, key=timestamp)
+    raise ValueError("Unknown image.", name)
 
 
 class ICloudDriver(Interface):
@@ -216,10 +227,11 @@ class ICloudDriver(Interface):
         """
 
 
-@attributes(
-    ['driver', 'name', 'instance_type', 'keypair_name', 'security_name',
-     'image_id', 'image_tags', 'user_data', 'instance_tags']
-)
+@attributes([
+    'driver', 'name', 'region', 'instance_type', 'keypair_name',
+    'security_name', 'image_id', 'image_tags', 'user_data',
+    'instance_tags'
+])
 @implementer(ICloudDriver)
 class EC2CloudDriver(object):
     """
@@ -254,10 +266,18 @@ class EC2CloudDriver(object):
             zulip_subject="EC2 Instances"
         )
 
-    def get_image_metadata(self):
-        image = get_image(
-            self.driver, self.image_id, self.image_tags
+    def get_image(self):
+        return get_newest_tagged_image(
+            # Only get images belonging to us.  There's a ton of public AMIs
+            # that are definitely irrelevant.
+            images=self.driver.list_images(ex_owner="self"),
+            name=self.image_id,
+            tags=self.image_tags,
+            get_tags=lambda image: image.extra['tags'],
         )
+
+    def get_image_metadata(self):
+        image = self.get_image()
 
         image_metadata = {
             'image_id': image.id,
@@ -268,11 +288,11 @@ class EC2CloudDriver(object):
 
     def create(self):
         """
-        """
-        image = get_image(
-            self.driver, self.image_id, self.image_tags
-        )
+        Create and start a new EC2 instance.
 
+        All parameters are fixed to the values used to initialize this driver.
+        """
+        image = self.get_image()
         return self.driver.create_node(
             name=self.name,
             size=get_size(self._driver, self.size),
@@ -308,15 +328,37 @@ class RackspaceCloudDriver(object):
         driver = rackspace(username, api_key, region)
         return cls(driver=driver, **kwargs)
 
-    def create(self):
-        """
-        """
-
-    def get_image_metadata(self):
-        image = get_image(
-            self.driver, self.image_id, self.image_tags
+    def get_image(self):
+        return get_newest_tagged_image(
+            images=self.driver.list_images(),
+            name=self.image_id,
+            tags=self.image_tags,
+            get_tags=lambda image: image.extra['metadata'],
         )
 
+    def create(self):
+        """
+        Create and start a new Rackspace Cloud Server.
+
+        All parameters are fixed to the values used to initialize this driver.
+        """
+        image = self.get_image()
+        return self.driver.create_node(
+            name=self.name,
+            size=get_size(self.driver, self.flavor),
+            image=image,
+
+            ex_keyname=self.keypair_name,
+            ex_metadata=self.instance_tags,
+
+            # If you don't turn on the config drive then your user data gets
+            # tossed in a black hole.
+            ex_config_drive=True,
+            ex_userdata=self.user_data,
+        )
+
+    def get_image_metadata(self):
+        image = self.get_image()
         image_metadata = {
             'image_id': image.id,
             'image_name': image.name,
@@ -339,7 +381,7 @@ def rackspace_slave(
         flavor='general1-8',
         region='dfw',
         keypair_name='richardw-testing',
-        image=config['openstack-image'],
+        image_id=config['openstack-image'],
         username=credentials['username'],
         api_key=credentials['api_key'],
         image_tags=image_tags,
