@@ -661,6 +661,19 @@ def getBuilders(slavenames):
                 nextSlave=idleSlave,
                 ))
 
+    # Storage backend builders
+    builders.extend([
+        BuilderConfig(
+            name='flocker-storage-backend-cinder',
+            slavenames=["rackspace-blockdevice"],
+            category='flocker',
+            factory=makeFactory(
+                b'python2.7',
+                tests=["flocker.node.agents.functional.test_cinder"],
+            ),
+        ),
+    ])
+
     return builders
 
 BUILDERS = [
