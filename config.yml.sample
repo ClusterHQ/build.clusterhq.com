@@ -22,8 +22,12 @@ aws:
 
 rackspace:
      username: "<rackspace username>"
-     api_key: "<rackspace api key>"
+     key: "<rackspace api key>"
+     keyname: "<ssh keypair name granting access to slave vm>"
      region: "<region slug>"
+     # Same as aws section.
+     image_tags:
+     #    production: "true"
 github:
     token: "<github api token>"
     report_status: True
