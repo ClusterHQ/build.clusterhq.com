@@ -378,15 +378,16 @@ class RackspaceCloudDriver(object):
 
 def rackspace_slave(
         name, password, config, credentials, user_data, buildmaster,
-        image_tags, build_wait_timeout, keepalive_interval):
+        image_tags, build_wait_timeout, keepalive_interval
+):
     driver = RackspaceCloudDriver.from_driver_parameters(
         name=name,
         flavor='general1-8',
         region='dfw',
-        keypair_name='richard_drax',
+        keypair_name=config["keyname"],
         image_id=config['openstack-image'],
         username=credentials['username'],
-        api_key=credentials['api_key'],
+        api_key=credentials['key'],
         image_tags=image_tags,
         user_data=user_data,
         instance_tags={
