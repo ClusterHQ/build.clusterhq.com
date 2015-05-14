@@ -117,7 +117,6 @@ class EC2SlaveTests(OnDemandBuildSlaveTestsMixin, SynchronousTestCase):
             build_wait_timeout=50*60,
             keepalive_interval=60,
             buildmaster=sample_build_master(),
-            image_tags=credentials.get('image_tags', {}),
         )
 
 
@@ -136,5 +135,4 @@ class RackspaceSlaveTests(OnDemandBuildSlaveTestsMixin, SynchronousTestCase):
             build_wait_timeout=50*60,
             keepalive_interval=60,
             buildmaster=sample_build_master(),
-            image_tags=credentials.get('image_tags', {}),
         )
