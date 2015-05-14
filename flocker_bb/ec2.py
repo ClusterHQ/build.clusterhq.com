@@ -384,7 +384,7 @@ def rackspace_slave(
         name=name,
         flavor='general1-8',
         region='dfw',
-        keypair_name=config["keyname"],
+        keypair_name=credentials["keyname"],
         image_id=config['openstack-image'],
         username=credentials['username'],
         api_key=credentials['key'],
