@@ -318,10 +318,10 @@ class EC2CloudDriver(object):
             name=self.name,
             size=get_size(self.driver, self.instance_type),
             image=image,
-            ex_keyname=self.keyname,
-            ex_userdata=self.userdata,
+            ex_keyname=self.keypair_name,
+            ex_userdata=self.user_data,
             ex_metadata=self.instance_tags,
-            ex_securitygroup=self.security_groups,
+            ex_securitygroup=[self.security_name],
         )
 
 
