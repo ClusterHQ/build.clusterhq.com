@@ -316,7 +316,7 @@ class EC2CloudDriver(object):
         image = self.get_image()
         return self.driver.create_node(
             name=self.name,
-            size=get_size(self._driver, self.size),
+            size=get_size(self.driver, self.size),
             image=image,
             ex_keyname=self.keyname,
             ex_userdata=self.userdata,
