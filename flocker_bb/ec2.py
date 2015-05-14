@@ -383,7 +383,7 @@ def rackspace_slave(
         name=name,
         flavor='general1-8',
         region='dfw',
-        keypair_name='jp-secret-key',
+        keypair_name='richard_drax',
         image_id=config['openstack-image'],
         username=credentials['username'],
         api_key=credentials['api_key'],
