@@ -367,7 +367,7 @@ class RackspaceCloudDriver(object):
             'image_id': image.id,
             'image_name': image.name,
         }
-        image_metadata.update(image.extra['tags'])
+        image_metadata.update(image.extra['metadata'])
         return image_metadata
 
     def log_failure_arguments(self):
