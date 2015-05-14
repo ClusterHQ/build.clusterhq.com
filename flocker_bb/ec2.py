@@ -197,17 +197,31 @@ def get_newest_tagged_image(images, name, tags, get_tags):
     required_tags = tags.copy()
     required_tags[BASE_NAME_TAG] = name
 
+    log.msg(
+        format="Checking %(count)d images for tags %(required)s",
+        count=len(images),
+        required=required_tags,
+    )
+
     def dict_contains(expected, actual):
         return set(expected.items()).issubset(set(actual.items()))
 
     def timestamp(image):
         return get_tags(image).get('timestamp')
 
-    matching_images = [
-        image for
-        image in images
-        if dict_contains(required_tags, get_tags(image))
-    ]
+    matching_images = []
+    for image in images:
+        image_tags = get_tags(image)
+        log.msg(
+            format="Checking %(image_id)s with %(tags)s",
+            image_id=image.id, tags=image_tags,
+        )
+        if dict_contains(required_tags, image_tags):
+            log.msg(
+                format="%(image_id)s matched required tags", image_id=image.id,
+            )
+            matching_images.append(image)
+
     if matching_images:
         return max(matching_images, key=timestamp)
     raise ValueError("Unknown image.", name)
@@ -270,6 +284,10 @@ class EC2CloudDriver(object):
         )
 
     def get_image(self):
+        log.msg(
+            format="Getting image for %(image_id)s; required tags %(tags)s",
+            image_id=self.image_id, tags=self.image_tags,
+        )
         return get_newest_tagged_image(
             # Only get images belonging to us.  There's a ton of public AMIs
             # that are definitely irrelevant.
