@@ -77,9 +77,6 @@ for base, slaveConfig in privateData['slaves'].items():
             build_wait_timeout=50*60,
             keepalive_interval=60,
             buildmaster=privateData['buildmaster']['host'],
-            image_tags=privateData['rackspace'].get(
-                'image_tags', {"production": "true"}
-            ) or {},
         )
         c['slaves'].append(slave)
     elif 'ami' in slaveConfig:
@@ -105,10 +102,6 @@ for base, slaveConfig in privateData['slaves'].items():
                 build_wait_timeout=50*60,
                 keepalive_interval=60,
                 buildmaster=privateData['buildmaster']['host'],
-                # Default to requiring production, but treat `None` as {}
-                image_tags=privateData['aws'].get(
-                    'image_tags', {"production": "true"}
-                ) or {},
             )
             c['slaves'].append(slave)
     else:

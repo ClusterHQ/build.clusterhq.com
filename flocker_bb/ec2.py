@@ -376,9 +376,14 @@ class RackspaceCloudDriver(object):
         )
 
 
+def get_image_tags(credentials):
+    # Default to requiring production, but treat `None` as {}
+    return credentials.get("image_tags", {"production": "true"}) or {}
+
+
 def rackspace_slave(
         name, password, config, credentials, user_data, buildmaster,
-        image_tags, build_wait_timeout, keepalive_interval
+        build_wait_timeout, keepalive_interval
 ):
     driver = RackspaceCloudDriver.from_driver_parameters(
         name=name,
@@ -388,7 +393,7 @@ def rackspace_slave(
         image_id=config['openstack-image'],
         username=credentials['username'],
         api_key=credentials['key'],
-        image_tags=image_tags,
+        image_tags=get_image_tags(credentials),
         user_data=user_data,
         instance_tags={
             'Image': config['openstack-image'],
@@ -410,8 +415,8 @@ def rackspace_slave(
 
 def ec2_slave(
         name, password, config, credentials, user_data, region, keypair_name,
-        security_name, build_wait_timeout, keepalive_interval, buildmaster,
-        image_tags):
+        security_name, build_wait_timeout, keepalive_interval, buildmaster
+):
     """
     """
     driver = EC2CloudDriver.from_driver_parameters(
@@ -426,7 +431,7 @@ def ec2_slave(
         keypair_name=keypair_name,
         security_name=security_name,
         image_id=config['ami'],
-        image_tags=image_tags,
+        image_tags=get_image_tags(credentials),
         user_data=user_data,
         instance_tags={
             'Image': config['ami'],
