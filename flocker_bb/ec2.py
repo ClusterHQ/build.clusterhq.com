@@ -383,7 +383,7 @@ def rackspace_slave(
     driver = RackspaceCloudDriver.from_driver_parameters(
         name=name,
         flavor='general1-8',
-        region='dfw',
+        region=credentials["region"],
         keypair_name=credentials["keyname"],
         image_id=config['openstack-image'],
         username=credentials['username'],
