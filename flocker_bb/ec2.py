@@ -10,6 +10,10 @@ from machinist import (
 from flocker_bb.ec2_buildslave import OnDemandBuildSlave
 
 
+# A metadata key name which can be found in image metadata.  This metadata
+# items identifies the general purpose of the image.  It may not be unique if
+# multiple versions of the image have been created.  It corresponds to the
+# names used in the manifest.yml file used to build the images.
 BASE_NAME_TAG = "base_name"
 
 
