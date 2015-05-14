@@ -12,6 +12,10 @@ from common import (
 from libcloud.compute.base import NodeImage
 from libcloud.compute.deployment import ScriptDeployment
 
+# Watch out for dodgy providers that mangle your tag names (I'm looking *right*
+# at you Rackspace).
+BASE_NAME_TAG = 'base_name'
+
 
 def get_size(driver, size_name):
     """
@@ -156,7 +160,7 @@ def build_image_aws(name, base_ami, deploy, username,
         print "Creating image %(name)s." % dict(name=ami_name)
         image = create_image(driver, node, ami_name)
         driver.ex_create_tags(image, tags={
-            'base-name': name,
+            BASE_NAME_TAG: name,
             'timestamp': timestamp,
             })
     finally:
@@ -200,8 +204,8 @@ def build_image_rackspace(name, base_image, deploy, **kwargs):
             'timestamp': timestamp,
         }
         print "Creating image %(name)s." % dict(name=image_name)
-        image = driver.create_image(node, name, metadata={
-            'base-name': name,
+        image = driver.create_image(node, image_name, metadata={
+            BASE_NAME_TAG: name,
             'timestamp': timestamp,
         })
         wait_for_image(driver, image)
