@@ -23,7 +23,7 @@ aws:
 rackspace:
      username: "<rackspace username>"
      api_key: "<rackspace api key>"
-
+     region: "<region slug>"
 github:
     token: "<github api token>"
     report_status: True
