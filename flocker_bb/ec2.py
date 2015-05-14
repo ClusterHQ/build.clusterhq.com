@@ -122,8 +122,7 @@ class InstanceBooter(object):
         """
         def thread_start():
             self.image_metadata = self.driver.get_image_metadata()
-
-            return self.driver.create_node()
+            return self.driver.create()
         d = deferToThread(thread_start)
 
         def started(node):
