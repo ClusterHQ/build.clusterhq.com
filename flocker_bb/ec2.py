@@ -151,6 +151,9 @@ class InstanceBooter(object):
         d.addCallbacks(started, failed)
 
     def output_STOP(self, context):
+        """
+        Destroy a node.
+        """
         d = deferToThread(self.node.destroy)
 
         def stopped(node):
@@ -235,18 +238,28 @@ def get_newest_tagged_image(images, name, tags, get_tags):
 
 class ICloudDriver(Interface):
     """
-    A thin layer on top of libcloud NodeDriver.
+    A thin layer on top of libcloud ``NodeDriver`` which is required to mask
+    the differences between cloud provider specific subclasses of
+    ``NodeDriver``.
     """
     def create():
         """
-        :return: libcloud Node
+        Create a new node
+
+        :return: A libcloud ``Node``.
         """
+
     def log_failure_arguments():
         """
+        :return: A ``dict`` of arguments which will be use to format the
+            message sent to ``Zulip`` when a node can not be automatically
+            destroyed.
         """
 
     def get_image_metadata():
         """
+        :return: A ``dict`` of metadata for the image used by this buildslave,
+            which will be displayed in the build master web interface.
         """
 
 
