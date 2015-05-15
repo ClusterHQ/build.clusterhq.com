@@ -1,7 +1,7 @@
 # Copyright Hybrid Logic Ltd.  See LICENSE file for details.
 
 """
-Tests for ``flocker_bb.ec2``.
+Tests for ``flocker_bb.ondemand``.
 """
 import os
 
@@ -84,7 +84,7 @@ class OnDemandBuildSlaveTestsMixin(object):
                         """
                         """
                         return [dict(buildername=self.buildslave.slavename)]
-                    
+
         self.buildslave.master = FakeMaster
 
         class FakeBuilder(object):
