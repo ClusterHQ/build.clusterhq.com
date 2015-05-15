@@ -93,12 +93,18 @@ StopFailed = trivialInput(Input.STOP_FAILED)
 @attributes(['driver'], apply_immutable=True)
 class InstanceBooter(object):
     """
+    Creates and destroys virtual machines associated with an
+    ``OnDemandBuildSlave`` 's in response to the state changes supplied by a
+    ``machinist`` loop.
+
+    :ivar ICloudDriver driver: A driver instance which is capable of creating
+       and destroying virtual machines for a particular cloud provider.
     """
 
     def _fsmState(self):
         """
         Return the current state of the finite-state machine driving this
-        L{EC2}.
+        ``InstanceBooter``.
         """
         return self._fsm.state
 
