@@ -271,6 +271,7 @@ class ICloudDriver(Interface):
 @implementer(ICloudDriver)
 class EC2CloudDriver(object):
     """
+    A driver for creating ``EC2`` nodes on ``AWS``.
     """
     _INSTANCE_URL = (
         "https://%(region)s.console.aws.amazon.com/ec2/v2/home?"
@@ -284,6 +285,15 @@ class EC2CloudDriver(object):
     def from_driver_parameters(
             cls, region, identifier, secret_identifier, **kwargs):
         """
+        Create an ``EC2`` libcloud ``NodeDriver`` using the supplied region and
+        credentials and supply that as the ``driver`` for ``EC2CloudDriver``
+        along with all the other keyword arguments it requires.
+
+        :param bytes region: An EC2 region slug.
+        :param bytes identifier: An EC2 API identifier.
+        :param bytes secret_identifier: An EC2 API "secret" identifier.
+        :param dict kwargs: Keyword arguments for ``EC2CloudDriver``.
+        :returns: An ``EC2CloudDriver``instance.
         """
         from libcloud.compute.providers import get_driver, Provider
         ec2_driver_factory = get_driver(Provider.EC2)
@@ -351,9 +361,11 @@ class EC2CloudDriver(object):
 @implementer(ICloudDriver)
 class RackspaceCloudDriver(object):
     """
+    A driver for creating ``Compute`` nodes on ``Rackspace``.
     """
     _FAILED_MSG_FORMAT = (
         "Rackspace Instance [%(instance_id)s]"
+        # XXX: Fix this URL.
         "(https://rackspace.com/cloudy/console/?instanceId=%(instance_id)s) "
         "failed to stop."
     )
@@ -362,6 +374,16 @@ class RackspaceCloudDriver(object):
     def from_driver_parameters(
             cls, region, username, api_key, **kwargs):
         """
+        Create an ``Rackspace`` libcloud ``NodeDriver`` using the supplied
+        region and credentials and supply that as the ``driver`` for
+        ``RackspaceCloudDriver`` along with all the other keyword arguments it
+        requires.
+
+        :param bytes region: A Rackspace region slug.
+        :param bytes username: A Rackspace API username.
+        :param bytes api_key: A Rackspace API key.
+        :param dict kwargs: Keyword arguments for ``RackspaceCloudDriver``.
+        :returns: A ``RackspaceCloudDriver``instance.
         """
         from libcloud.compute.providers import get_driver, Provider
         rackspace = get_driver(Provider.RACKSPACE)
@@ -414,7 +436,20 @@ class RackspaceCloudDriver(object):
 
 
 def get_image_tags(credentials):
-    # Default to requiring production, but treat `None` as {}
+    """
+    Extracts the ``image_tags`` dictionary from the ``credentials`` section of
+    a buildbot ``config.yml`` file.
+    These tags are used for filtering the list of images that can be used when
+    creating buildslave nodes.
+    If the image_tags section is missing, a default dictionary of tags is
+    returned which will result in only production images being used.
+    If the image_tags key is present by has a value of ``None``, an empty
+    ``dict`` will be returned.
+
+    :param dict credentials: The ``credentials`` section of a buildbot
+        ``config.yml`` file.
+    :returns: ``dict``
+    """
     return credentials.get("image_tags", {"production": "true"}) or {}
 
 
@@ -422,6 +457,10 @@ def rackspace_slave(
         name, password, config, credentials, user_data, buildmaster,
         build_wait_timeout, keepalive_interval
 ):
+    """
+    :return: An ``OnDemandBuildSlave`` that uses a ``RackspaceCloudDriver`` for
+        creating and destroying new buildslave nodes.
+    """
     driver = RackspaceCloudDriver.from_driver_parameters(
         name=name,
         flavor='general1-8',
@@ -455,6 +494,8 @@ def ec2_slave(
         security_name, build_wait_timeout, keepalive_interval, buildmaster
 ):
     """
+    :return: An ``OnDemandBuildSlave`` that uses an ``EC2CloudDriver`` for
+        creating and destroying new buildslave nodes.
     """
     driver = EC2CloudDriver.from_driver_parameters(
         # libcloud ec2 driver parameters
