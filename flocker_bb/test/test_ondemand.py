@@ -16,6 +16,8 @@ from flocker_bb import __file__ as flocker_bb_dir
 from flocker_bb.ec2 import ec2_slave, ICloudDriver, rackspace_slave
 from flocker_bb.password import generate_password
 
+# Use either the ``config.yml.sample`` or a config file path supplied in the
+# environment.
 sample_config_path = os.environ.get('BUILDBOT_CONFIG_PATH')
 if sample_config_path is None:
     sample_config = FilePath(flocker_bb_dir).parent().sibling('config.yml.sample')
@@ -24,6 +26,10 @@ else:
 
 
 def ec2_slave_config():
+    """
+    :return: The configuration for the first EC2 slave defined in the config
+        file.
+    """
     all_config = yaml.load(sample_config.open())
     for slave_name, slave_config in all_config['slaves'].items():
         if u'ami' in slave_config:
@@ -31,6 +37,10 @@ def ec2_slave_config():
 
 
 def rackspace_slave_config():
+    """
+    :return: The configuration for the first Rackspace slave defined in the
+        config file.
+    """
     all_config = yaml.load(sample_config.open())
     for slave_name, slave_config in all_config['slaves'].items():
         if u'openstack-image' in slave_config:
@@ -38,10 +48,16 @@ def rackspace_slave_config():
 
 
 def sample_credentials(provider):
+    """
+    :return: The credentials for ``provider`` found in the ``sample_config``.
+    """
     return yaml.load(sample_config.open())[provider]
 
 
 def sample_build_master():
+    """
+    :return: The buildmaster configuration from the ``sample_config``.
+    """
     return yaml.load(sample_config.open())['buildmaster']
 
 
@@ -63,6 +79,14 @@ class OnDemandBuildSlaveTestsMixin(object):
 
     def test_start_service(self):
         """
+        An unfinished attempt to test how the ``OnDemandBuildSlave`` responds
+        to build requests.
+
+        I intended to feed a fake request to the ``OnDemandBuildSlave`` and
+        verify that it creates a cloud node in response.
+
+        This will require real credentials to be included in the supplied
+        config file.
         """
         from twisted.internet.defer import succeed
         class FakeMaster(object):
@@ -100,9 +124,11 @@ class OnDemandBuildSlaveTestsMixin(object):
 
 
 class EC2SlaveTests(OnDemandBuildSlaveTestsMixin, SynchronousTestCase):
+    """
+    Tests for ``ec2_slave`` factory function and the ``OnDemandBuildSlave``
+    that it returns.
+    """
     def setUp(self):
-        """
-        """
         slave_name, slave_config = ec2_slave_config()
         credentials = sample_credentials('aws')
         self.buildslave = ec2_slave(
@@ -121,9 +147,11 @@ class EC2SlaveTests(OnDemandBuildSlaveTestsMixin, SynchronousTestCase):
 
 
 class RackspaceSlaveTests(OnDemandBuildSlaveTestsMixin, SynchronousTestCase):
+    """
+    Tests for ``rackspace_slave`` factory function and the
+    ``OnDemandBuildSlave`` that it returns.
+    """
     def setUp(self):
-        """
-        """
         slave_name, slave_config = rackspace_slave_config()
         credentials = sample_credentials('rackspace')
         self.buildslave = rackspace_slave(
