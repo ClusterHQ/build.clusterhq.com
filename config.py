@@ -45,6 +45,22 @@ SLAVENAMES = {}
 
 
 def get_cloud_init(name, base, password, provider, privateData, slavePortnum):
+    """
+    :param bytes name: The name of the buildslave.
+    :param bytes base: The name of image used for the buildslave.
+    :param bytes password: The password that the buildslave will use to
+       authenticate with the buildmaster.
+    :param bytes provider: The cloud ``provider`` hosting the buildslave. This
+        is added to an environment variable, so that cloud ``provider``
+        specific tests know which cloud authentication plugin to load and which
+        credentials to load from the credentials file.
+    :param dict privateData: The non-slave specific keys and values from the
+        buildbot ``config.yml`` file.
+    :parma int slavePortnum: The TCP port number on the buildmaster to which
+        the buildslave will connect.
+    :returns: The ``bytes`` of a ``cloud-init.sh`` script which can be supplied
+       as ``userdata`` when creating an on-demand buildslave.
+    """
     return cloudInit % {
         "github_token": privateData['github']['token'],
         "coveralls_token": privateData['coveralls']['token'],
