@@ -17,9 +17,9 @@
 from __future__ import with_statement
 
 """
-Fake latent slave implementation for AWS EC2.
+An improved latent or on-demand slave implementation.
 
-Buiildbot's latent slave implementation has some issues. It will often get into
+Buildbot's latent slave implementation has some issues. It will often get into
 a state where where it doesn't try to start a slave. I'm not sure exactly why
 this is but it is related to the fact that the state is spread out over 4
 objects and 6 classes
@@ -31,7 +31,7 @@ objects and 6 classes
 - buildbot.process.botmaster.BotMaster
 
 This implements a simpler scheme, which acts like a regular slave, but watches
-buildbots state to start and stop the slave.
+buildbot's state to start and stop the slave.
 - When a build request comes in for a builder the slave is allocated to,
   start this slave.
 - Poll for existing requests for builders the slave is allocated to.
@@ -69,7 +69,10 @@ from machinist import WrongState
 
 
 class OnDemandBuildSlave(BuildSlave):
-
+    """
+    A buildslave which is capable of creating a buildslave node upon receiving
+    a build request and which will destroy that node when it becomes idle.
+    """
     instance = image = None
     _poll_resolution = 5  # hook point for tests
 
@@ -86,9 +89,8 @@ class OnDemandBuildSlave(BuildSlave):
                  missing_timeout=60 * 20,
                  properties={}, locks=None,
                  ):
-        # XXX: Not too sure about this.
-        # Name is the name assigned to the VM created by our libcloud driver,
-        # so it seems reasonable to use that for the buildslave name too.
+        # The buildslave name has already been supplied to the driver
+        # responsible for booting the node, so we use that attribute here.
         name = instance_booter.driver.name
         BuildSlave.__init__(
             self, name, password, max_builds,
