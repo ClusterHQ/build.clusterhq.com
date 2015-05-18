@@ -672,7 +672,7 @@ def getBuilders(slavenames):
                 b'python2.7',
                 tests=[
                     "--testmodule",
-                    Interpolate("%(builddir)s/build/" + driver),
+                    Interpolate("%(prop:builddir)s/build/" + driver),
                 ],
             ),
         )
