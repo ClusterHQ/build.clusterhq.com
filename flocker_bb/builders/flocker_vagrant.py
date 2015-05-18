@@ -449,7 +449,7 @@ BUILDERS = [
     'flocker/installed-package/fedora-20',
 ] + [
     configuration.builder_name
-    for configuration in ACCEPTEANCE_CONFIGURATIONS
+    for configuration in ACCEPTANCE_CONFIGURATIONS
 ]
 
 from ..steps import MergeForward, report_expected_failures_parameter
@@ -492,7 +492,7 @@ def getSchedulers():
                 'flocker/installed-package/fedora-20',
             ] + [
                 configuration.builder_name
-                for configuration in ACCEPTEANCE_CONFIGURATIONS
+                for configuration in ACCEPTANCE_CONFIGURATIONS
                 if configuration.provider == 'vagrant'
             ],
             codebases={
@@ -503,7 +503,7 @@ def getSchedulers():
     for distribution in ('fedora-20', 'centos-7', 'ubuntu-14.04'):
         builders = [
             configuration.builder_name
-            for configuration in ACCEPTEANCE_CONFIGURATIONS
+            for configuration in ACCEPTANCE_CONFIGURATIONS
             if configuration.provider != 'vagrant'
             and configuration.distribution == distribution
         ]
