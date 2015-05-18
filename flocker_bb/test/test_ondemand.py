@@ -20,7 +20,9 @@ from flocker_bb.password import generate_password
 # environment.
 sample_config_path = os.environ.get('BUILDBOT_CONFIG_PATH')
 if sample_config_path is None:
-    sample_config = FilePath(flocker_bb_dir).parent().sibling('config.yml.sample')
+    sample_config = FilePath(flocker_bb_dir).parent().sibling(
+        'config.yml.sample')
+    
 else:
     sample_config = FilePath(sample_config_path)
 
