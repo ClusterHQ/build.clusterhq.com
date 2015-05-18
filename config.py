@@ -83,6 +83,9 @@ for base, slaveConfig in privateData['slaves'].items():
         password = generate_password(32)
 
         SLAVENAMES[base].append(base)
+        # Factor the repetition out of this section and the ec2_slave call
+        # below.  Maybe something like ondemand_slave(rackspace_driver, ...)
+        # FLOC-1908
         slave = rackspace_slave(
             name=base,
             password=password,
