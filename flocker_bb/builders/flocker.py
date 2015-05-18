@@ -694,7 +694,7 @@ BUILDERS = [
     'flocker-zfs-head',
     'flocker-admin',
     'flocker/homebrew/create',
-    'flocker-storage-backend-cinder',
+    'flocker/functional/rackspace/centos-7/storage-driver',
 ] + [
     'flocker-omnibus-%s' % (dist,) for dist in OMNIBUS_DISTRIBUTIONS
 ]
