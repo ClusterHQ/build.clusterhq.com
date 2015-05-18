@@ -670,7 +670,10 @@ def getBuilders(slavenames):
             category='flocker',
             factory=makeFactory(
                 b'python2.7',
-                tests=["--testmodule", "../build/" + driver],
+                tests=[
+                    "--testmodule",
+                    Interpolate("%(builddir)s/build/" + driver),
+                ],
             ),
         )
         for (name, driver)
