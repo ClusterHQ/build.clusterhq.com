@@ -34,57 +34,99 @@ if 'zulip' in privateData:
 c['slavePortnum'] = 9989
 
 from flocker_bb.password import generate_password
-from flocker_bb.ec2_buildslave import EC2BuildSlave
+from flocker_bb.ec2 import rackspace_slave, ec2_slave
 from buildbot.buildslave import BuildSlave
 
-cloudInit = FilePath(__file__).sibling("slave").child("cloud-init.sh").getContent()
+cloudInit = FilePath(__file__).sibling("slave").child(
+    "cloud-init.sh").getContent()
 
 c['slaves'] = []
 SLAVENAMES = {}
 
+
+def get_cloud_init(name, base, password, provider, privateData, slavePortnum):
+    """
+    :param bytes name: The name of the buildslave.
+    :param bytes base: The name of image used for the buildslave.
+    :param bytes password: The password that the buildslave will use to
+       authenticate with the buildmaster.
+    :param bytes provider: The cloud ``provider`` hosting the buildslave. This
+        is added to an environment variable, so that cloud ``provider``
+        specific tests know which cloud authentication plugin to load and which
+        credentials to load from the credentials file.
+    :param dict privateData: The non-slave specific keys and values from the
+        buildbot ``config.yml`` file.
+    :parma int slavePortnum: The TCP port number on the buildmaster to which
+        the buildslave will connect.
+    :returns: The ``bytes`` of a ``cloud-init.sh`` script which can be supplied
+       as ``userdata`` when creating an on-demand buildslave.
+    """
+    return cloudInit % {
+        "github_token": privateData['github']['token'],
+        "coveralls_token": privateData['coveralls']['token'],
+        "name": name,
+        "base": base,
+        "password": password,
+        "FLOCKER_FUNCTIONAL_TEST_CLOUD_PROVIDER": provider,
+        'buildmaster_host': privateData['buildmaster']['host'],
+        'buildmaster_port': slavePortnum,
+        'acceptance.yml': privateData['acceptance'].get('config', ''),
+        'acceptance-ssh-key': privateData['acceptance'].get('ssh-key', ''),
+    }
+
+
 for base, slaveConfig in privateData['slaves'].items():
     SLAVENAMES[base] = []
-    if 'ami' in slaveConfig:
+    if "openstack-image" in slaveConfig:
+        # Give this multi-slave support like the EC2 implementation below.
+        # FLOC-1907
+        password = generate_password(32)
+
+        SLAVENAMES[base].append(base)
+        # Factor the repetition out of this section and the ec2_slave call
+        # below.  Maybe something like ondemand_slave(rackspace_driver, ...)
+        # FLOC-1908
+        slave = rackspace_slave(
+            name=base,
+            password=password,
+            config=slaveConfig,
+            credentials=privateData['rackspace'],
+            user_data=get_cloud_init(
+                base, base, password,
+                provider="openstack",
+                privateData=privateData,
+                slavePortnum=c['slavePortnum'],
+            ),
+            build_wait_timeout=50*60,
+            keepalive_interval=60,
+            buildmaster=privateData['buildmaster']['host'],
+        )
+        c['slaves'].append(slave)
+    elif 'ami' in slaveConfig:
         for i in range(slaveConfig['slaves']):
             name = '%s-%d' % (base, i)
             password = generate_password(32)
 
             SLAVENAMES[base].append(name)
-            c['slaves'].append(
-                EC2BuildSlave(
-                    name, password,
-                    instance_type=slaveConfig['instance_type'],
-                    build_wait_timeout=50*60,
-                    image_name=slaveConfig['ami'],
-                    region='us-west-2',
-                    security_name='ssh',
-                    keypair_name='hybrid-master',
-                    identifier=privateData['aws']['identifier'],
-                    secret_identifier=privateData['aws']['secret_identifier'],
-                    user_data=cloudInit % {
-                        "github_token": privateData['github']['token'],
-                        "coveralls_token": privateData['coveralls']['token'],
-                        "name": name,
-                        "base": base,
-                        "password": password,
-                        'buildmaster_host': privateData['buildmaster']['host'],
-                        'buildmaster_port': c['slavePortnum'],
-                        'acceptance.yml':
-                            privateData['acceptance'].get('config', ''),
-                        'acceptance-ssh-key':
-                            privateData['acceptance'].get('ssh-key', ''),
-                        },
-                    keepalive_interval=60,
-                    instance_tags={
-                        'Image': slaveConfig['ami'],
-                        'Class': base,
-                        'BuildMaster': privateData['buildmaster']['host'],
-                        },
-                    # Default to requiring production, but treat `None` as {}
-                    image_tags=privateData['aws'].get(
-                        'image_tags', {"production": "true"}) or {},
-                )
+            slave = ec2_slave(
+                name=name,
+                password=password,
+                config=slaveConfig,
+                credentials=privateData['aws'],
+                user_data=get_cloud_init(
+                    name, base, password,
+                    provider="aws",
+                    privateData=privateData,
+                    slavePortnum=c['slavePortnum'],
+                ),
+                region='us-west-2',
+                keypair_name='hybrid-master',
+                security_name='ssh',
+                build_wait_timeout=50*60,
+                keepalive_interval=60,
+                buildmaster=privateData['buildmaster']['host'],
             )
+            c['slaves'].append(slave)
     else:
         for i, password in enumerate(slaveConfig['passwords']):
             name = '%s-%d' % (base, i)
