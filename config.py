@@ -78,6 +78,8 @@ def get_cloud_init(name, base, password, provider, privateData, slavePortnum):
 for base, slaveConfig in privateData['slaves'].items():
     SLAVENAMES[base] = []
     if "openstack-image" in slaveConfig:
+        # Give this multi-slave support like the EC2 implementation below.
+        # FLOC-1907
         password = generate_password(32)
 
         SLAVENAMES[base].append(base)
