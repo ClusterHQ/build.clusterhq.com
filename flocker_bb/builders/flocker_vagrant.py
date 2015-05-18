@@ -377,7 +377,7 @@ class AcceptanceConfiguration(object):
             return 'centos-7'
 
 
-ACCEPTEANCE_CONFIGURATIONS = [
+ACCEPTANCE_CONFIGURATIONS = [
     AcceptanceConfiguration(
         provider='vagrant', distribution='fedora-20'),
     AcceptanceConfiguration(
@@ -432,7 +432,7 @@ def getBuilders(slavenames):
                           box='tutorial'),
                       nextSlave=idleSlave),
         ]
-    for configuration in ACCEPTEANCE_CONFIGURATIONS:
+    for configuration in ACCEPTANCE_CONFIGURATIONS:
         builders.append(BuilderConfig(
             name=configuration.builder_name,
             builddir=configuration.builder_directory,
