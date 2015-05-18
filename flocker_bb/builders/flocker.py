@@ -664,14 +664,19 @@ def getBuilders(slavenames):
     # Storage backend builders
     builders.extend([
         BuilderConfig(
-            name='flocker-storage-backend-cinder',
-            slavenames=slavenames["rackspace/centos-7/storage-driver"],
+            name=name,
+            slavenames=slavenames[name],
             category='flocker',
             factory=makeFactory(
                 b'python2.7',
-                tests=["--testmodule", "flocker/node/agents/cinder.py"],
+                tests=["--testmodule", driver],
             ),
-        ),
+        )
+        for (name, driver)
+        in [
+            ("flocker/functional/rackspace/centos-7/storage-driver",
+             "flocker/node/agents/cinder.py"),
+        ]
     ])
 
     return builders
