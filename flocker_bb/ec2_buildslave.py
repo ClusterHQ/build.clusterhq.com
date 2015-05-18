@@ -79,8 +79,10 @@ class OnDemandBuildSlave(BuildSlave):
     build_wait_timer = None
 
     def __init__(self,
+                 password,
+
                  # On-Demand related stuff
-                 password, instance_booter,
+                 instance_booter,
                  build_wait_timeout=60 * 10,
                  keepalive_interval=None,
 
