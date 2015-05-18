@@ -366,18 +366,20 @@ class EC2CloudDriver(object):
 
 @attributes(
     ['driver', 'name', 'flavor', 'keypair_name', 'image_id', 'image_tags',
-     'instance_tags', 'user_data']
+     'instance_tags', 'user_data', 'region']
 )
 @implementer(ICloudDriver)
 class RackspaceCloudDriver(object):
     """
     A driver for creating ``Compute`` nodes on ``Rackspace``.
     """
+    # ClusterHQ organization
+    _TENANT_ID = "929000"
     _FAILED_MSG_FORMAT = (
         "Rackspace Instance [%(instance_id)s]"
-        # XXX: Fix this URL.
-        "(https://rackspace.com/cloudy/console/?instanceId=%(instance_id)s) "
-        "failed to stop."
+        "(https://mycloud.rackspace.com/cloud/" + _TENANT_ID + "/servers#"
+        "compute%%2CcloudServersOpenStack%%2C%(region_slug)s/"
+        "%(instance_id)s) failed to stop."
     )
 
     @classmethod
@@ -398,7 +400,7 @@ class RackspaceCloudDriver(object):
         from libcloud.compute.providers import get_driver, Provider
         rackspace = get_driver(Provider.RACKSPACE)
         driver = rackspace(username, api_key, region)
-        return cls(driver=driver, **kwargs)
+        return cls(driver=driver, region=region, **kwargs)
 
     def get_image(self):
         return get_newest_tagged_image(
@@ -441,6 +443,7 @@ class RackspaceCloudDriver(object):
     def log_failure_arguments(self):
         return dict(
             format=self._FAILED_MSG_FORMAT,
+            region_slug=self.region,
             zulip_subject="Rackspace Instances"
         )
 
