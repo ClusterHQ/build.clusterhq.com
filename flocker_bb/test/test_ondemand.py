@@ -78,51 +78,6 @@ class OnDemandBuildSlaveTestsMixin(object):
             )
         )
 
-    def test_start_service(self):
-        """
-        An unfinished attempt to test how the ``OnDemandBuildSlave`` responds
-        to build requests.
-
-        I intended to feed a fake request to the ``OnDemandBuildSlave`` and
-        verify that it creates a cloud node in response.
-
-        This will require real credentials to be included in the supplied
-        config file.
-        """
-        from twisted.internet.defer import succeed
-        class FakeMaster(object):
-            @staticmethod
-            def subscribeToBuildRequests(request):
-                """
-                """
-            class db(object):
-                class buildslaves(object):
-                    @staticmethod
-                    def getBuildslaveByName(slavename):
-                        """
-                        """
-                        return succeed(None)
-
-                class buildrequests(object):
-                    @staticmethod
-                    def getBuildRequests(claimed):
-                        """
-                        """
-                        return [dict(buildername=self.buildslave.slavename)]
-
-        self.buildslave.master = FakeMaster
-
-        class FakeBuilder(object):
-            name = self.buildslave.slavename
-
-        class FakeBotMaster(object):
-            @staticmethod
-            def getBuildersForSlave(slavename):
-                return [FakeBuilder()]
-
-        self.buildslave.botmaster = FakeBotMaster()
-        self.buildslave.startService()
-
 
 class EC2SlaveTests(OnDemandBuildSlaveTestsMixin, SynchronousTestCase):
     """
