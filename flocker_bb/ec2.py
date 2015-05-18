@@ -127,6 +127,16 @@ class InstanceBooter(object):
         Create a node.
         """
         def thread_start():
+            # Since loading the image metadata is done separately from booting
+            # the node, it's possible the metadata here won't actually match
+            # the metadata of the image the node ends up running (someone could
+            # replace the image with a different one between this call and the
+            # node being started).  Since generating images is currently a
+            # manual step, this probably won't happen very often and if it does
+            # there's a person there who can deal with it.  Also it will be
+            # resolved after the next node restart.  It would be better to
+            # extract the image metadata from the booted node, though.
+            # FLOC-1905
             self.image_metadata = self.driver.get_image_metadata()
             return self.driver.create()
         d = deferToThread(thread_start)
