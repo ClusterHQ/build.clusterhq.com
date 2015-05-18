@@ -669,7 +669,7 @@ def getBuilders(slavenames):
             category='flocker',
             factory=makeFactory(
                 b'python2.7',
-                tests=["flocker.node.agents.functional.test_cinder"],
+                tests=["--testmodule", "flocker/node/agents/cinder.py"],
             ),
         ),
     ])
