@@ -79,6 +79,8 @@ for base, slaveConfig in privateData['slaves'].items():
     SLAVENAMES[base] = []
     if "openstack-image" in slaveConfig:
         password = generate_password(32)
+
+        SLAVENAMES[base].append(base)
         slave = rackspace_slave(
             name=base,
             password=password,

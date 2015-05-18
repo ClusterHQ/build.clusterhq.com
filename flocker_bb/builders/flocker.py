@@ -665,7 +665,7 @@ def getBuilders(slavenames):
     builders.extend([
         BuilderConfig(
             name='flocker-storage-backend-cinder',
-            slavenames=["rackspace-blockdevice"],
+            slavenames=slavenames["rackspace-blockdevice"],
             category='flocker',
             factory=makeFactory(
                 b'python2.7',
