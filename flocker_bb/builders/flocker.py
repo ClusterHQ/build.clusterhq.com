@@ -665,6 +665,7 @@ def getBuilders(slavenames):
     builders.extend([
         BuilderConfig(
             name=name,
+            builddir=name.replace("/", "-"),
             slavenames=slavenames[name],
             category='flocker',
             factory=makeFactory(
