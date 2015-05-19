@@ -54,7 +54,7 @@ class StorageConfiguration(object):
 
     @property
     def slave_class(self):
-        if self.provider == 'ebs':
+        if self.provider == 'aws':
             return self.distribution
         elif self.provider == 'rackspace':
             return 'flocker/functional/rackspace/centos-7/storage-driver'
@@ -62,7 +62,7 @@ class StorageConfiguration(object):
 
     @property
     def driver(self):
-        if self.provider == 'ebs':
+        if self.provider == 'aws':
             return 'flocker/node/agents/ebs.py'
         elif self.provider == 'rackspace':
             return 'flocker/node/agents/cinder.py'
@@ -78,11 +78,11 @@ STORAGE_CONFIGURATIONS = [
         provider='rackspace', distribution='centos-7'),
 ]
 
-functional_rackspace_lock = MasterLock("rackspace-lock", maxCount=1)
-functional_ebs_lock = MasterLock("ebs-lock", maxCount=1)
+functional_rackspace_lock = MasterLock("functional-rackspace-lock", maxCount=1)
+functional_aws_lock = MasterLock("functional-aws-lock", maxCount=1)
 STORAGE_LOCKS = {
     'rackspace': [functional_rackspace_lock.access("counting")],
-    'ebs': [functional_ebs_lock.access("counting")],
+    'aws': [functional_aws_lock.access("counting")],
 }
 
 
