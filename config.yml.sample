@@ -71,6 +71,8 @@ slaves:
         passwords: ['<password>']
     flocker/functional/rackspace/centos-7/storage-driver:
         openstack-image: "buildslave-centos-7-zfs-head"
+    clusterhq_pistoncloud_buildslave:
+        passwords: ['<password>']
 # List of builders whose failures should not be reported.  Tests listed here
 # will be reported in a separate section of the Buildbot web page, to indicate
 # that they are expected failures.
