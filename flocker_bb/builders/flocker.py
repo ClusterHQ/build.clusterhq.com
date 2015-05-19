@@ -37,9 +37,9 @@ TMPDIR = Interpolate(b"%(prop:workdir)s/tmp-%(prop:buildnumber)s")
 ])
 class StorageConfiguration(object):
     """
-    Configuration for an acceptance test run.
+    Configuration for a storage backend test run.
 
-    :ivar provider: The provider to use.
+    :ivar provider: The storage provider to use.
     :ivar distribution: The distribution to use.
     """
     @property
