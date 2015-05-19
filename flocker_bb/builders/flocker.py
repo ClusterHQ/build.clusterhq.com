@@ -181,7 +181,7 @@ def installTwistedTrunk():
     return steps
 
 
-def makeFactory(python, tests=None, twistedTrunk=False):
+def makeFactory(python, tests=None, twistedTrunk=False, env=None):
     """
     Make a new build factory which can do a flocker build.
 
@@ -199,7 +199,7 @@ def makeFactory(python, tests=None, twistedTrunk=False):
     if twistedTrunk:
         factory.addSteps(installTwistedTrunk())
 
-    factory.addSteps(_flockerTests(kwargs={}, tests=tests))
+    factory.addSteps(_flockerTests(kwargs={}, tests=tests, env=env))
 
     return factory
 
@@ -573,6 +573,21 @@ OMNIBUS_DISTRIBUTIONS = [
 
 def getBuilders(slavenames):
     builders = [
+        BuilderConfig(
+            name='flocker/functional/storage-driver',
+            builddir='flocker',
+            slavenames=slavenames[
+                'centos-7', 
+                'ubuntu-14.04', 
+                'flocker/functional/rackspace/centos-7/storage-driver'
+            ],
+            category='flocker',
+            factory=makeFactory(
+                b'python2.7',
+                env={'FLOCKER_FUNCTIONAL_TESTS': 'TRUE'}
+            ),
+            locks=[functionalLock.access('counting')]
+        ),
         BuilderConfig(name='flocker-fedora-20',
                       builddir='flocker',
                       slavenames=slavenames['fedora'],
@@ -675,6 +690,7 @@ BUILDERS = [
     'flocker-zfs-head',
     'flocker-admin',
     'flocker/homebrew/create',
+    'flocker/functional/storage-driver',
 ] + [
     'flocker-omnibus-%s' % (dist,) for dist in OMNIBUS_DISTRIBUTIONS
 ]
