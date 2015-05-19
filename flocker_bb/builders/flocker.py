@@ -45,9 +45,8 @@ class StorageConfiguration(object):
     @property
     def builder_name(self):
         return '/'.join(
-            ['flocker', 'node', 'agents',
-             self.provider,
-             self.distribution])
+            ['flocker', 'functional', self.provider, self.distribution,
+             'storage-driver'])
 
     @property
     def builder_directory(self):
@@ -69,25 +68,21 @@ class StorageConfiguration(object):
             return 'flocker/node/agents/cinder.py'
         return None
 
-    @property
-    def env(self):
-        return {'FLOCKER_FUNCTIONAL_TEST': 'TRUE'}
-
 
 STORAGE_CONFIGURATIONS = [
     StorageConfiguration(
-        provider='ebs', distribution='ubuntu-14.04'),
+        provider='aws', distribution='ubuntu-14.04'),
     StorageConfiguration(
-        provider='ebs', distribution='centos-7'),
+        provider='aws', distribution='centos-7'),
     StorageConfiguration(
         provider='rackspace', distribution='centos-7'),
 ]
 
-rackspace_lock = MasterLock("rackspace-lock", maxCount=12)
-ebs_lock = MasterLock("ebs-lock", maxCount=1)
+functional_rackspace_lock = MasterLock("rackspace-lock", maxCount=1)
+functional_ebs_lock = MasterLock("ebs-lock", maxCount=1)
 STORAGE_LOCKS = {
-    'rackspace': [rackspace_lock.access("counting")],
-    'ebs': [ebs_lock.access("counting")],
+    'rackspace': [functional_rackspace_lock.access("counting")],
+    'ebs': [functional_ebs_lock.access("counting")],
 }
 
 
@@ -741,7 +736,7 @@ def getBuilders(slavenames):
                         Interpolate("%(prop:builddir)s/build/" +
                                     configuration.driver),
                     ],
-                    env=configuration.env
+                    env={'FLOCKER_FUNCTIONAL_TEST': 'TRUE'},
                 ),
                 locks=STORAGE_LOCKS.get(configuration.provider, []),
             )
