@@ -381,8 +381,6 @@ ACCEPTANCE_CONFIGURATIONS = [
     AcceptanceConfiguration(
         provider='vagrant', distribution='fedora-20'),
     AcceptanceConfiguration(
-        provider='rackspace', distribution='fedora-20'),
-    AcceptanceConfiguration(
         provider='rackspace', distribution='ubuntu-14.04'),
     AcceptanceConfiguration(
         provider='rackspace', distribution='centos-7'),
