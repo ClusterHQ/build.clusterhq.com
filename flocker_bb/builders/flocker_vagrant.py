@@ -242,6 +242,7 @@ def run_acceptance_tests(configuration):
             Interpolate('%(prop:builddir)s/build/admin/run-acceptance-tests'),
             '--distribution', configuration.distribution,
             '--provider', configuration.provider,
+            '--type', configuration.type,
             '--branch', flockerBranch,
             '--build-server', buildbotURL,
             '--config-file', Interpolate("%(kw:home)s/acceptance.yml",
@@ -344,8 +345,9 @@ from buildbot.locks import MasterLock
 # sets of variants to test on each provider.
 @attributes([
     Attribute('provider'),
-    # Vagrant doesn't take a distrubtion.
+    # Vagrant doesn't take a distribution.
     Attribute('distribution', default_value=None),
+    Attribute('type', default_value='cluster'),
     Attribute('variants', default_factory=set),
 ])
 class AcceptanceConfiguration(object):
@@ -354,6 +356,7 @@ class AcceptanceConfiguration(object):
 
     :ivar provider: The provider to use.
     :ivar distribution: The distribution to use.
+    :ivar type: Whether to run cluster or client tests.
     :ivar variants: The variants to use.
     """
 
@@ -363,6 +366,7 @@ class AcceptanceConfiguration(object):
             ['flocker', 'acceptance',
              self.provider,
              self.distribution]
+            + (['client'] if self.type == 'client' else [])
             + sorted(self.variants))
 
     @property
@@ -384,6 +388,8 @@ ACCEPTANCE_CONFIGURATIONS = [
         provider='rackspace', distribution='fedora-20'),
     AcceptanceConfiguration(
         provider='rackspace', distribution='ubuntu-14.04'),
+    AcceptanceConfiguration(
+        provider='rackspace', distribution='ubuntu-14.04', type='client'),
     AcceptanceConfiguration(
         provider='rackspace', distribution='centos-7'),
     AcceptanceConfiguration(
