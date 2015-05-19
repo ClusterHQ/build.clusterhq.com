@@ -33,7 +33,7 @@ TMPDIR = Interpolate(b"%(prop:workdir)s/tmp-%(prop:buildnumber)s")
 # sets of variants to test on each provider.
 @attributes([
     Attribute('provider'),
-    Attribute('distribution', default_value=None),
+    Attribute('distribution'),
 ])
 class StorageConfiguration(object):
     """
@@ -58,7 +58,7 @@ class StorageConfiguration(object):
             return self.distribution
         elif self.provider == 'rackspace':
             return 'flocker/functional/rackspace/centos-7/storage-driver'
-        return None
+        raise NotImplementedError("Unsupported provider %s" % (self.provider,))
 
     @property
     def driver(self):
@@ -66,7 +66,7 @@ class StorageConfiguration(object):
             return 'flocker/node/agents/ebs.py'
         elif self.provider == 'rackspace':
             return 'flocker/node/agents/cinder.py'
-        return None
+        raise NotImplementedError("Unsupported provider %s" % (self.provider,))
 
 
 STORAGE_CONFIGURATIONS = [
