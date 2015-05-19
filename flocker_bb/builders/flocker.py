@@ -181,7 +181,7 @@ def installTwistedTrunk():
     return steps
 
 
-def makeFactory(python, tests=None, twistedTrunk=False):
+def makeFactory(python, tests=None, twistedTrunk=False, env=None):
     """
     Make a new build factory which can do a flocker build.
 
@@ -199,7 +199,7 @@ def makeFactory(python, tests=None, twistedTrunk=False):
     if twistedTrunk:
         factory.addSteps(installTwistedTrunk())
 
-    factory.addSteps(_flockerTests(kwargs={}, tests=tests))
+    factory.addSteps(_flockerTests(kwargs={}, tests=tests, env=env))
 
     return factory
 
@@ -666,20 +666,22 @@ def getBuilders(slavenames):
         BuilderConfig(
             name=name,
             builddir=name.replace("/", "-"),
-            slavenames=slavenames[name],
+            slavenames=slavenames[slave_name],
             category='flocker',
             factory=makeFactory(
                 b'python2.7',
-                tests=[
-                    "--testmodule",
-                    Interpolate("%(prop:builddir)s/build/" + driver),
-                ],
+                env={
+                        'FLOCKER_FUNCTIONAL_TEST': 'TRUE',
+                }
             ),
         )
-        for (name, driver)
-        in [
-            ("flocker/functional/rackspace/centos-7/storage-driver",
-             "flocker/node/agents/cinder.py"),
+        for name, slave_name in [
+            ('flocker/functional/rackspace/centos-7/storage-driver',
+             'flocker/functional/rackspace/centos-7/storage-driver')
+            ('flocker/functional/aws/centos-7/storage-driver',
+             'centos-7'),
+            ('flocker/functional/aws/ubuntu-14.04/storage-driver',
+             'ubuntu-14.04'),
         ]
     ])
 
@@ -698,6 +700,8 @@ BUILDERS = [
     'flocker-admin',
     'flocker/homebrew/create',
     'flocker/functional/rackspace/centos-7/storage-driver',
+    'flocker/functional/aws/centos-7/storage-driver',
+    'flocker/functional/aws/ubuntu-14.04/storage-driver',
 ] + [
     'flocker-omnibus-%s' % (dist,) for dist in OMNIBUS_DISTRIBUTIONS
 ]
