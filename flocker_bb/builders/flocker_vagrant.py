@@ -377,20 +377,9 @@ class AcceptanceConfiguration(object):
             return 'centos-7'
 
 
-ACCEPTEANCE_CONFIGURATIONS = [
+ACCEPTANCE_CONFIGURATIONS = [
     AcceptanceConfiguration(
         provider='vagrant', distribution='fedora-20'),
-    AcceptanceConfiguration(
-        provider='rackspace', distribution='fedora-20'),
-    AcceptanceConfiguration(
-        provider='rackspace', distribution='fedora-20',
-        variants={'docker-head'}),
-    AcceptanceConfiguration(
-        provider='rackspace', distribution='fedora-20',
-        variants={'zfs-testing'}),
-    AcceptanceConfiguration(
-        provider='rackspace', distribution='fedora-20',
-        variants={'distro-testing'}),
     AcceptanceConfiguration(
         provider='rackspace', distribution='ubuntu-14.04'),
     AcceptanceConfiguration(
@@ -432,7 +421,7 @@ def getBuilders(slavenames):
                           box='tutorial'),
                       nextSlave=idleSlave),
         ]
-    for configuration in ACCEPTEANCE_CONFIGURATIONS:
+    for configuration in ACCEPTANCE_CONFIGURATIONS:
         builders.append(BuilderConfig(
             name=configuration.builder_name,
             builddir=configuration.builder_directory,
@@ -449,7 +438,7 @@ BUILDERS = [
     'flocker/installed-package/fedora-20',
 ] + [
     configuration.builder_name
-    for configuration in ACCEPTEANCE_CONFIGURATIONS
+    for configuration in ACCEPTANCE_CONFIGURATIONS
 ]
 
 from ..steps import MergeForward, report_expected_failures_parameter
@@ -492,7 +481,7 @@ def getSchedulers():
                 'flocker/installed-package/fedora-20',
             ] + [
                 configuration.builder_name
-                for configuration in ACCEPTEANCE_CONFIGURATIONS
+                for configuration in ACCEPTANCE_CONFIGURATIONS
                 if configuration.provider == 'vagrant'
             ],
             codebases={
@@ -503,7 +492,7 @@ def getSchedulers():
     for distribution in ('fedora-20', 'centos-7', 'ubuntu-14.04'):
         builders = [
             configuration.builder_name
-            for configuration in ACCEPTEANCE_CONFIGURATIONS
+            for configuration in ACCEPTANCE_CONFIGURATIONS
             if configuration.provider != 'vagrant'
             and configuration.distribution == distribution
         ]
