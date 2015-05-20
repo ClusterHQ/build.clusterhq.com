@@ -332,6 +332,8 @@ Run the following ``fabric`` task::
 Where ``${PASSWORD}`` is the password in ``slaves.flocker/functional/pistoncloud/centos-7/storage-driver.passwords`` from the ``config.yml`` or ``staging.yml`` file,
 and ``${BUILDMASTER}`` is the IP address of the BuildBot master that you want this buildslave to connect to.
 
+Note: See "Create the configuration" section above if you do not have a ``config.yml`` or ``staging.yml`` configuration file.
+
 Next steps:
  * Check that the new build slave has connected to the master by viewing the build master web interface and by monitoring the build slave and build master log files.
  * Check that builders have been assigned to the new build slave.
