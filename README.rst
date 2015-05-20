@@ -294,7 +294,7 @@ Here is an example of such a file::
         HostName <novahost_public_hostname_or_ip_address>
         ProxyCommand ssh pistoncloud-jumphost nc %h %p
 
-With that ``~/.ssh/config`` file in place, run::
+With that ``~/.ssh/config`` content in place, run::
 
    fab -f slave/pistoncloud/fabfile.py create_server:clusterhq_joebloggs
 
