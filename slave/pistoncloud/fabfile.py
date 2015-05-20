@@ -31,6 +31,11 @@ def cmd(*args):
 
 
 def get_lastpass_config(key):
+    """
+    Download a section from LastPass.
+
+    Requires you to have run ``lpass login`` first.
+    """
     output = local(cmd('lpass', 'show', '--notes', key),
                    capture=True)
     config = yaml.safe_load(output.stdout)
@@ -61,6 +66,7 @@ def configure_acceptance():
     """
     Upload the pistoncloud acceptance credentials to the buildslave.
     """
+    # The alias for the build slave server in ``.ssh/config``.
     env.hosts = ['pistoncloud-buildslave']
     execute(_configure_acceptance)
 
@@ -149,6 +155,8 @@ def create_server(keypair_name):
     :param str keypair_name: The name of an SSH keypair that has been
         registered on the PistonCloud nova tenant.
     """
+    # The alias for the openstack / nova administration server in
+    # ``.ssh/config``.
     env.hosts = ['pistoncloud-novahost']
     execute(_create_server, keypair_name)
 
@@ -167,6 +175,8 @@ def delete_server():
     """
     Delete the PistonCloud buildslave VM.
     """
+    # The alias for the openstack / nova administration server in
+    # ``.ssh/config``.
     env.hosts = ['pistoncloud-novahost']
     execute(_delete_server)
 
@@ -261,5 +271,6 @@ def configure(index, password, master='build.staging.clusterhq.com'):
     :param unicode master: The hostname or IP address of the build
         master that this build slave will attempt to connect to.
     """
+    # The alias for the build slave server in ``.ssh/config``.
     env.hosts = ['pistoncloud-buildslave']
     execute(_configure, index, password, master)
