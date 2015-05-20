@@ -147,11 +147,11 @@ def _configure(index, password, master='build.staging.clusterhq.com'):
         u"buildslave create-slave "
         u"/home/buildslave/{builddir} "
         u"{master} "
-        u"{buildslave_name} "
+        u"{buildslave_name}-{index} "
         u"{password}".format(
             builddir=slashless_name,
             master=master,
-            buildslave_name=slashless_name,
+            buildslave_name=BUILDSLAVE_NAME,
             index=index,
             password=password,
         ),
