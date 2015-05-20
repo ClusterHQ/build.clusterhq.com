@@ -66,6 +66,11 @@ def configure_acceptance():
 
 
 def put_template(template, replacements, remote_path, **put_kwargs):
+    """
+    Replace Python style string formatting variables in ``template``
+    with the supplied ``replacements`` and then ``put`` the resulting
+    content to ``remote_path``.
+    """
     local_file = template.temporarySibling()
     try:
         with local_file.open('w') as f:
@@ -80,11 +85,15 @@ def put_template(template, replacements, remote_path, **put_kwargs):
 
 
 def set_google_dns():
-    # XXX: This isn't a solution, but it at least allows the packages to
-    # install
-    # There is a documented permanent solution:
-    # * http://askubuntu.com/a/615951
-    # ...but it doesn't work.
+    """
+    Replace the ``/etc/resolv.conf`` file on the target server.
+
+    XXX: This isn't a solution, but it at least allows the packages to
+    install
+    There is a documented permanent solution:
+    * http://askubuntu.com/a/615951
+    ...but it doesn't work.
+    """
     put(
         StringIO(
             "\n".join([
@@ -107,6 +116,10 @@ def _create_server(
         # tmz-mdl-net1
         net_id=u'74632532-1629-44b4-a464-dd31657f46a3',
 ):
+    """
+    Run ``nova boot`` to create a new server on which to run the
+    PistonCloud build slave.
+    """
     with shell_env(OS_TENANT_NAME=TENANT_NAME):
         run(
             ' '.join(
@@ -141,6 +154,10 @@ def create_server(keypair_name):
 
 
 def _delete_server():
+    """
+    Call ``nova delete`` to delete the server on which the PistonCloud
+    build slave is running.
+    """
     with shell_env(OS_TENANT_NAME=TENANT_NAME):
         run('nova delete ' + BUILDSLAVE_NODENAME)
 
@@ -155,8 +172,18 @@ def delete_server():
 
 
 def _configure(index, password, master='build.staging.clusterhq.com'):
+    """
+    Install all the packages required by ``buildslave`` and then
+    configure the PistonCloud buildslave.
+    """
+    # The default DNS servers on our PistonCloud tenant prevent
+    # resolution of public DNS names.
+    # Instead use Google's public DNS servers for the duration of the
+    # build slave installation.
     set_google_dns()
+
     sudo("yum install -y epel-release")
+
     packages = [
         "https://kojipkgs.fedoraproject.org/packages/buildbot/0.8.10/1.fc22/noarch/buildbot-slave-0.8.10-1.fc22.noarch.rpm",  # noqa
         "git",
@@ -171,10 +198,16 @@ def _configure(index, password, master='build.staging.clusterhq.com'):
         "curl",
         "enchant",
     ]
+
     sudo("yum install -y " + " ".join(packages))
+
     slashless_name = BUILDSLAVE_NAME.replace("/", "-") + '-' + str(index)
     builddir = 'builddir-' + str(index)
+
     sudo("mkdir -p {}".format(BUILDSLAVE_HOME))
+
+    _configure_acceptance()
+
     sudo(
         u"buildslave create-slave "
         u"{buildslave_home}/{builddir} "
@@ -198,8 +231,6 @@ def _configure(index, password, master='build.staging.clusterhq.com'):
         use_sudo=True,
     )
 
-    _configure_acceptance()
-
     remote_service_filename = slashless_name + '.service'
 
     put_template(
@@ -220,7 +251,15 @@ def _configure(index, password, master='build.staging.clusterhq.com'):
 @task
 def configure(index, password, master='build.staging.clusterhq.com'):
     """
-    Install and configure the buildslave on the PistonCloud buildslave VM.
+    Install and configure the buildslave on the PistonCloud buildslave
+    VM.
+
+    :param int index: The index of this PistonCloud build slave. You
+        should probably just say 0.
+    :param unicode password: The password that the build slave will
+        use when authenticating with the build master.
+    :param unicode master: The hostname or IP address of the build
+        master that this build slave will attempt to connect to.
     """
     env.hosts = ['pistoncloud-buildslave']
     execute(_configure, index, password, master)
