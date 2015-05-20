@@ -12,7 +12,9 @@ from twisted.python.filepath import FilePath
 from StringIO import StringIO
 import yaml
 
-# http://stackoverflow.com/a/9685171
+# Since version 1.4.0, Fabric uses your ssh config (partly). However,
+# you need to explicitly enable it.
+# See http://stackoverflow.com/a/9685171
 env.use_ssh_config = True
 
 BUILDSLAVE_NAME = "flocker/functional/pistoncloud/centos-7/storage-driver"
@@ -105,9 +107,6 @@ def _create_server(
         # SC_Centos7
         image=u'ab32525b-f565-49ca-9595-48cdb5eaa794',
         # tmz-mdl-net1
-        # The network with a route to the nova keystone server address
-        # XXX: The DNS server for this network doesn't resolve external
-        # hostnames.  Need to update to Google DNS.
         net_id=u'74632532-1629-44b4-a464-dd31657f46a3',
 ):
     with shell_env(OS_TENANT_NAME=TENANT_NAME):
