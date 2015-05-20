@@ -191,35 +191,3 @@ def configure(index, password, master='build.staging.clusterhq.com'):
     """
     env.hosts = ['pistoncloud-buildslave']
     execute(_configure, index, password, master)
-
-
-def _uninstall():
-    remote_service_filename = u'{buildslave_name}-slave.service'.format(
-        buildslave_name=BUILDSLAVE_NAME
-    )
-
-    sudo(
-        'systemctl stop {}'.format(remote_service_filename),
-        warn_only=True,
-    )
-    sudo(
-        'systemctl disable {}'.format(remote_service_filename),
-        warn_only=True,
-    )
-    sudo(
-        u'rm /etc/systemd/system/{}'.format(remote_service_filename),
-        warn_only=True,
-    )
-    sudo(
-        "userdel --remove buildslave",
-        warn_only=True,
-    )
-
-
-@task
-def uninstall():
-    """
-    Uninstall the buildslave packages from the PistonCloud buildslave VM.
-    """
-    env.hosts = ['pistoncloud-buildslave']
-    execute(_uninstall)
