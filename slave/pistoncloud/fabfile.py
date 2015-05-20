@@ -17,6 +17,8 @@ env.use_ssh_config = True
 
 BUILDSLAVE_NAME = "flocker/functional/pistoncloud/centos-7/storage-driver"
 BUILDSLAVE_NODENAME = "clusterhq_flocker_buildslave"
+BUILDSLAVE_HOME = '/srv/buildslave'
+
 # Be careful here! If our script has bugs we don't want to accidentally
 # modify VMs or resources of another more important tenant
 TENANT_NAME = "tmz-mdl-1"
@@ -25,7 +27,7 @@ TENANT_NAME = "tmz-mdl-1"
 def configure_acceptance():
     put(
         StringIO(yaml.safe_dump({'metadata': {'creator': 'buildbot'}})),
-        '/home/buildslave/acceptance.yml',
+        BUILDSLAVE_HOME + '/acceptance.yml',
         use_sudo=True,
     )
 
@@ -142,28 +144,28 @@ def _configure(index, password, master='build.staging.clusterhq.com'):
         "enchant",
     ]
     sudo("yum install -y " + " ".join(packages))
-    sudo("useradd buildslave")
     slashless_name = BUILDSLAVE_NAME.replace("/", "-") + '-' + str(index)
     builddir = 'builddir-' + str(index)
+    sudo("mkdir -p {}".format(BUILDSLAVE_HOME))
     sudo(
         u"buildslave create-slave "
-        u"/home/buildslave/{builddir} "
+        u"{buildslave_home}/{builddir} "
         u"{master} "
         u"{buildslave_name}-{index} "
         u"{password}".format(
+            buildslave_home=BUILDSLAVE_HOME,
             builddir=builddir,
             master=master,
             buildslave_name=BUILDSLAVE_NAME,
             index=index,
             password=password,
         ),
-        user='buildslave'
     )
 
     put_template(
         template=FilePath(__file__).sibling('start.template'),
-        replacements=dict(builddir=builddir),
-        remote_path='/home/buildslave/' + builddir + '/start',
+        replacements=dict(buildslave_home=BUILDSLAVE_HOME, builddir=builddir),
+        remote_path=BUILDSLAVE_HOME + '/' + builddir + '/start',
         mode=0755,
         use_sudo=True,
     )
@@ -176,6 +178,7 @@ def _configure(index, password, master='build.staging.clusterhq.com'):
         template=FilePath(__file__).sibling('slave.service.template'),
         replacements=dict(
             buildslave_name=slashless_name,
+            buildslave_home=BUILDSLAVE_HOME,
             builddir=builddir,
         ),
         remote_path=u'/etc/systemd/system/' + remote_service_filename,

@@ -2,4 +2,4 @@
 exec /usr/bin/twistd \
     --nodaemon \
     --pidfile= \
-    --python=/home/buildslave/{builddir}/buildbot.tac
+    --python={buildslave_home}/{builddir}/buildbot.tac
