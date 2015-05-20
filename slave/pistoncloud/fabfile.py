@@ -143,13 +143,14 @@ def _configure(index, password, master='build.staging.clusterhq.com'):
     sudo("yum install -y " + " ".join(packages))
     sudo("useradd buildslave")
     slashless_name = BUILDSLAVE_NAME.replace("/", "-") + '-' + str(index)
+    builddir = 'builddir-' + str(index)
     sudo(
         u"buildslave create-slave "
         u"/home/buildslave/{builddir} "
         u"{master} "
         u"{buildslave_name}-{index} "
         u"{password}".format(
-            builddir=slashless_name,
+            builddir=builddir,
             master=master,
             buildslave_name=BUILDSLAVE_NAME,
             index=index,
@@ -160,8 +161,8 @@ def _configure(index, password, master='build.staging.clusterhq.com'):
 
     put_template(
         template=FilePath(__file__).sibling('start.template'),
-        replacements=dict(builddir=slashless_name),
-        remote_path='/home/buildslave/' + slashless_name + '/start',
+        replacements=dict(builddir=builddir),
+        remote_path='/home/buildslave/' + builddir + '/start',
         mode=0755,
         use_sudo=True,
     )
@@ -174,7 +175,7 @@ def _configure(index, password, master='build.staging.clusterhq.com'):
         template=FilePath(__file__).sibling('slave.service.template'),
         replacements=dict(
             buildslave_name=slashless_name,
-            builddir=slashless_name,
+            builddir=builddir,
         ),
         remote_path=u'/etc/systemd/system/' + remote_service_filename,
         use_sudo=True,
