@@ -11,7 +11,7 @@ Group=buildslave
 
 Restart=always
 
-Environment="FLOCKER_FUNCTIONAL_TEST_CLOUD_CONFIG_FILE=/home/buildslave/acceptance.yml FLOCKER_FUNCTIONAL_TEST_CLOUD_PROVIDER=pistoncloud"
+Environment="FLOCKER_FUNCTIONAL_TEST_CLOUD_CONFIG_FILE=/home/buildslave/acceptance.yml" "FLOCKER_FUNCTIONAL_TEST_CLOUD_PROVIDER=pistoncloud"
 
 [Install]
 WantedBy=multi-user.target
