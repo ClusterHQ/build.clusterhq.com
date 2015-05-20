@@ -142,7 +142,7 @@ def _configure(index, password, master='build.staging.clusterhq.com'):
     ]
     sudo("yum install -y " + " ".join(packages))
     sudo("useradd buildslave")
-    slashless_name = BUILDSLAVE_NAME.replace("/", "-") + '-' + str(index),
+    slashless_name = BUILDSLAVE_NAME.replace("/", "-") + '-' + str(index)
     sudo(
         u"buildslave create-slave "
         u"/home/buildslave/{builddir} "
