@@ -181,7 +181,7 @@ def installTwistedTrunk():
     return steps
 
 
-def makeFactory(python, tests=None, twistedTrunk=False, env=None, **kwargs):
+def makeFactory(python, tests=None, twistedTrunk=False):
     """
     Make a new build factory which can do a flocker build.
 
@@ -199,7 +199,7 @@ def makeFactory(python, tests=None, twistedTrunk=False, env=None, **kwargs):
     if twistedTrunk:
         factory.addSteps(installTwistedTrunk())
 
-    factory.addSteps(_flockerTests(kwargs=kwargs, tests=tests, env=env))
+    factory.addSteps(_flockerTests(kwargs={}, tests=tests))
 
     return factory
 
@@ -648,27 +648,6 @@ def getBuilders(slavenames):
                       category='flocker',
                       factory=makeHomebrewRecipeTestFactory(),
                       nextSlave=idleSlave),
-        BuilderConfig(name='flocker-openstack-pistoncloud',
-                      slavenames=slavenames[
-                          'clusterhq_pistoncloud_buildslave'
-                      ],
-                      category='flocker',
-                      factory=makeFactory(
-                          python=b'python2.7',
-                          trialArgs=[
-                              b'--testmodule'
-                          ],
-                          tests=[
-                              Interpolate(
-                                  path.join(
-                                      VIRTUALENV_DIR,
-                                      "lib", "python2.7", "site-packages",
-                                      'flocker/node/agents/cinder.py'
-                                  )
-                              ),
-                          ],
-                      ),
-                      nextSlave=idleSlave),
         ]
     for distribution in OMNIBUS_DISTRIBUTIONS:
         builders.append(
@@ -701,6 +680,8 @@ def getBuilders(slavenames):
         in [
             ("flocker/functional/rackspace/centos-7/storage-driver",
              "flocker/node/agents/cinder.py"),
+            ("flocker/functional/pistoncloud/centos-7/storage-driver",
+             "flocker/node/agents/cinder.py"),
         ]
     ])
 
@@ -718,8 +699,8 @@ BUILDERS = [
     'flocker-zfs-head',
     'flocker-admin',
     'flocker/homebrew/create',
-    'flocker-openstack-pistoncloud',
     'flocker/functional/rackspace/centos-7/storage-driver',
+    'flocker/functional/pistoncloud/centos-7/storage-driver',
 ] + [
     'flocker-omnibus-%s' % (dist,) for dist in OMNIBUS_DISTRIBUTIONS
 ]
