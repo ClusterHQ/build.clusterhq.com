@@ -264,23 +264,24 @@ The following builders need to run on Centos-7 on PistonCloud:
 To create this machine you'll need to access various machines within pistoncloud via an "SSH jump host".
 
 The machines are referred to here as:
- * pistoncloud-jumphost: The server through which you will connect to servers inside the pistoncloud network.
- * pistoncloud-novahost: The server which has ``novaclient`` and associated command line tools installed.
- * pistoncloud-buildslave: The server which we have created to run the ClusterHQ buildslave.
+ * pistoncloud-jumphost: The SSH proxy through which you will connect to servers inside the pistoncloud network.
+ * pistoncloud-novahost: The server which has ``nova`` and other openstack administrative tools installed.
+ * pistoncloud-buildslave: The server which will be created to run the ``flocker/functional/pistoncloud/centos-7/storage-driver`` builder.
 
-You'll need to add your public SSH key to each of these hosts.
+You'll need to add your public SSH key to the ``pistoncloud-jumphost``.
 A username and key for initial access to the jump host can be found in LastPass.
-Using that username and key, log into the jumphost and add your own public key.
-From there, log into the novahost (credentials in LastPass) and add your own public key.
-Finally, register your personal public key using nova as follows::
+Using that username and key, log into the jumphost and add your own public SSH key to the ``authorized_keys`` file of the jumphost user.
+
+Next log into the ``pistoncloud-novahost`` (credentials in LastPass) and add your own public SSH key.
+
+Finally, register your public SSH key with openstack by using the ``nova`` command, as follows::
 
   cat > id_rsa_joe.blogs@clusterhq.com.pub
   ssh-rsa AAAAB3NzaC1yc2EAAAADAQABAAABAQC2imO7tTLepxqTvxacpNHKmqsRUdhM1EPdAVrBFadrYAC664LDbOvTqXR0iiVomKsfAe6nK9xZ5YzGFIpcOn/MeH45LOHVy5/+yx06qAnRkCDGZzQN/3qrs2K0v0L4XSIFbWmkFycAzG2phxFyAaJicK9XsJ9JaJ1q9/0FBj1TJ0CA7kCFaz/t0eozzOgr7WsqtidMrgrfrWvZW0GZR2PUc+1Ezt0/OBR8Xir0VGMgeLOrHprAF/BSK+7GLuQ9usa+nu3i46UuKtaVDMrKFCkzSdfNX2xJJYlRUEvLTa1VgswgL1wXXUwxXlDmYdwjF583CSFrVeVzBmRRJqNU/IMb joe.bloggs@clusterhq.com
 
-
   nova keypair-add --pub-key id_rsa_joe.bloggs@clusterhq.com.pub clusterhq_joebloggs
 
-Having done this, the easiest way to access these machines is to create an SSH config file containing the hostnames and usernames that you will use to access the machines.
+Having done this, create or modify a ``~/.ssh/config`` file containing the aliases, usernames, hostnames for each of the servers and proxy commands that will allow direct access to the internal servers via the ``pistoncloud-jumphost``.
 
 Here is an example of such a file::
 
@@ -293,20 +294,25 @@ Here is an example of such a file::
         HostName <novahost_public_hostname_or_ip_address>
         ProxyCommand ssh pistoncloud-jumphost nc %h %p
 
-With this ``ssh-config`` file saved to ``~/.ssh/config``, run::
+With that ``~/.ssh/config`` file in place, run::
 
    fab -f slave/pistoncloud/fabfile.py create_server:clusterhq_joebloggs
 
-Now log into the ``pistoncloud-novahost`` and find the IP address that has been assigned to the new buildslave node.
 
-Add that address to your ssh config file::
+The argument ``clusterhq_joebloggs`` should be replaced with the name of the SSH public key that you registered using ``nova keypair-add`` in an earlier step.
+
+The last line of the output will show the IP address of the new server.
+
+Add that IP address of the new build slave server to your ssh config file::
 
    Host pistoncloud-buildslave
         User <buildbot_username>
         HostName <buildbot_internal_ip_address_from_previous_step>
         ProxyCommand ssh pistoncloud-novahost nc %h %p
 
-Check that you can log in to the new buildslave::
+Note: You can also log into ``pistoncloud-novahost`` and run ``nova list`` to show all the openstack virtual machines and their IP addresses.
+
+Test the ``pistoncloud-buildslave`` by attempting to connect to the build slave with SSH, as follows::
 
    ssh pistoncloud-buildslave
 
@@ -314,8 +320,8 @@ Now configure the new server by running the following ``fabric`` task::
 
    fab -f slave/pistoncloud/fabfile.py configure:0,${PASSWORD},${BUILDMASTER}
 
-Where ``${PASSWORD}`` is the password in ``slaves.piston_buildslave.passwords`` from the ``config.yml`` or ``staging.yml`` file,
-and ``${MASTER}`` is the IP address of the BuildBot master that you want this buildslave to connect to.
+Where ``${PASSWORD}`` is the password in ``slaves.flocker/functional/pistoncloud/centos-7/storage-driver.passwords`` from the ``config.yml`` or ``staging.yml`` file,
+and ``${BUILDMASTER}`` is the IP address of the BuildBot master that you want this buildslave to connect to.
 
 This step will install:
  * the buildbot buildslave package on the server and
