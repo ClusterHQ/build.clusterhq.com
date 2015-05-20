@@ -268,11 +268,23 @@ The machines are referred to here as:
  * pistoncloud-novahost: The server which has ``novaclient`` and associated command line tools installed.
  * pistoncloud-buildslave: The server which we have created to run the ClusterHQ buildslave.
 
-The easiest way to access these machines is to create an SSH config file containing the hostnames and usernames that you will use to access the machines.
+You'll need to add your public SSH key to each of these hosts.
+A username and key for initial access to the jump host can be found in LastPass.
+Using that username and key, log into the jumphost and add your own public key.
+From there, log into the novahost (credentials in LastPass) and add your own public key.
+Finally, register your personal public key using nova as follows::
+
+  cat > id_rsa_joe.blogs@clusterhq.com.pub
+  ssh-rsa AAAAB3NzaC1yc2EAAAADAQABAAABAQC2imO7tTLepxqTvxacpNHKmqsRUdhM1EPdAVrBFadrYAC664LDbOvTqXR0iiVomKsfAe6nK9xZ5YzGFIpcOn/MeH45LOHVy5/+yx06qAnRkCDGZzQN/3qrs2K0v0L4XSIFbWmkFycAzG2phxFyAaJicK9XsJ9JaJ1q9/0FBj1TJ0CA7kCFaz/t0eozzOgr7WsqtidMrgrfrWvZW0GZR2PUc+1Ezt0/OBR8Xir0VGMgeLOrHprAF/BSK+7GLuQ9usa+nu3i46UuKtaVDMrKFCkzSdfNX2xJJYlRUEvLTa1VgswgL1wXXUwxXlDmYdwjF583CSFrVeVzBmRRJqNU/IMb joe.bloggs@clusterhq.com
+
+
+  nova keypair-add --pub-key id_rsa_joe.bloggs@clusterhq.com.pub clusterhq_joebloggs
+
+Having done this, the easiest way to access these machines is to create an SSH config file containing the hostnames and usernames that you will use to access the machines.
+
 Here is an example of such a file::
 
    Host pistoncloud-jumphost
-        IdentityFile ~/.ssh/id_rsa_pistoncloud
         User <jumphost_username>
         HostName <jumphost_public_hostname_or_ip_address>
 
@@ -283,17 +295,13 @@ Here is an example of such a file::
 
 With this ``ssh-config`` file saved to ``~/.ssh/config``, run::
 
-   fab -f slave/pistoncloud/fabfile.py create_server:clusterhq_richardw
+   fab -f slave/pistoncloud/fabfile.py create_server:clusterhq_joebloggs
 
-Then IP address of the new machine will be printed at the end::
-
-   | ad6c426c-c862-4ab4-8ee8-941f6425dd77 | clusterhq_flocker_buildslave            | ACTIVE | tmz-mdl-net1=172.19.139.35 |
-
+Now log into the ``pistoncloud-novahost`` and find the IP address that has been assigned to the new buildslave node.
 
 Add that address to your ssh config file::
 
    Host pistoncloud-buildslave
-        IdentityFile ~/.ssh/id_rsa_pistoncloud_buildslave
         User <buildbot_username>
         HostName <buildbot_internal_ip_address_from_previous_step>
         ProxyCommand ssh pistoncloud-novahost nc %h %p
