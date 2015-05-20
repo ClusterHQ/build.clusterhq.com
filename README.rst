@@ -259,7 +259,7 @@ PistonCloud
 
 The following builders need to run on Centos-7 on PistonCloud:
 
-* flocker-openstack-pistoncloud
+* ``flocker/functional/pistoncloud/centos-7/storage-driver``
 
 To create this machine you'll need to access various machines within pistoncloud via an "SSH jump host".
 
