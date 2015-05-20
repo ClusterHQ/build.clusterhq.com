@@ -273,6 +273,8 @@ class ICloudDriver(Interface):
         """
 
 
+# Add a node_id attribute that refers to the id of the node most recently
+# created.
 @attributes([
     'driver', 'name', 'region', 'instance_type', 'keypair_name',
     'security_name', 'image_id', 'image_tags', 'user_data',
@@ -352,7 +354,10 @@ class EC2CloudDriver(object):
 
         All parameters are fixed to the values used to initialize this driver.
         """
+        # Look up self.node_id here
+        # If it is running, do nothing.
         image = self.get_image()
+        # Save the id of the returned node as self.node_id
         return self.driver.create_node(
             name=self.name,
             size=get_size(self.driver, self.instance_type),
@@ -416,6 +421,7 @@ class RackspaceCloudDriver(object):
 
         All parameters are fixed to the values used to initialize this driver.
         """
+        # Same fixes as to EC2
         image = self.get_image()
         return self.driver.create_node(
             name=self.name,
