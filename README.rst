@@ -306,7 +306,7 @@ The last line of the output will show the IP address of the new server.
 Add that IP address of the new build slave server to your ssh config file::
 
    Host pistoncloud-buildslave
-        User <buildbot_username>
+        User centos
         HostName <buildbot_internal_ip_address_from_previous_step>
         ProxyCommand ssh pistoncloud-novahost nc %h %p
 
