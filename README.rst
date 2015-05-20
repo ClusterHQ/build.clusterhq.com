@@ -316,6 +316,9 @@ Test the ``pistoncloud-buildslave`` by attempting to connect to the build slave 
 
    ssh pistoncloud-buildslave
 
+Note: You may need to add your SSH private key to your keyring or SSH agent::
+
+   ssh-add
 
 Now configure the new server.
 The following step will install:
