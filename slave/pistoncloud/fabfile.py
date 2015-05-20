@@ -80,20 +80,18 @@ def put_template(template, replacements, remote_path, **put_kwargs):
 
 
 def set_google_dns():
-    # This is supposed to work:
-    # * http://askubuntu.com/a/615951
-    # ...but doesn't.
-    put(
-        StringIO("echo 'nameserver 8.8.4.4' > /etc/resolv.conf"),
-        '/etc/NetworkManager/dispatcher.d/10-google-dns',
-        use_sudo=True,
-        mode=0o755,
-    )
-    sudo('systemctl restart NetworkManager')
     # XXX: This isn't a solution, but it at least allows the packages to
     # install
+    # There is a documented permanent solution:
+    # * http://askubuntu.com/a/615951
+    # ...but it doesn't work.
     put(
-        StringIO("nameserver 8.8.4.4\n"),
+        StringIO(
+            "\n".join([
+                "nameserver 8.8.8.8"
+                "nameserver 8.8.4.4"
+            ]) + "\n"
+        ),
         '/etc/resolv.conf',
         use_sudo=True,
         mode=0o644,
