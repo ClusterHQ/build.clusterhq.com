@@ -41,7 +41,7 @@ def maybeAddManhole(config, privateData):
             "\n".join(manhole['authorized_keys']) + "\n"
         )
 
-    c['manhole'] = AuthorizedKeysManhole(manhole['port'])
+    c['manhole'] = AuthorizedKeysManhole(manhole['port'], authorized_keys.name)
 
 maybeAddManhole(c, privateData)
 
