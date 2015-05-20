@@ -130,15 +130,16 @@ def _configure(index, password, master='build.staging.clusterhq.com'):
     packages = [
         "https://kojipkgs.fedoraproject.org/packages/buildbot/0.8.10/1.fc22/noarch/buildbot-slave-0.8.10-1.fc22.noarch.rpm",  # noqa
         "git",
-        "libffi-devel",
         "python",
         "python-devel",
-        "python-virtualenv",
-        "openssl-devel",
         "python-tox",
+        "python-virtualenv",
         "libffi-devel",
         "@buildsys-build",
         "openssl-devel",
+        "wget",
+        "curl",
+        "enchant",
     ]
     sudo("yum install -y " + " ".join(packages))
     sudo("useradd buildslave")
