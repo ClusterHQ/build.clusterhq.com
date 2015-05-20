@@ -5,8 +5,8 @@ Configuration for a buildslave to run on PistonCloud
 .. warning::
     This points at the staging buildserver by default.
 """
-
-from fabric.api import sudo, task, env, execute, put, run
+from pipes import quote as shellQuote
+from fabric.api import sudo, task, env, execute, put, run, local
 from fabric.context_managers import shell_env
 from twisted.python.filepath import FilePath
 from StringIO import StringIO
@@ -24,12 +24,43 @@ BUILDSLAVE_HOME = '/srv/buildslave'
 TENANT_NAME = "tmz-mdl-1"
 
 
-def configure_acceptance():
+def cmd(*args):
+    return ' '.join(map(shellQuote, args))
+
+
+def get_lastpass_config(key):
+    output = local(cmd('lpass', 'show', '--notes', key),
+                   capture=True)
+    config = yaml.safe_load(output.stdout)
+    return config
+
+
+def _configure_acceptance():
+    """
+    Download the entire acceptance.yml file from lastpass but only
+    upload the metadata and pistoncloud credentials.
+    """
+    acceptance_config = {}
+    full_config = get_lastpass_config(
+        "acceptance@build.clusterhq.com"
+    )
+    for key in ('metadata', 'pistoncloud'):
+        acceptance_config[key] = full_config['config'][key]
+
     put(
-        StringIO(yaml.safe_dump({'metadata': {'creator': 'buildbot'}})),
+        StringIO(yaml.safe_dump(acceptance_config)),
         BUILDSLAVE_HOME + '/acceptance.yml',
         use_sudo=True,
     )
+
+
+@task
+def configure_acceptance():
+    """
+    Upload the pistoncloud acceptance credentials to the buildslave.
+    """
+    env.hosts = ['pistoncloud-buildslave']
+    execute(_configure_acceptance)
 
 
 def put_template(template, replacements, remote_path, **put_kwargs):
@@ -170,7 +201,7 @@ def _configure(index, password, master='build.staging.clusterhq.com'):
         use_sudo=True,
     )
 
-    configure_acceptance()
+    _configure_acceptance()
 
     remote_service_filename = slashless_name + '.service'
 
