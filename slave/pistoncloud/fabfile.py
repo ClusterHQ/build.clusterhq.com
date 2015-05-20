@@ -126,8 +126,8 @@ def delete_server():
 
 def _configure(index, password, master='build.staging.clusterhq.com'):
     set_google_dns()
+    sudo("yum install -y epel-release")
     packages = [
-        "epel-release",
         "https://kojipkgs.fedoraproject.org/packages/buildbot/0.8.10/1.fc22/noarch/buildbot-slave-0.8.10-1.fc22.noarch.rpm",  # noqa
         "git",
         "libffi-devel",
