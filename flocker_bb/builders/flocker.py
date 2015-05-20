@@ -680,7 +680,7 @@ def getBuilders(slavenames):
         in [
             ("flocker/functional/rackspace/centos-7/storage-driver",
              "flocker/node/agents/cinder.py"),
-            ("flocker/functional/pistoncloud/centos-7/storage-driver",
+            ("pistoncloud",
              "flocker/node/agents/cinder.py"),
         ]
     ])
@@ -700,7 +700,7 @@ BUILDERS = [
     'flocker-admin',
     'flocker/homebrew/create',
     'flocker/functional/rackspace/centos-7/storage-driver',
-    'flocker/functional/pistoncloud/centos-7/storage-driver',
+    'pistoncloud',
 ] + [
     'flocker-omnibus-%s' % (dist,) for dist in OMNIBUS_DISTRIBUTIONS
 ]
