@@ -15,7 +15,8 @@ import yaml
 # http://stackoverflow.com/a/9685171
 env.use_ssh_config = True
 
-BUILDSLAVE_NAME = "clusterhq_flocker_buildslave"
+BUILDSLAVE_NAME = "flocker/functional/pistoncloud/centos-7/storage-driver"
+BUILDSLAVE_NODENAME = "clusterhq_flocker_buildslave"
 # Be careful here! If our script has bugs we don't want to accidentally
 # modify VMs or resources of another more important tenant
 TENANT_NAME = "tmz-mdl-1"
@@ -89,11 +90,11 @@ def _create_server(
                     '--config-drive', 'true',
                     # Wait for the machine to become active.
                     '--poll',
-                    BUILDSLAVE_NAME
+                    BUILDSLAVE_NODENAME
                 ]
             )
         )
-        run('nova list | grep {!r}'.format(BUILDSLAVE_NAME))
+        run('nova list | grep {!r}'.format(BUILDSLAVE_NODENAME))
 
 
 @task
@@ -111,7 +112,7 @@ def create_server(keypair_name):
 
 def _delete_server():
     with shell_env(OS_TENANT_NAME=TENANT_NAME):
-        run('nova delete ' + BUILDSLAVE_NAME)
+        run('nova delete ' + BUILDSLAVE_NODENAME)
 
 
 @task
@@ -141,44 +142,41 @@ def _configure(index, password, master='build.staging.clusterhq.com'):
     ]
     sudo("yum install -y " + " ".join(packages))
     sudo("useradd buildslave")
+    slashless_name = BUILDSLAVE_NAME.replace("/", "-") + '-' + str(index),
     sudo(
         u"buildslave create-slave "
-        u"/home/buildslave/{buildslave_name} "
+        u"/home/buildslave/{builddir} "
         u"{master} "
-        u"{buildslave_name}-{index} "
+        u"{buildslave_name} "
         u"{password}".format(
-            buildslave_name=BUILDSLAVE_NAME,
+            builddir=slashless_name,
+            master=master,
+            buildslave_name=slashless_name,
             index=index,
             password=password,
-            master=master,
         ),
         user='buildslave'
     )
 
     put_template(
         template=FilePath(__file__).sibling('start.template'),
-        replacements=dict(
-            buildslave_name=BUILDSLAVE_NAME
-        ),
-        remote_path='/home/buildslave/{buildslave_name}/start'.format(
-            buildslave_name=BUILDSLAVE_NAME
-        ),
+        replacements=dict(builddir=slashless_name),
+        remote_path='/home/buildslave/' + slashless_name + '/start',
         mode=0755,
         use_sudo=True,
     )
 
     configure_acceptance()
 
-    remote_service_filename = u'{buildslave_name}-slave.service'.format(
-        buildslave_name=BUILDSLAVE_NAME
-    )
+    remote_service_filename = slashless_name + '.service'
 
     put_template(
         template=FilePath(__file__).sibling('slave.service.template'),
         replacements=dict(
-            buildslave_name=BUILDSLAVE_NAME
+            buildslave_name=slashless_name,
+            builddir=slashless_name,
         ),
-        remote_path=u'/etc/systemd/system/{}'.format(remote_service_filename),
+        remote_path=u'/etc/systemd/system/' + remote_service_filename,
         use_sudo=True,
     )
 

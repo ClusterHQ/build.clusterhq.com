@@ -2,9 +2,9 @@
 Description=ClusterHQ buildslave ({buildslave_name})
 
 [Service]
-ExecStart=/home/buildslave/{buildslave_name}/start
+ExecStart=/home/buildslave/{builddir}/start
 
-WorkingDirectory=/home/buildslave/{buildslave_name}
+WorkingDirectory=/home/buildslave/{builddir}
 
 User=buildslave
 Group=buildslave
