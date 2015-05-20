@@ -26,6 +26,26 @@ if 'zulip' in privateData:
     zulip = createZulip(reactor, ZULIP_BOT, ZULIP_KEY)
 
 
+def maybeAddManhole(config, privateData):
+    try:
+        manhole = privateData['manhole']
+    except KeyError:
+        return
+
+    from tempfile import NamedTemporaryFile
+
+    from buildbot.manhole import AuthorizedKeysManhole
+
+    with NamedTemporaryFile(delete=False) as authorized_keys:
+        authorized_keys.write(
+            "\n".join(manhole['authorized_keys']) + "\n"
+        )
+
+    c['manhole'] = AuthorizedKeysManhole(manhole['port'])
+
+maybeAddManhole(c, privateData)
+
+
 ####### BUILDSLAVES
 
 # 'slavePortnum' defines the TCP port to listen on for connections from slaves.
