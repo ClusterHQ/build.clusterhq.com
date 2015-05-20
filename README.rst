@@ -316,17 +316,19 @@ Test the ``pistoncloud-buildslave`` by attempting to connect to the build slave 
 
    ssh pistoncloud-buildslave
 
-Now configure the new server by running the following ``fabric`` task::
+
+Now configure the new server.
+The following step will install:
+ * the buildbot buildslave package on the server and
+ * a systemd service which will be started automatically.
+
+Run the following ``fabric`` task::
 
    fab -f slave/pistoncloud/fabfile.py configure:0,${PASSWORD},${BUILDMASTER}
 
 Where ``${PASSWORD}`` is the password in ``slaves.flocker/functional/pistoncloud/centos-7/storage-driver.passwords`` from the ``config.yml`` or ``staging.yml`` file,
 and ``${BUILDMASTER}`` is the IP address of the BuildBot master that you want this buildslave to connect to.
 
-This step will install:
- * the buildbot buildslave package on the server and
- * a ``buildslave`` user account and
- * a ``clusterhq_pistoncloud_buildslave`` systemd service which will be started automatically.
 
 Monitoring
 ----------
