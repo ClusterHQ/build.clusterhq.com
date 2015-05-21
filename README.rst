@@ -276,7 +276,7 @@ Next log into the ``pistoncloud-novahost`` (credentials in LastPass) and add you
 
 Finally, register your public SSH key with openstack by using the ``nova`` command, as follows:
 
-.. code-block:: sh
+.. code-block:: console
 
   [pistoncloud-novahost] $ cat > id_rsa_joe.blogs@clusterhq.com.pub
   ssh-rsa AAAAB3NzaC1yc2EAAAADAQABAAABAQC2imO7tTLepxqTvxacpNHKmqsRUdhM1EPdAVrBFadrYAC664LDbOvTqXR0iiVomKsfAe6nK9xZ5YzGFIpcOn/MeH45LOHVy5/+yx06qAnRkCDGZzQN/3qrs2K0v0L4XSIFbWmkFycAzG2phxFyAaJicK9XsJ9JaJ1q9/0FBj1TJ0CA7kCFaz/t0eozzOgr7WsqtidMrgrfrWvZW0GZR2PUc+1Ezt0/OBR8Xir0VGMgeLOrHprAF/BSK+7GLuQ9usa+nu3i46UuKtaVDMrKFCkzSdfNX2xJJYlRUEvLTa1VgswgL1wXXUwxXlDmYdwjF583CSFrVeVzBmRRJqNU/IMb joe.bloggs@clusterhq.com
@@ -298,7 +298,7 @@ Here is an example of such a file::
 
 With that ``~/.ssh/config`` content in place, run:
 
-.. code-block:: sh
+.. code-block:: console
 
    [laptop] $ fab -f slave/pistoncloud/fabfile.py create_server:clusterhq_joebloggs
 
@@ -318,13 +318,13 @@ Note: You can also log into ``pistoncloud-novahost`` and run ``nova list`` to sh
 
 Test the ``pistoncloud-buildslave`` by attempting to connect to the build slave with SSH, as follows:
 
-.. code-block:: sh
+.. code-block:: console
 
    [laptop] $ ssh pistoncloud-buildslave
 
 Note: You may need to add your SSH private key to your keyring or SSH agent:
 
-.. code-block:: sh
+.. code-block:: console
 
    [laptop] $ ssh-add
 
@@ -336,7 +336,7 @@ The following step will install:
 
 Run the following ``fabric`` task:
 
-.. code-block:: sh
+.. code-block:: console
 
    [laptop] $ fab -f slave/pistoncloud/fabfile.py configure:0,${PASSWORD},${BUILDMASTER}
 
