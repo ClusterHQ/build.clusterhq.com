@@ -258,7 +258,7 @@ Fixing issues
 -------------
 
 VirtualBox errors
-^^^^^^^^^^^^^^^^^
+.................
 
 Sometimes a message similar to the following is shown::
 
