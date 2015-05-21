@@ -257,8 +257,7 @@ Where ``${PASSWORD}`` is the password in ``slaves.fedora-vagrant.passwords`` fro
 Fixing issues
 -------------
 
-VirtualBox errors
-.................
+**VirtualBox errors**
 
 Sometimes a message similar to the following is shown::
 
