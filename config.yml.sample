@@ -11,7 +11,11 @@ zulip:
     stream: "BuildBot"
     # This can be null, to have the go to /dev/null
     critical_stream: "Engineering"
-
+manhole:
+    port: 22
+    authorized_keys:
+      - "ssh-rsa AAAA... comment"
+      - "..."
 ##
 ## These are the "credentials" sections.  They supply the configuration that
 ## config.py and other areas of the implementation call "credentials" and they

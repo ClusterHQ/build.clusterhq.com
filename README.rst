@@ -352,6 +352,46 @@ Next steps:
 * Check that the assigned builders are able to perform all the required steps by forcing a build.
 * If the builds on the new builder are expected to fail, add the name of the new builder to the ``failing_builders`` section of the ``config.yml`` file.
 
+Fixing issues
+-------------
+
+**VirtualBox errors**
+
+Sometimes a message similar to the following is shown::
+
+   ERROR    : [/etc/sysconfig/network-scripts/ifup-eth] Error, some other host already uses address 172.16.255.240.
+
+See https://github.com/mitchellh/vagrant/issues/1693 for explanations and workarounds for this issue.
+
+One way to work around this issue is to remove existing Virtual Machines.
+To do this, run the following commands.
+``${IP_ADDRESS}`` should be the address of the host.
+For example, the Flocker host is on `soyoustart <https://www.soyoustart.com/>`_.
+
+Show all active Vagrant environments for the buildslave user:
+
+.. code:: shell
+
+   ssh root@${IP_ADDRESS}
+   su - buildslave
+   vagrant global-status
+
+Destroy all vagrant boxes.
+Note, this will cause any currently running tests using these VMs to fail:
+
+.. code:: shell
+
+   # For each ID shown by vagrant global-status:
+   vagrant destroy ${ID}
+
+Kill all VBoxHead processes and unregister the killed VMs from VirtualBox:
+
+.. code:: shell
+
+   for box in $(VBoxManage list vms | cut -f -1 -d ' ' );
+   do
+      eval VBoxManage unregistervm $box ;
+   done
 
 Monitoring
 ----------
