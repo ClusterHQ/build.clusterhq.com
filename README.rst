@@ -264,9 +264,9 @@ The following builders need to run on Centos-7 on PistonCloud:
 To create this machine you'll need to access various machines within pistoncloud via an "SSH jump host".
 
 The machines are referred to here as:
- * pistoncloud-jumphost: The SSH proxy through which you will connect to servers inside the pistoncloud network.
- * pistoncloud-novahost: The server which has ``nova`` and other openstack administrative tools installed.
- * pistoncloud-buildslave: The server which will be created to run the ``flocker/functional/pistoncloud/centos-7/storage-driver`` builder.
+ * **pistoncloud-jumphost**: The SSH proxy through which you will connect to servers inside the pistoncloud network.
+ * **pistoncloud-novahost**: The server which has ``nova`` and other openstack administrative tools installed.
+ * **pistoncloud-buildslave**: The server which will be created to run the ``flocker/functional/pistoncloud/centos-7/storage-driver`` builder.
 
 You'll need to add your public SSH key to the ``pistoncloud-jumphost``.
 A username and key for initial access to the jump host can be found in LastPass.
