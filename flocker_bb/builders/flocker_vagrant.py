@@ -248,9 +248,6 @@ def run_client_installation_tests(configuration):
             '--build-server', buildbotURL,
             '--config-file', Interpolate("%(kw:home)s/acceptance.yml",
                                          home=slave_environ("HOME")),
-        ] + [
-            ['--variant', variant]
-            for variant in configuration.variants
         ],
         haltOnFailure=True))
     return factory
@@ -378,13 +375,10 @@ from ..steps import idleSlave
 from buildbot.locks import MasterLock
 
 
-# Dictionary mapping providers for client installation testing to a list
-# of sets of variants to test on each provider.
+# Configuration for client installation testing.
 @attributes([
     Attribute('provider'),
-    # Vagrant doesn't take a distribution.
-    Attribute('distribution', default_value=None),
-    Attribute('variants', default_factory=set),
+    Attribute('distribution'),
 ])
 class ClientConfiguration(object):
     """
@@ -392,7 +386,6 @@ class ClientConfiguration(object):
 
     :ivar provider: The provider to use.
     :ivar distribution: The distribution to use.
-    :ivar variants: The variants to use.
     """
 
     @property
@@ -400,8 +393,7 @@ class ClientConfiguration(object):
         return '/'.join(
             ['flocker', 'client',
              self.provider,
-             self.distribution]
-            + sorted(self.variants))
+             self.distribution])
 
     @property
     def builder_directory(self):
