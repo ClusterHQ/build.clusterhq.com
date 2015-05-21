@@ -336,10 +336,11 @@ and ``${BUILDMASTER}`` is the IP address of the BuildBot master that you want th
 Note: See "Create the configuration" section above if you do not have a ``config.yml`` or ``staging.yml`` configuration file.
 
 Next steps:
- * Check that the new build slave has connected to the master by viewing the build master web interface and by monitoring the build slave and build master log files.
- * Check that builders have been assigned to the new build slave.
- * Check that the assigned builders are able to perform all the required steps by forcing a build.
- * If the builds on the new builder are expected to fail, add the name of the new builder to the ``failing_builders`` section of the ``config.yml`` file.
+
+* Check that the new build slave has connected to the master by viewing the build master web interface and by monitoring the build slave and build master log files.
+* Check that builders have been assigned to the new build slave.
+* Check that the assigned builders are able to perform all the required steps by forcing a build.
+* If the builds on the new builder are expected to fail, add the name of the new builder to the ``failing_builders`` section of the ``config.yml`` file.
 
 
 Monitoring
