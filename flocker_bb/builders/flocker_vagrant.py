@@ -219,7 +219,11 @@ def buildTutorialBox():
 
 
 def run_client_installation_tests(configuration):
-    """Run the installation tests for clients."""
+    """Run the installation tests for clients.
+
+    :param ClientConfiguration configuration: Configuration for a client
+        installation test run.
+    """
     factory = getFlockerFactory()
 
     if configuration.provider == 'vagrant':
