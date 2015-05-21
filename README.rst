@@ -322,8 +322,9 @@ Note: You may need to add your SSH private key to your keyring or SSH agent::
 
 Now configure the new server.
 The following step will install:
- * the buildbot buildslave package on the server and
- * a systemd service which will be started automatically.
+
+* the buildbot buildslave package on the server and
+* a systemd service which will be started automatically.
 
 Run the following ``fabric`` task::
 
