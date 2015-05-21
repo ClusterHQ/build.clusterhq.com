@@ -27,6 +27,16 @@ TENANT_NAME = "tmz-mdl-1"
 
 
 def cmd(*args):
+    """
+    Quote the supplied ``list`` of ``args`` and return a command line
+    string.
+
+    XXX: This is copied from the ``fabfile.py`` in the root of this repository.
+    It should be shared.
+
+    :param list args: The componants of the command line.
+    :return: The quoted command line string.
+    """
     return ' '.join(map(shellQuote, args))
 
 
@@ -131,22 +141,20 @@ def _create_server(
     PistonCloud build slave.
     """
     with shell_env(OS_TENANT_NAME=TENANT_NAME):
-        run(
-            ' '.join(
-                [
-                    'nova boot',
-                    '--image', image,
-                    '--flavor', flavor,
-                    '--nic', 'net-id=' + net_id,
-                    '--key-name', keypair_name,
-                    # SSH authentication fails unless this is included.
-                    '--config-drive', 'true',
-                    # Wait for the machine to become active.
-                    '--poll',
-                    BUILDSLAVE_NODENAME
-                ]
-            )
-        )
+        commandline = cmd([
+            'nova boot',
+            '--image', image,
+            '--flavor', flavor,
+            '--nic', 'net-id=' + net_id,
+            '--key-name', keypair_name,
+            # SSH authentication fails unless this is included.
+            '--config-drive', 'true',
+            # Wait for the machine to become active.
+            '--poll',
+            BUILDSLAVE_NODENAME
+        ])
+
+        run(commandline)
         run('nova list | grep {!r}'.format(BUILDSLAVE_NODENAME))
 
 
