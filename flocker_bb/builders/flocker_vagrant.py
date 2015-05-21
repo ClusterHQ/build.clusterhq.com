@@ -235,6 +235,9 @@ def run_acceptance_tests(configuration):
             # Allow 5 minutes for acceptance test runner to shutdown gracefully
             # In particular, this allows it to clean up the VMs it spawns.
             'sigtermTime': 5*60,
+            'logfiles': {
+                'run-acceptance-tests.log': 'run-acceptance-tests.log',
+            },
         },
         tests=[],
         trial=[
