@@ -46,6 +46,10 @@ def _configure_acceptance():
     """
     Download the entire acceptance.yml file from lastpass but only
     upload the metadata and pistoncloud credentials.
+
+    Our PistonCloud build slave is hosted on a cluster that isn't
+    administered by ClusterHQ, so we don't want to share all our
+    credentials there.
     """
     acceptance_config = {}
     full_config = get_lastpass_config(
