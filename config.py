@@ -121,9 +121,7 @@ for base, slaveConfig in privateData['slaves'].items():
             keepalive_interval=60,
             buildmaster=privateData['buildmaster']['host'],
             properties={
-                'distribution':
-                    # HACK
-                    'centos-7',
+                'distribution': slaveConfig['distribution'],
             },
         )
         c['slaves'].append(slave)
@@ -151,9 +149,7 @@ for base, slaveConfig in privateData['slaves'].items():
                 keepalive_interval=60,
                 buildmaster=privateData['buildmaster']['host'],
                 properties={
-                    'distribution':
-                        # HACK
-                        'fedora-20' if 'fedora' in base else base
+                    'distribution': slaveConfig['distribution'],
                 },
             )
             c['slaves'].append(slave)
@@ -161,7 +157,12 @@ for base, slaveConfig in privateData['slaves'].items():
         for i, password in enumerate(slaveConfig['passwords']):
             name = '%s-%d' % (base, i)
             SLAVENAMES[base].append(name)
-            c['slaves'].append(BuildSlave(name, password=password))
+            c['slaves'].append(BuildSlave(
+                name, password=password,
+                properties={
+                    'distribution': slaveConfig['distribution'],
+                },
+            ))
 
 
 
