@@ -17,9 +17,9 @@
 from __future__ import with_statement
 
 """
-Fake latent slave implementation for AWS EC2.
+An improved latent or on-demand slave implementation.
 
-Buiildbot's latent slave implementation has some issues. It will often get into
+Buildbot's latent slave implementation has some issues. It will often get into
 a state where where it doesn't try to start a slave. I'm not sure exactly why
 this is but it is related to the fact that the state is spread out over 4
 objects and 6 classes
@@ -31,7 +31,7 @@ objects and 6 classes
 - buildbot.process.botmaster.BotMaster
 
 This implements a simpler scheme, which acts like a regular slave, but watches
-buildbots state to start and stop the slave.
+buildbot's state to start and stop the slave.
 - When a build request comes in for a builder the slave is allocated to,
   start this slave.
 - Poll for existing requests for builders the slave is allocated to.
@@ -65,29 +65,39 @@ from twisted.internet import reactor
 from buildbot.buildslave.base import BuildSlave
 from buildbot import config
 
-from flocker_bb.ec2 import EC2
+from machinist import WrongState
 
 
-class EC2BuildSlave(BuildSlave):
-
+class OnDemandBuildSlave(BuildSlave):
+    """
+    A buildslave which is capable of creating a buildslave node upon receiving
+    a build request and which will destroy that node when it becomes idle.
+    """
     instance = image = None
     _poll_resolution = 5  # hook point for tests
 
     build_wait_timer = None
 
-    def __init__(self, name, password, instance_type, image_name,
-                 identifier, secret_identifier,
-                 user_data, region,
-                 keypair_name, security_name,
+    def __init__(self,
+                 password,
+
+                 # On-Demand related stuff
+                 instance_booter,
+                 build_wait_timeout=60 * 10,
+                 keepalive_interval=None,
+
+                 # Generic stuff for the base class
                  max_builds=None, notify_on_missing=[],
                  missing_timeout=60 * 20,
-                 build_wait_timeout=60 * 10, properties={}, locks=None,
-                 keepalive_interval=None,
-                 tags={}):
-
+                 properties={}, locks=None,
+                 ):
+        # The buildslave name has already been supplied to the driver
+        # responsible for booting the node, so we use that attribute here.
+        name = instance_booter.driver.name
         BuildSlave.__init__(
-            self, name, password, max_builds, notify_on_missing,
-            missing_timeout, properties, locks)
+            self, name, password, max_builds,
+            notify_on_missing, missing_timeout, properties, locks
+        )
         if build_wait_timeout < 0:
             config.error("%s: %s: Can't wait for negative time."
                          % (self.__class__, name))
@@ -98,18 +108,7 @@ class EC2BuildSlave(BuildSlave):
 
         self.building = set()
 
-        self.ec2 = EC2(
-            access_key=identifier,
-            secret_access_token=secret_identifier,
-            region=region,
-            name=name,
-            image_name=image_name,
-            size=instance_type,
-            keyname=keypair_name,
-            security_groups=[security_name],
-            userdata=user_data,
-            metadata=tags,
-        )
+        self.instance_booter = instance_booter
 
         self.addService(TimerService(60, self.periodic))
 
@@ -123,7 +122,7 @@ class EC2BuildSlave(BuildSlave):
         self.building.discard(sb.builder_name)
         if not self.building:
             if self.build_wait_timeout == 0:
-                self.ec2.stop()
+                self.instance_booter.stop()
             else:
                 self._setBuildWaitTimer()
 
@@ -133,28 +132,54 @@ class EC2BuildSlave(BuildSlave):
                 self.build_wait_timer.cancel()
             self.build_wait_timer = None
 
+    def attached(self, bot):
+        d = BuildSlave.attached(self, bot)
+
+        def set_metadata_and_timer(result):
+            try:
+                self.properties.setProperty(
+                    'image_metadata',
+                    self.instance_booter.image_metadata,
+                    "buildslave"
+                )
+            except WrongState:
+                self.properties.setProperty(
+                    'image_metadata', None, "buildslave")
+            try:
+                self.properties.setProperty(
+                    'instance_metadata',
+                    self.instance_booter.instance_metadata,
+                    "buildslave")
+            except WrongState:
+                self.properties.setProperty(
+                    'instance_metadata', None, "buildslave")
+            self._setBuildWaitTimer()
+            return result
+        d.addCallback(set_metadata_and_timer)
+        return d
+
     def detached(self, mind):
         BuildSlave.detached(self, mind)
         # If the slave disconnects, assuming it is a problem with the instance,
         # and stop it.
-        self.ec2.stop()
+        self.instance_booter.stop()
 
     def _setBuildWaitTimer(self):
         self._clearBuildWaitTimer()
         self.build_wait_timer = reactor.callLater(
-            self.build_wait_timeout, self.ec2.stop)
+            self.build_wait_timeout, self.instance_booter.stop)
 
     def requestSubmitted(self, request):
         builder_names = [b.name for b in
                          self.botmaster.getBuildersForSlave(self.slavename)]
         if request['buildername'] in builder_names:
-            self.ec2.start()
+            self.instance_booter.start()
 
     def startService(self):
         BuildSlave.startService(self)
 
         self._shutdown_callback_handle = reactor.addSystemEventTrigger(
-            'before', 'shutdown', self.ec2.stop)
+            'before', 'shutdown', self.instance_booter.stop)
 
         self.master.subscribeToBuildRequests(self.requestSubmitted)
 
@@ -168,4 +193,4 @@ class EC2BuildSlave(BuildSlave):
             b.name for b in
             self.botmaster.getBuildersForSlave(self.slavename)])
         if pending_builders & our_builders:
-            self.ec2.start()
+            self.instance_booter.start()

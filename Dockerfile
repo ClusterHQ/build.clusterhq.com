@@ -2,8 +2,8 @@ FROM fedora:20
 #ADD https://copr.fedoraproject.org/coprs/tomprince/hybridlogic/repo/fedora-20-x86_64/tomprince-hybridlogic-fedora-20-x86_64.repo /etc/yum.repos.d/
 ADD tomprince-hybridlogic-fedora-20-x86_64.repo /etc/yum.repos.d/
 #RUN yum upgrade -y
-RUN yum install -y python-devel python-pip gcc libffi-devel openssl-devel git s3cmd dpkg-dev createrepo_c
-RUN ["pip", "install", "buildbot==0.8.10", "txgithub==15.0.0", "eliot", "apache-libcloud", "service_identity", "machinist", "prometheus_client"]
+RUN yum install -y python-devel python-pip gcc libffi-devel openssl-devel gmp-devel git s3cmd dpkg-dev createrepo_c
+RUN ["pip", "install", "twisted[conch]", "buildbot==0.8.10", "txgithub==15.0.0", "eliot", "apache-libcloud", "service_identity", "machinist", "prometheus_client"]
 
 ADD buildbot.tac /srv/buildmaster/
 ADD public_html /srv/buildmaster/public_html

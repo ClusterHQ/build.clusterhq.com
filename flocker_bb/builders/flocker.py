@@ -330,8 +330,6 @@ def makeInternalDocsFactory():
         description=["uploading", "release", "documentation"],
         descriptionDone=["upload", "release", "documentation"],
         command=[
-            # We use s3cmd instead of gsutil here because of
-            # https://github.com/GoogleCloudPlatform/gsutil/issues/247
             "s3cmd", "sync",
             '--verbose',
             '--delete-removed',
@@ -628,7 +626,13 @@ def getBuilders(slavenames):
         BuilderConfig(name='flocker-osx-10.10',
                       slavenames=slavenames['osx'],
                       category='flocker',
-                      factory=makeFactory(b'python2.7'),
+                      factory=makeFactory(
+                          b'python2.7', tests=[
+                              b'flocker.cli',
+                              b'flocker.common',
+                              b'flocker.ca',
+                          ],
+                      ),
                       nextSlave=idleSlave),
         BuilderConfig(name='flocker-zfs-head',
                       slavenames=slavenames['fedora-zfs-head'],
@@ -697,6 +701,28 @@ def getBuilders(slavenames):
                 nextSlave=idleSlave,
                 ))
 
+    # Storage backend builders
+    builders.extend([
+        BuilderConfig(
+            name=name,
+            builddir=name.replace("/", "-"),
+            slavenames=slavenames[name],
+            category='flocker',
+            factory=makeFactory(
+                b'python2.7',
+                tests=[
+                    "--testmodule",
+                    Interpolate("%(prop:builddir)s/build/" + driver),
+                ],
+            ),
+        )
+        for (name, driver)
+        in [
+            ("flocker/functional/rackspace/centos-7/storage-driver",
+             "flocker/node/agents/cinder.py"),
+        ]
+    ])
+
     return builders
 
 BUILDERS = [
@@ -711,6 +737,7 @@ BUILDERS = [
     'flocker-zfs-head',
     'flocker-admin',
     'flocker/homebrew/create',
+    'flocker/functional/rackspace/centos-7/storage-driver',
 ] + [
     'flocker-omnibus-%s' % (dist,)
     for dist in OMNIBUS_DISTRIBUTIONS

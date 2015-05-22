@@ -22,6 +22,18 @@ git config --global credential.helper "store"
 cat <<"EOF" > $HOME/acceptance.yml
 %(acceptance.yml)s
 EOF
+export FLOCKER_FUNCTIONAL_TEST_CLOUD_CONFIG_FILE=$HOME/acceptance.yml
+export FLOCKER_FUNCTIONAL_TEST_CLOUD_PROVIDER=%(FLOCKER_FUNCTIONAL_TEST_CLOUD_PROVIDER)s
+
+case "${FLOCKER_FUNCTIONAL_TEST_CLOUD_PROVIDER}" in
+    aws)
+        export FLOCKER_FUNCTIONAL_TEST_AWS_AVAILABILITY_ZONE="$(curl -s http://169.254.169.254/latest/meta-data/placement/availability-zone)"
+        ;;
+
+    openstack)
+        export FLOCKER_FUNCTIONAL_TEST_OPENSTACK_REGION="$(xenstore-read vm-data/provider_data/region)"
+        ;;
+esac
 
 touch /root/.ssh/known_hosts
 cat <<"EOF"  > /root/.ssh/id_rsa

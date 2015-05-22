@@ -93,13 +93,13 @@ def buildVagrantBox(box, add=True):
         description=['uploading', 'base', box, 'box'],
         descriptionDone=['upload', 'base', box, 'box'],
         command=[
-            virtualenvBinary('gsutil'),
-            'cp', '-a', 'public-read',
+            '/bin/s3cmd',
+            'put',
             Interpolate(
                 'vagrant/%(kw:box)s/flocker-%(kw:box)s-%(prop:version)s.box',
                 box=box),
             Interpolate(
-                'gs://clusterhq-vagrant-buildbot/%(kw:box)s/',
+                's3://clusterhq-dev-archive/vagrant/%(kw:box)s/',
                 box=box),
         ],
     ))
@@ -116,7 +116,7 @@ def buildVagrantBox(box, add=True):
                 "providers": [{
                     "name": "virtualbox",
                     "url": Interpolate(
-                        'https://storage.googleapis.com/clusterhq-vagrant-buildbot/'  # noqa
+                        'https://s3.amazonaws.com/clusterhq-dev-archive/vagrant/'  # noqa
                         '%(kw:box)s/flocker-%(kw:box)s-%(prop:version)s.box',
                         box=box),
                 }]
@@ -377,20 +377,11 @@ class AcceptanceConfiguration(object):
             return 'centos-7'
 
 
-ACCEPTEANCE_CONFIGURATIONS = [
+ACCEPTANCE_CONFIGURATIONS = [
     AcceptanceConfiguration(
         provider='vagrant', distribution='fedora-20'),
     AcceptanceConfiguration(
-        provider='rackspace', distribution='fedora-20'),
-    AcceptanceConfiguration(
-        provider='rackspace', distribution='fedora-20',
-        variants={'docker-head'}),
-    AcceptanceConfiguration(
-        provider='rackspace', distribution='fedora-20',
-        variants={'zfs-testing'}),
-    AcceptanceConfiguration(
-        provider='rackspace', distribution='fedora-20',
-        variants={'distro-testing'}),
+        provider='rackspace', distribution='ubuntu-14.04'),
     AcceptanceConfiguration(
         provider='rackspace', distribution='centos-7'),
     AcceptanceConfiguration(
@@ -399,10 +390,6 @@ ACCEPTEANCE_CONFIGURATIONS = [
     AcceptanceConfiguration(
         provider='rackspace', distribution='centos-7',
         variants={'zfs-testing'}),
-    AcceptanceConfiguration(
-        provider='digitalocean', distribution='fedora-20'),
-    AcceptanceConfiguration(
-        provider='aws', distribution='centos-7'),
 ]
 
 
@@ -434,7 +421,7 @@ def getBuilders(slavenames):
                           box='tutorial'),
                       nextSlave=idleSlave),
         ]
-    for configuration in ACCEPTEANCE_CONFIGURATIONS:
+    for configuration in ACCEPTANCE_CONFIGURATIONS:
         builders.append(BuilderConfig(
             name=configuration.builder_name,
             builddir=configuration.builder_directory,
@@ -451,7 +438,7 @@ BUILDERS = [
     'flocker/installed-package/fedora-20',
 ] + [
     configuration.builder_name
-    for configuration in ACCEPTEANCE_CONFIGURATIONS
+    for configuration in ACCEPTANCE_CONFIGURATIONS
 ]
 
 from ..steps import MergeForward, report_expected_failures_parameter
@@ -494,7 +481,7 @@ def getSchedulers():
                 'flocker/installed-package/fedora-20',
             ] + [
                 configuration.builder_name
-                for configuration in ACCEPTEANCE_CONFIGURATIONS
+                for configuration in ACCEPTANCE_CONFIGURATIONS
                 if configuration.provider == 'vagrant'
             ],
             codebases={
@@ -505,7 +492,7 @@ def getSchedulers():
     for distribution in ('fedora-20', 'centos-7', 'ubuntu-14.04'):
         builders = [
             configuration.builder_name
-            for configuration in ACCEPTEANCE_CONFIGURATIONS
+            for configuration in ACCEPTANCE_CONFIGURATIONS
             if configuration.provider != 'vagrant'
             and configuration.distribution == distribution
         ]

@@ -187,15 +187,19 @@ Each image uses `slave/cloud-init.sh` with some substitutions as user-data, to s
 
 Both images have :file:`salve/cloud-init.sh` run on them at instance creation time.
 
-Google Storage
---------------
+Vagrant Builders
+----------------
 
-The vagrant builders upload the boxes to google cloud storage.
-The bucket (`gs://clusterhq-vagrant-buildbot/`) is set to expire objects after two weeks.
-The lifecycle configuration file is in :file:`vagrant/clusterhq-vagrant-buildbot.lifecycle.json`.
-It was configured by::
+The vagrant builders upload the boxes to Amazon S3.
+The bucket (`s3://clusterhq-dev-archive/vagrant`) is set to expire objects after two weeks.
 
-  gsutil lifecycle set vagrant/clusterhq-vagrant-buildbot.lifecycle.json gs://clusterhq-vagrant-buildbot/
+To set this lifecycle setting:
+
+* Right click on the bucket,
+* Properties,
+* Lifecycle > Add rule,
+* "Apply the Rule to", select "A Prefix" and fill in "vagrant/",
+* Choose "Action on Objects" "Permanently Delete Only", after 14 days.
 
 Mac OS X Buildslave
 -------------------
@@ -225,6 +229,72 @@ There is a VMware Fusion OSX VM configured, for running homebrew installation te
 It is configured with a ``nat`` network, with a static IP address,
 and the buildslave user has a password-less ssh-key that can log in to it.
 
+Fedora hardware builders
+------------------------
+
+The following builders need to run on Fedora 20 on bare metal hardware:
+
+* flocker-vagrant-dev-box
+* flocker-vagrant-tutorial-box
+* flocker/acceptance/vagrant/fedora-20
+* flocker/installed-package/fedora-20
+
+To create a Rackspace OnMetal slave to serve this purpose:
+
+* Log into https://mycloud.rackspace.com,
+* Create Server > OnMetal Server,
+* Give the server an appropriate name,
+* Choose the following options: Image: OnMetal - Fedora 20 (Heisenbug), Flavor: OnMetal Compute, An SSH key you have access to
+* Create Server,
+* When this is complete there will be a command to log into the server, e.g. ``ssh root@${ONMETAL_IP_ADDRESS}``.
+
+To configure any Fedora 20 bare metal machine (e.g. on OnMetal as above)::
+
+   fab -f slave/vagrant/fabfile.py --hosts=root@${ONMETAL_IP_ADDRESS} install:0,${PASSWORD},${MASTER}
+
+Where ``${PASSWORD}`` is the password in ``slaves.fedora-vagrant.passwords`` from the ``config.yml`` or ``staging.yml`` file used to deploy the BuildBot master on hostname or IP address ``${MASTER}``.
+
+Fixing issues
+-------------
+
+**VirtualBox errors**
+
+Sometimes a message similar to the following is shown::
+
+   ERROR    : [/etc/sysconfig/network-scripts/ifup-eth] Error, some other host already uses address 172.16.255.240.
+
+See https://github.com/mitchellh/vagrant/issues/1693 for explanations and workarounds for this issue.
+
+One way to work around this issue is to remove existing Virtual Machines.
+To do this, run the following commands.
+``${IP_ADDRESS}`` should be the address of the host.
+For example, the Flocker host is on `soyoustart <https://www.soyoustart.com/>`_.
+
+Show all active Vagrant environments for the buildslave user:
+
+.. code:: shell
+
+   ssh root@${IP_ADDRESS}
+   su - buildslave
+   vagrant global-status
+
+Destroy all vagrant boxes.
+Note, this will cause any currently running tests using these VMs to fail:
+
+.. code:: shell
+
+   # For each ID shown by vagrant global-status:
+   vagrant destroy ${ID}
+
+Kill all VBoxHead processes and unregister the killed VMs from VirtualBox:
+
+.. code:: shell
+
+   for box in $(VBoxManage list vms | cut -f -1 -d ' ' );
+   do
+      eval VBoxManage unregistervm $box ;
+   done
+
 Monitoring
 ----------
 
@@ -234,3 +304,37 @@ It is currently running alongside both ``build.clusterhq.com`` and ``build.stagi
 It can be started by::
 
    fab --hosts=${USERNAME}@${HOST} startPrometheus
+
+Disk Usage and Clearing Space
+=============================
+
+The Buildbot master stores artifacts from previous builds.
+A script is run daily to delete some data which is 14+ days old.
+
+To find where space is being used run::
+
+   $ su -u root
+   $ cd /
+   # The following shows directory contents sorted by size
+   $ du -sk * | sort -n
+   # cd into any suspiciously large directories, probably the largest, and
+   # repeat until the culprit is found.
+   $ cd suspiciously-large-directory
+
+Then fix the problem causing the space to be filled.
+
+A temporary fix is to delete old files.
+The following deletes files which are 7+ days old::
+
+   $ find . -type f -mtime +7 -exec unlink {} \;
+
+Alternatively it is possible to increase the volume size on the Amazon S3 instance hosting the BuildBot master.
+
+The following steps can be used to change a volume size:
+
+- Stop the S3 instance.
+- Snapshot the volume being used by the instance.
+- Create a volume from the snapshot with the desired size.
+- Detach the old volume.
+- Attach the new volume
+- Start the instance.
