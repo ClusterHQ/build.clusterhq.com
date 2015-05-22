@@ -51,11 +51,11 @@ def flockerRevision(build):
     return build.getProperty('got_revision', {}).get('flocker')
 
 
-def _result(kind, prefix, discriminator=buildNumber):
+def _result(kind, prefix, discriminator=buildNumber, branch=flockerBranch):
     """
     Build a path to results.
     """
-    parts = [prefix, kind, flockerBranch, discriminator]
+    parts = [prefix, kind, branch, discriminator]
 
     @renderer
     def render(build):
@@ -345,6 +345,7 @@ def pip(what, packages):
                  "--find-links", resultURL(
                      'wheelhouse',
                      discriminator=Property('distribution'),
+                     branch='',
                      isAbsolute=True),
                  packages,
                  ],
