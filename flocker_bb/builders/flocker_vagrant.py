@@ -242,6 +242,7 @@ def run_acceptance_tests(configuration):
             Interpolate('%(prop:builddir)s/build/admin/run-acceptance-tests'),
             '--distribution', configuration.distribution,
             '--provider', configuration.provider,
+            '--dataset-backend', configuration.dataset_backend,
             '--branch', flockerBranch,
             '--build-server', buildbotURL,
             '--config-file', Interpolate("%(kw:home)s/acceptance.yml",
@@ -346,6 +347,7 @@ from buildbot.locks import MasterLock
     Attribute('provider'),
     # Vagrant doesn't take a distrubtion.
     Attribute('distribution', default_value=None),
+    Attribute('dataset_backend'),
     Attribute('variants', default_factory=set),
 ])
 class AcceptanceConfiguration(object):
@@ -354,6 +356,7 @@ class AcceptanceConfiguration(object):
 
     :ivar provider: The provider to use.
     :ivar distribution: The distribution to use.
+    :ivar dataset_backend: The dataset backend to use.
     :ivar variants: The variants to use.
     """
 
@@ -362,8 +365,9 @@ class AcceptanceConfiguration(object):
         return '/'.join(
             ['flocker', 'acceptance',
              self.provider,
-             self.distribution]
-            + sorted(self.variants))
+             self.distribution,
+             self.dataset_backend,
+             ] + sorted(self.variants))
 
     @property
     def builder_directory(self):
@@ -379,17 +383,26 @@ class AcceptanceConfiguration(object):
 
 ACCEPTANCE_CONFIGURATIONS = [
     AcceptanceConfiguration(
-        provider='vagrant', distribution='fedora-20'),
+        provider='vagrant', distribution='fedora-20',
+        dataset_backend='zfs'),
     AcceptanceConfiguration(
-        provider='rackspace', distribution='ubuntu-14.04'),
-    AcceptanceConfiguration(
-        provider='rackspace', distribution='centos-7'),
-    AcceptanceConfiguration(
-        provider='rackspace', distribution='centos-7',
-        variants={'docker-head'}),
+        provider='rackspace', distribution='ubuntu-14.04',
+        dataset_backend='loopback'),
     AcceptanceConfiguration(
         provider='rackspace', distribution='centos-7',
-        variants={'zfs-testing'}),
+        dataset_backend='loopback'),
+    AcceptanceConfiguration(
+        provider='rackspace', distribution='ubuntu-14.04',
+        dataset_backend='zfs'),
+    AcceptanceConfiguration(
+        provider='rackspace', distribution='centos-7',
+        dataset_backend='zfs'),
+    AcceptanceConfiguration(
+        provider='rackspace', distribution='centos-7',
+        dataset_backend='loopback', variants={'docker-head'}),
+    AcceptanceConfiguration(
+        provider='rackspace', distribution='centos-7',
+        dataset_backend='zfs', variants={'zfs-testing'}),
 ]
 
 
