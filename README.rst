@@ -252,7 +252,7 @@ To configure any Fedora 20 bare metal machine (e.g. on OnMetal as above)::
 
    fab -f slave/vagrant/fabfile.py --hosts=root@${ONMETAL_IP_ADDRESS} install:0,${PASSWORD},${MASTER}
 
-Where ``${PASSWORD}`` is the password in ``slaves.fedora-vagrant.passwords`` from the ``config.yml`` or ``staging.yml`` file used to deploy the BuildBot master on hostname or IP address ``${MASTER}``.
+Where ``${PASSWORD}`` is the password in ``slaves.fedora-20/vagrant.passwords`` from the ``config.yml`` or ``staging.yml`` file used to deploy the BuildBot master on hostname or IP address ``${MASTER}``.
 
 PistonCloud
 -----------

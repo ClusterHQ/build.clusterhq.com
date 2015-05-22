@@ -372,7 +372,7 @@ class AcceptanceConfiguration(object):
     @property
     def slave_class(self):
         if self.provider == 'vagrant':
-            return 'fedora-vagrant'
+            return 'fedora-20/vagrant'
         else:
             return 'centos-7'
 
@@ -404,18 +404,18 @@ ACCEPTANCE_LOCKS = {
 def getBuilders(slavenames):
     builders = [
         BuilderConfig(name='flocker-vagrant-dev-box',
-                      slavenames=slavenames['fedora-vagrant'],
+                      slavenames=slavenames['fedora-20/vagrant'],
                       category='flocker',
                       factory=buildDevBox(),
                       nextSlave=idleSlave),
         BuilderConfig(name='flocker-vagrant-tutorial-box',
-                      slavenames=slavenames['fedora-vagrant'],
+                      slavenames=slavenames['fedora-20/vagrant'],
                       category='flocker',
                       factory=buildTutorialBox(),
                       nextSlave=idleSlave),
         BuilderConfig(name='flocker/installed-package/fedora-20',
                       builddir='flocker-installed-package-fedora-20',
-                      slavenames=slavenames['fedora-vagrant'],
+                      slavenames=slavenames['fedora-20/vagrant'],
                       category='flocker',
                       factory=test_installed_package(
                           box='tutorial'),

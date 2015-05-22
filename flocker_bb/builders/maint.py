@@ -30,7 +30,7 @@ def getBuilders(slavenames):
         BuilderConfig(
             name='clean-old-builds',
             # These slaves are dedicated slaves.
-            slavenames=slavenames['fedora-vagrant'],
+            slavenames=slavenames['fedora-20/vagrant'],
             factory=makeCleanOldBuildsFactory()),
         ]
 
