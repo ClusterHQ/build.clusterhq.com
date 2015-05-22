@@ -8,8 +8,11 @@ from buildbot.steps.source.git import Git
 from buildbot.process.properties import Interpolate, Property
 from buildbot.steps.trigger import Trigger
 from buildbot.config import error
+from buildbot.locks import MasterLock
 
 from os import path
+
+from characteristic import attributes, Attribute
 
 from ..steps import (
     VIRTUALENV_DIR, buildVirtualEnv, virtualenvBinary,
@@ -24,6 +27,63 @@ from ..steps import (
 
 # This is where temporary files associated with a build will be dumped.
 TMPDIR = Interpolate(b"%(prop:workdir)s/tmp-%(prop:buildnumber)s")
+
+
+# Dictionary mapping providers for storage backend testing to a list of
+# sets of variants to test on each provider.
+@attributes([
+    Attribute('provider'),
+    Attribute('distribution'),
+])
+class StorageConfiguration(object):
+    """
+    Configuration for storage backend test run.
+
+    :ivar provider: The storage provider to use.
+    :ivar distribution: The distribution to use.
+    """
+    @property
+    def builder_name(self):
+        return '/'.join(
+            ['flocker', 'functional', self.provider, self.distribution,
+             'storage-driver'])
+
+    @property
+    def builder_directory(self):
+        return self.builder_name.replace('/', '-')
+
+    @property
+    def slave_class(self):
+        if self.provider == 'aws':
+            return self.distribution
+        elif self.provider == 'rackspace':
+            return 'flocker/functional/rackspace/centos-7/storage-driver'
+        raise NotImplementedError("Unsupported provider %s" % (self.provider,))
+
+    @property
+    def driver(self):
+        if self.provider == 'aws':
+            return 'flocker/node/agents/ebs.py'
+        elif self.provider == 'rackspace':
+            return 'flocker/node/agents/cinder.py'
+        raise NotImplementedError("Unsupported provider %s" % (self.provider,))
+
+
+STORAGE_CONFIGURATIONS = [
+    StorageConfiguration(
+        provider='aws', distribution='ubuntu-14.04'),
+    StorageConfiguration(
+        provider='aws', distribution='centos-7'),
+    StorageConfiguration(
+        provider='rackspace', distribution='centos-7'),
+]
+
+functional_rackspace_lock = MasterLock("functional-rackspace-lock", maxCount=1)
+functional_aws_lock = MasterLock("functional-aws-lock", maxCount=1)
+STORAGE_LOCKS = {
+    'rackspace': [functional_rackspace_lock.access("counting")],
+    'aws': [functional_aws_lock.access("counting")],
+}
 
 
 def getFlockerFactory(python):
@@ -181,7 +241,7 @@ def installTwistedTrunk():
     return steps
 
 
-def makeFactory(python, tests=None, twistedTrunk=False):
+def makeFactory(python, tests=None, twistedTrunk=False, env=None):
     """
     Make a new build factory which can do a flocker build.
 
@@ -199,7 +259,7 @@ def makeFactory(python, tests=None, twistedTrunk=False):
     if twistedTrunk:
         factory.addSteps(installTwistedTrunk())
 
-    factory.addSteps(_flockerTests(kwargs={}, tests=tests))
+    factory.addSteps(_flockerTests(kwargs={}, tests=tests, env=env))
 
     return factory
 
@@ -662,26 +722,25 @@ def getBuilders(slavenames):
                 ))
 
     # Storage backend builders
-    builders.extend([
-        BuilderConfig(
-            name=name,
-            builddir=name.replace("/", "-"),
-            slavenames=slavenames[name],
-            category='flocker',
-            factory=makeFactory(
-                b'python2.7',
-                tests=[
-                    "--testmodule",
-                    Interpolate("%(prop:builddir)s/build/" + driver),
-                ],
-            ),
-        )
-        for (name, driver)
-        in [
-            ("flocker/functional/rackspace/centos-7/storage-driver",
-             "flocker/node/agents/cinder.py"),
-        ]
-    ])
+    for configuration in STORAGE_CONFIGURATIONS:
+        builders.extend([
+            BuilderConfig(
+                name=configuration.builder_name,
+                builddir=configuration.builder_directory,
+                slavenames=slavenames[configuration.slave_class],
+                category='flocker',
+                factory=makeFactory(
+                    b'python2.7',
+                    tests=[
+                        "--testmodule",
+                        Interpolate("%(prop:builddir)s/build/" +
+                                    configuration.driver),
+                    ],
+                    env={'FLOCKER_FUNCTIONAL_TEST': 'TRUE'},
+                ),
+                locks=STORAGE_LOCKS.get(configuration.provider, []),
+            )
+        ])
 
     return builders
 
@@ -697,9 +756,10 @@ BUILDERS = [
     'flocker-zfs-head',
     'flocker-admin',
     'flocker/homebrew/create',
-    'flocker/functional/rackspace/centos-7/storage-driver',
 ] + [
     'flocker-omnibus-%s' % (dist,) for dist in OMNIBUS_DISTRIBUTIONS
+] + [
+    configuration.builder_name for configuration in STORAGE_CONFIGURATIONS
 ]
 
 
