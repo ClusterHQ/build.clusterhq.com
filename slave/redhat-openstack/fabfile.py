@@ -1,6 +1,6 @@
 # Copyright Hybrid Logic Ltd.
 """
-Configuration for a buildslave to run on PistonCloud
+Configuration for a buildslave to run on redhat-openstack
 
 .. warning::
     This points at the staging buildserver by default.
@@ -17,7 +17,7 @@ import yaml
 # See http://stackoverflow.com/a/9685171
 env.use_ssh_config = True
 
-BUILDSLAVE_NAME = "flocker/functional/pistoncloud/centos-7/storage-driver"
+BUILDSLAVE_NAME = "redhat-openstack/centos-7"
 BUILDSLAVE_NODENAME = "clusterhq_flocker_buildslave"
 BUILDSLAVE_HOME = '/srv/buildslave'
 
@@ -55,9 +55,9 @@ def get_lastpass_config(key):
 def _configure_acceptance():
     """
     Download the entire acceptance.yml file from lastpass but only
-    upload the metadata and pistoncloud credentials.
+    upload the metadata and openstack credentials.
 
-    Our PistonCloud build slave is hosted on a cluster that isn't
+    Our redhat-openstack build slave is hosted on a cluster that isn't
     administered by ClusterHQ, so we don't want to share all our
     credentials there.
     """
@@ -65,7 +65,7 @@ def _configure_acceptance():
     full_config = get_lastpass_config(
         "acceptance@build.clusterhq.com"
     )
-    for key in ('metadata', 'pistoncloud'):
+    for key in ('metadata', 'redhat-openstack'):
         acceptance_config[key] = full_config['config'][key]
 
     put(
@@ -78,10 +78,10 @@ def _configure_acceptance():
 @task
 def configure_acceptance():
     """
-    Upload the pistoncloud acceptance credentials to the buildslave.
+    Upload the redhat-openstack acceptance credentials to the buildslave.
     """
     # The alias for the build slave server in ``.ssh/config``.
-    env.hosts = ['pistoncloud-buildslave']
+    env.hosts = ['redhat-openstack-buildslave']
     execute(_configure_acceptance)
 
 
@@ -138,7 +138,7 @@ def _create_server(
 ):
     """
     Run ``nova boot`` to create a new server on which to run the
-    PistonCloud build slave.
+    redhat-openstack build slave.
     """
     with shell_env(OS_TENANT_NAME=TENANT_NAME):
         commandline = cmd(
@@ -161,21 +161,21 @@ def _create_server(
 @task
 def create_server(keypair_name):
     """
-    Create a PistonCloud buildslave VM and wait for it to boot.
+    Create a redhat-openstack buildslave VM and wait for it to boot.
     Finally print its IP address.
 
     :param str keypair_name: The name of an SSH keypair that has been
-        registered on the PistonCloud nova tenant.
+        registered on the redhat-openstack nova tenant.
     """
     # The alias for the openstack / nova administration server in
     # ``.ssh/config``.
-    env.hosts = ['pistoncloud-novahost']
+    env.hosts = ['redhat-openstack-novahost']
     execute(_create_server, keypair_name)
 
 
 def _delete_server():
     """
-    Call ``nova delete`` to delete the server on which the PistonCloud
+    Call ``nova delete`` to delete the server on which the redhat-openstack
     build slave is running.
     """
     with shell_env(OS_TENANT_NAME=TENANT_NAME):
@@ -185,20 +185,20 @@ def _delete_server():
 @task
 def delete_server():
     """
-    Delete the PistonCloud buildslave VM.
+    Delete the redhat-openstack buildslave VM.
     """
     # The alias for the openstack / nova administration server in
     # ``.ssh/config``.
-    env.hosts = ['pistoncloud-novahost']
+    env.hosts = ['redhat-openstack-novahost']
     execute(_delete_server)
 
 
 def _configure(index, password, master='build.staging.clusterhq.com'):
     """
     Install all the packages required by ``buildslave`` and then
-    configure the PistonCloud buildslave.
+    configure the redhat-openstack buildslave.
     """
-    # The default DNS servers on our PistonCloud tenant prevent
+    # The default DNS servers on our redhat-openstack tenant prevent
     # resolution of public DNS names.
     # Instead use Google's public DNS servers for the duration of the
     # build slave installation.
@@ -273,10 +273,10 @@ def _configure(index, password, master='build.staging.clusterhq.com'):
 @task
 def configure(index, password, master='build.staging.clusterhq.com'):
     """
-    Install and configure the buildslave on the PistonCloud buildslave
+    Install and configure the buildslave on the redhat-openstack buildslave
     VM.
 
-    :param int index: The index of this PistonCloud build slave. You
+    :param int index: The index of this redhat-openstack build slave. You
         should probably just say 0.
     :param unicode password: The password that the build slave will
         use when authenticating with the build master.
@@ -284,5 +284,5 @@ def configure(index, password, master='build.staging.clusterhq.com'):
         master that this build slave will attempt to connect to.
     """
     # The alias for the build slave server in ``.ssh/config``.
-    env.hosts = ['pistoncloud-buildslave']
+    env.hosts = ['redhat-openstack-buildslave']
     execute(_configure, index, password, master)

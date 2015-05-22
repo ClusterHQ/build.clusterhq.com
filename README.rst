@@ -254,53 +254,53 @@ To configure any Fedora 20 bare metal machine (e.g. on OnMetal as above)::
 
 Where ``${PASSWORD}`` is the password in ``slaves.fedora-20/vagrant.passwords`` from the ``config.yml`` or ``staging.yml`` file used to deploy the BuildBot master on hostname or IP address ``${MASTER}``.
 
-PistonCloud
------------
+Red Hat Openstack
+-----------------
 
-The following builders need to run on Centos-7 on PistonCloud:
+The following builders need to run on Centos-7 on Red Hat Open Stack:
 
-* ``flocker/functional/pistoncloud/centos-7/storage-driver``
+* ``flocker/functional/redhat-openstack/centos-7/storage-driver``
 
-To create this machine you'll need to access various machines within pistoncloud via an "SSH jump host".
+To create this machine you'll need to access various machines within redhat-openstack via an "SSH jump host".
 
 The machines are referred to here as:
- * **pistoncloud-jumphost**: The SSH proxy through which you will connect to servers inside the pistoncloud network.
- * **pistoncloud-novahost**: The server which has ``nova`` and other openstack administrative tools installed.
- * **pistoncloud-buildslave**: The server which will be created to run the ``flocker/functional/pistoncloud/centos-7/storage-driver`` builder.
+ * **redhat-openstack-jumphost**: The SSH proxy through which you will connect to servers inside the redhat-openstack network.
+ * **redhat-openstack-novahost**: The server which has ``nova`` and other openstack administrative tools installed.
+ * **redhat-openstack-buildslave**: The server which will be created to run the ``flocker/functional/redhat-openstack/centos-7/storage-driver`` builder.
 
-You'll need to add your public SSH key to the ``pistoncloud-jumphost``.
+You'll need to add your public SSH key to the ``redhat-openstack-jumphost``.
 A username and key for initial access to the jump host can be found in LastPass.
 Using that username and key, log into the jumphost and add your own public SSH key to the ``authorized_keys`` file of the jumphost user.
 
-Next log into the ``pistoncloud-novahost`` (credentials in LastPass) and add your own public SSH key.
+Next log into the ``redhat-openstack-novahost`` (credentials in LastPass) and add your own public SSH key.
 
 Finally, register your public SSH key with openstack by using the ``nova`` command, as follows:
 
 .. code-block:: console
 
-  [pistoncloud-novahost] $ cat > id_rsa_joe.blogs@clusterhq.com.pub
+  [redhat-openstack-novahost] $ cat > id_rsa_joe.blogs@clusterhq.com.pub
   ssh-rsa AAAAB3NzaC1yc2EAAAADAQABAAABAQC2imO7tTLepxqTvxacpNHKmqsRUdhM1EPdAVrBFadrYAC664LDbOvTqXR0iiVomKsfAe6nK9xZ5YzGFIpcOn/MeH45LOHVy5/+yx06qAnRkCDGZzQN/3qrs2K0v0L4XSIFbWmkFycAzG2phxFyAaJicK9XsJ9JaJ1q9/0FBj1TJ0CA7kCFaz/t0eozzOgr7WsqtidMrgrfrWvZW0GZR2PUc+1Ezt0/OBR8Xir0VGMgeLOrHprAF/BSK+7GLuQ9usa+nu3i46UuKtaVDMrKFCkzSdfNX2xJJYlRUEvLTa1VgswgL1wXXUwxXlDmYdwjF583CSFrVeVzBmRRJqNU/IMb joe.bloggs@clusterhq.com
 
-  [pistoncloud-novahost] $ nova keypair-add --pub-key id_rsa_joe.bloggs@clusterhq.com.pub clusterhq_joebloggs
+  [redhat-openstack-novahost] $ nova keypair-add --pub-key id_rsa_joe.bloggs@clusterhq.com.pub clusterhq_joebloggs
 
-Having done this, create or modify a ``~/.ssh/config`` file containing the aliases, usernames, hostnames for each of the servers and proxy commands that will allow direct access to the internal servers via the ``pistoncloud-jumphost``.
+Having done this, create or modify a ``~/.ssh/config`` file containing the aliases, usernames, hostnames for each of the servers and proxy commands that will allow direct access to the internal servers via the ``redhat-openstack-jumphost``.
 
 Here is an example of such a file::
 
-   Host pistoncloud-jumphost
+   Host redhat-openstack-jumphost
         User <jumphost_username>
         HostName <jumphost_public_hostname_or_ip_address>
 
-   Host pistoncloud-novahost
+   Host redhat-openstack-novahost
         User <novahost_username>
         HostName <novahost_public_hostname_or_ip_address>
-        ProxyCommand ssh pistoncloud-jumphost nc %h %p
+        ProxyCommand ssh redhat-openstack-jumphost nc %h %p
 
 With that ``~/.ssh/config`` content in place, run:
 
 .. code-block:: console
 
-   [laptop] $ fab -f slave/pistoncloud/fabfile.py create_server:clusterhq_joebloggs
+   [laptop] $ fab -f slave/redhat-openstack/fabfile.py create_server:clusterhq_joebloggs
 
 
 The argument ``clusterhq_joebloggs`` should be replaced with the name of the SSH public key that you registered using ``nova keypair-add`` in an earlier step.
@@ -309,18 +309,18 @@ The last line of the output will show the IP address of the new server.
 
 Add that IP address of the new build slave server to your ssh config file::
 
-   Host pistoncloud-buildslave
+   Host redhat-openstack-buildslave
         User centos
         HostName <buildbot_internal_ip_address_from_previous_step>
-        ProxyCommand ssh pistoncloud-novahost nc %h %p
+        ProxyCommand ssh redhat-openstack-novahost nc %h %p
 
-Note: You can also log into ``pistoncloud-novahost`` and run ``nova list`` to show all the openstack virtual machines and their IP addresses.
+Note: You can also log into ``redhat-openstack-novahost`` and run ``nova list`` to show all the openstack virtual machines and their IP addresses.
 
-Test the ``pistoncloud-buildslave`` by attempting to connect to the build slave with SSH, as follows:
+Test the ``redhat-openstack-buildslave`` by attempting to connect to the build slave with SSH, as follows:
 
 .. code-block:: console
 
-   [laptop] $ ssh pistoncloud-buildslave
+   [laptop] $ ssh redhat-openstack-buildslave
 
 Note: You may need to add your SSH private key to your keyring or SSH agent:
 
@@ -338,9 +338,9 @@ Run the following ``fabric`` task:
 
 .. code-block:: console
 
-   [laptop] $ fab -f slave/pistoncloud/fabfile.py configure:0,${PASSWORD},${BUILDMASTER}
+   [laptop] $ fab -f slave/redhat-openstack/fabfile.py configure:0,${PASSWORD},${BUILDMASTER}
 
-Where ``${PASSWORD}`` is the password in ``slaves.flocker/functional/pistoncloud/centos-7/storage-driver.passwords`` from the ``config.yml`` or ``staging.yml`` file,
+Where ``${PASSWORD}`` is the password in ``slaves.redhat-openstack/centos-7.passwords`` from the ``config.yml`` or ``staging.yml`` file,
 and ``${BUILDMASTER}`` is the IP address of the BuildBot master that you want this buildslave to connect to.
 
 Note: See "Create the configuration" section above if you do not have a ``config.yml`` or ``staging.yml`` configuration file.
@@ -351,7 +351,7 @@ Next steps:
 * Check that builders have been assigned to the new build slave.
 * Check that the assigned builders are able to perform all the required steps by forcing a build.
 * If the builds on the new builder are expected to fail, add the name of the new builder to the ``failing_builders`` section of the ``config.yml`` file.
-* The PistonCloud build slave can be destroyed by running ``fab -f slave/pistoncloud/fabfile.py delete_server``.
+* The redhat-openstack build slave can be destroyed by running ``fab -f slave/redhat-openstack/fabfile.py delete_server``.
 
 Fixing issues
 -------------

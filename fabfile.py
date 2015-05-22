@@ -13,7 +13,7 @@ def cmd(*args):
     Quote the supplied ``list`` of ``args`` and return a command line
     string.
 
-    XXX: This is duplicated in ``slaves/pistoncloud/fabfile.py``. It
+    XXX: This is duplicated in ``slaves/redhat-openstack/fabfile.py``. It
     should be shared.
 
     :param list args: The componants of the command line.
