@@ -566,6 +566,7 @@ def build_wheels_factory(distribution):
                  "--find-links", resultURL(
                      'wheelhouse',
                      discriminator=Property('distribution'),
+                     branch='',
                      isAbsolute=True),
                  "-e", ".[doc,dev,release]",
                  ],
