@@ -573,8 +573,8 @@ def build_wheels_factory(distribution):
     factory.addStep(
         DirectoryUpload(
             b"wheelhouse",
-            resultPath('wheelhouse', discriminator=distribution),
-            url=resultURL('wheelhouse', discriminator=distribution),
+            resultPath('wheelhouse', discriminator=distribution, branch=''),
+            url=resultURL('wheelhouse', discriminator=distribution, branch=''),
             name="upload-wheelhouse",
             ))
     return factory
