@@ -382,21 +382,21 @@ class AcceptanceConfiguration(object):
 
 
 ACCEPTANCE_CONFIGURATIONS = [
+    # There is only one vagrant box.
     AcceptanceConfiguration(
         provider='vagrant', distribution='fedora-20',
         dataset_backend='zfs'),
+] + [
     AcceptanceConfiguration(
-        provider='rackspace', distribution='ubuntu-14.04',
-        dataset_backend='loopback'),
-    AcceptanceConfiguration(
-        provider='rackspace', distribution='centos-7',
-        dataset_backend='loopback'),
-    AcceptanceConfiguration(
-        provider='rackspace', distribution='ubuntu-14.04',
-        dataset_backend='zfs'),
-    AcceptanceConfiguration(
-        provider='rackspace', distribution='centos-7',
-        dataset_backend='zfs'),
+        provider=provider, distribution=distribution,
+        dataset_backend=dataset_backend)
+    for provider in ['rackspace']
+    for distribution in ['centos-7', 'ubuntu-14.04']
+    for dataset_backend in ['loopback', 'zfs']
+] + [
+    # flocker currently only know about docker-head and zfs-testing
+    # on centos-7. It isn't worth testing either of these combinations
+    # on multiple cloud providers.
     AcceptanceConfiguration(
         provider='rackspace', distribution='centos-7',
         dataset_backend='loopback', variants={'docker-head'}),
