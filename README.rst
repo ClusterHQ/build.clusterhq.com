@@ -43,24 +43,6 @@ Test changes on staging server
 
 Changes to the Buildbot master can be tested on a staging machine.
 
-Create a staging Docker image
-=============================
-
-To create a new staging image in the Docker registry, update the ``staging`` branch and push to Github.
-The Docker registry will automatically build an image based on the ``staging`` branch of https://github.com/ClusterHQ/build.clusterhq.com whenever it is updated.
-To make the ``staging`` branch the same as a development branch, run the following commands::
-
-   git checkout staging
-   git pull
-   git reset --hard <other-branch>
-   git reset --soft HEAD@{1}
-   git commit
-   git push
-
-After pushing a change to ``staging``, it takes about 10 minutes for the Docker image build to finish.
-The status is available `here <https://registry.hub.docker.com/u/clusterhq/build.clusterhq.com/builds_history/46090/>`_.
-You will need to a member of the ``clusterhq`` group on Docker Hub in order to click on build id's to see detailed information about build progress or errors.
-
 Create a staging server
 =======================
 
@@ -82,6 +64,21 @@ This command will display the external IP address of the EC2 instance.
 
 Run ``python start-aws.py --help`` to see the available options to this command.
 
+Create a staging Docker image
+=============================
+
+On the staging server, run the following commands::
+
+   [aws]$ sudo yum install -y docker-io fabric git
+   [aws]$ sudo setenforce 0
+   [aws]$ sudo systemctl start docker
+   [aws]$ git clone https://github.com/ClusterHQ/build.clusterhq.com.git
+   [aws]$ cd build.clusterhq.com
+   [aws]$ # Change <BRANCH> to the branch of build.clusterhq.com you want
+   [aws]$ git checkout <BRANCH>
+   [aws]$ sudo docker build -t clusterhq/build.clusterhq.com:staging .
+   [aws]$ sudo docker run --name buildmaster-data -v /srv/buildmaster/data busybox /bin/true
+
 Create staging configuration
 ============================
 
@@ -99,21 +96,23 @@ Make the following changes to the ``staging.yml`` file:
 Start staging server
 ====================
 
-To start a Buildbot master on this machine run::
+Once the Docker image has built on the staging server, and the staging.yml file has been created, start the test Buildbot master from the local machine using::
 
-   $ fab start:staging.yml
+   $ fab restart:staging.yml
 
-To update a slave on this machine, run::
-
-   $ fab update:staging.yml
-
-Log in to the EC2 instance with the credentials from the ``auth`` section of the config file.
+Connect to the IP address of the EC2 instance and log in to the Buildmaster portal with the credentials from the ``auth`` section of the config file.
 
 The staging setup is missing the ability to trigger builds in response to Github pushes.
+To trigger a build, enter a branch name and click the ``Force`` button to start testing a Flocker branch.
 
-The staging master will start Linux slaves on AWS EC2 automatically.
-To start a Mac OS X slave, see below.
+The staging master will start latent slaves on AWS EC2 automatically when builds have been triggered.
 
+Tests that require Mac OS X or to start VM's cannot use AWS EC2 latent slaves.
+These tests will remain grey until a non-latent slave connects.
+To start a Mac OS X non-latent slave, see below.
+
+Latent slaves will shut-down automatically.
+The Buildmaster and non-latent slaves must be shutdown manually. 
 
 Deploy changes to production server
 -----------------------------------
