@@ -189,7 +189,7 @@ def saveConfig():
 
 
 @task
-def check_config(configFile="staging.yml"):
+def check_config(configFile="config.yml.sample"):
     """
     Check that buildbot can load the configuration.
     """
