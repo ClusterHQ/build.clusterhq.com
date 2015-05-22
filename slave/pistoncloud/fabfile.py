@@ -117,8 +117,8 @@ def set_google_dns():
     put(
         StringIO(
             "\n".join([
-                "nameserver 8.8.8.8"
-                "nameserver 8.8.4.4"
+                "nameserver 8.8.8.8",
+                "nameserver 8.8.4.4",
             ]) + "\n"
         ),
         '/etc/resolv.conf',
@@ -141,8 +141,8 @@ def _create_server(
     PistonCloud build slave.
     """
     with shell_env(OS_TENANT_NAME=TENANT_NAME):
-        commandline = cmd([
-            'nova boot',
+        commandline = cmd(
+            'nova', 'boot',
             '--image', image,
             '--flavor', flavor,
             '--nic', 'net-id=' + net_id,
@@ -152,7 +152,7 @@ def _create_server(
             # Wait for the machine to become active.
             '--poll',
             BUILDSLAVE_NODENAME
-        ])
+        )
 
         run(commandline)
         run('nova list | grep {!r}'.format(BUILDSLAVE_NODENAME))
