@@ -1,6 +1,8 @@
 import random
 from collections import Counter
 
+from characteristic import attributes
+
 from twisted.internet import defer
 from twisted.python import log
 from twisted.python.filepath import FilePath
@@ -405,3 +407,39 @@ def slave_environ(var):
     def render(properties):
         return properties.getBuild().slavebuilder.slave.slave_environ.get(var)
     return render
+
+
+def _process_eliot_logs(log_iter, write):
+    from eliottree import (
+        mergeTasktree, renderTaskTree,
+        _convertTimestamp, DEFAULT_IGNORED_KEYS,
+    )
+
+    tasktree = mergeTasktree({}, log_iter, _convertTimestamp)
+
+    tasktree = sorted(tasktree.items(), key=lambda (_, n): n.sorter)
+    renderTaskTree(
+        write=write,
+        tasktree=tasktree,
+        ignoredTaskKeys=DEFAULT_IGNORED_KEYS)
+
+
+def with_eliot_logs(step_class):
+
+    @attributes(['eliot_log_files'])
+    class WithEliotLogs(step_class):
+        def __init__(self, *args, **kwargs):
+            step_class.__init__(self, *args, **kwargs)
+
+        def commandComplete(self, cmd):
+            result = step_class.commandComplete(self, cmd)
+            for log_name in self.eliot_log_files:
+                log_file = self.addLog(log_name)
+                raw_file = self.getLog(log_name + '.log')
+                _process_eliot_logs(
+                    log_iter=raw_file.readlines(),
+                    write=log_file.addStdout)
+                log_file.finish()
+            return result
+
+    return WithEliotLogs

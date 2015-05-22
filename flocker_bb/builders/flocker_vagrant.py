@@ -1,3 +1,5 @@
+from os import path
+
 from buildbot.steps.shell import ShellCommand, SetPropertyFromCommand
 from buildbot.process.properties import Interpolate, Property, renderer
 from buildbot.steps.python_twisted import Trial
@@ -7,6 +9,7 @@ from buildbot.interfaces import IBuildStepFactory
 
 from ..steps import (
     buildVirtualEnv, virtualenvBinary,
+    VIRTUALENV_DIR,
     getFactory,
     GITHUB,
     buildbotURL,
@@ -14,10 +17,11 @@ from ..steps import (
     flockerBranch,
     resultPath, resultURL,
     slave_environ,
+    with_eliot_logs,
     )
 
 # FIXME
-from flocker_bb.builders.flocker import installDependencies, _flockerTests
+from flocker_bb.builders.flocker import installDependencies
 
 
 from characteristic import attributes, Attribute
@@ -229,17 +233,7 @@ def run_acceptance_tests(configuration):
             destroy_box(path='build/admin/vagrant-acceptance-targets/%s'
                              % configuration.distribution)))
 
-    factory.addSteps(_flockerTests(
-        kwargs={
-            'trialMode': [],
-            # Allow 5 minutes for acceptance test runner to shutdown gracefully
-            # In particular, this allows it to clean up the VMs it spawns.
-            'sigtermTime': 5*60,
-            'logfiles': {
-                'run-acceptance-tests.log': 'run-acceptance-tests.log',
-            },
-        },
-        tests=[],
+    factory.addStep(with_eliot_logs(Trial)(
         trial=[
             virtualenvBinary('python'),
             Interpolate('%(prop:builddir)s/build/admin/run-acceptance-tests'),
@@ -253,6 +247,21 @@ def run_acceptance_tests(configuration):
             ['--variant', variant]
             for variant in configuration.variants
         ],
+        tests=[],
+        trialMode=[],
+        testpath=None,
+        # Allow 5 minutes for acceptance test runner to shutdown gracefully
+        # In particular, this allows it to clean up the VMs it spawns.
+        sigtermTime=5*60,
+        logfiles={
+            'run-acceptance-tests.log': 'run-acceptance-tests.log',
+        },
+        eliot_log_files=[
+            'run-acceptance-tests',
+        ],
+        env={b"PATH": [
+            Interpolate(path.join(VIRTUALENV_DIR, "bin")), "${PATH}"
+        ]},
     ))
     return factory
 
