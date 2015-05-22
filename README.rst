@@ -351,6 +351,7 @@ Next steps:
 * Check that builders have been assigned to the new build slave.
 * Check that the assigned builders are able to perform all the required steps by forcing a build.
 * If the builds on the new builder are expected to fail, add the name of the new builder to the ``failing_builders`` section of the ``config.yml`` file.
+* The PistonCloud build slave can be destroyed by running ``fab -f slave/pistoncloud/fabfile.py delete_server``.
 
 Fixing issues
 -------------
