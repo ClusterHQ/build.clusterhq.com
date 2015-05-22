@@ -101,6 +101,7 @@ Once the Docker image has built on the staging server, and the staging.yml file 
    $ fab restart:staging.yml
 
 Connect to the IP address of the EC2 instance and log in to the Buildmaster portal with the credentials from the ``auth`` section of the config file.
+Click on the ``flocker`` link to access the web form.
 
 The staging setup is missing the ability to trigger builds in response to Github pushes.
 To trigger a build, enter a branch name and click the ``Force`` button to start testing a Flocker branch.
