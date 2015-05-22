@@ -58,13 +58,15 @@ class StorageConfiguration(object):
             return self.distribution
         elif self.provider == 'rackspace':
             return 'flocker/functional/rackspace/centos-7/storage-driver'
+        elif self.provider == 'pistoncloud':
+            return 'flocker/functional/pistoncloud/centos-7/storage-driver'
         raise NotImplementedError("Unsupported provider %s" % (self.provider,))
 
     @property
     def driver(self):
         if self.provider == 'aws':
             return 'flocker/node/agents/ebs.py'
-        elif self.provider == 'rackspace':
+        elif self.provider in ('rackspace', 'pistoncloud'):
             return 'flocker/node/agents/cinder.py'
         raise NotImplementedError("Unsupported provider %s" % (self.provider,))
 
@@ -76,13 +78,18 @@ STORAGE_CONFIGURATIONS = [
         provider='aws', distribution='centos-7'),
     StorageConfiguration(
         provider='rackspace', distribution='centos-7'),
+    StorageConfiguration(
+        provider='pistoncloud', distribution='centos-7'),
 ]
+
 
 functional_rackspace_lock = MasterLock("functional-rackspace-lock", maxCount=1)
 functional_aws_lock = MasterLock("functional-aws-lock", maxCount=1)
+functional_pistoncloud_lock = MasterLock("functional-pistoncloud-lock", maxCount=1)
 STORAGE_LOCKS = {
     'rackspace': [functional_rackspace_lock.access("counting")],
     'aws': [functional_aws_lock.access("counting")],
+    'pistoncloud': [functional_pistoncloud_lock.access("counting")],
 }
 
 

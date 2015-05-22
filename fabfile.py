@@ -9,6 +9,16 @@ env.user = 'fedora'
 
 
 def cmd(*args):
+    """
+    Quote the supplied ``list`` of ``args`` and return a command line
+    string.
+
+    XXX: This is duplicated in ``slaves/pistoncloud/fabfile.py``. It
+    should be shared.
+
+    :param list args: The componants of the command line.
+    :return: The quoted command line string.
+    """
     return ' '.join(map(shellQuote, args))
 
 
