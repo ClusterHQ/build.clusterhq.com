@@ -41,7 +41,11 @@ class StorageConfiguration(object):
 
     :ivar provider: The storage provider to use.
     :ivar distribution: The distribution to use.
+    :cvar _locks:
     """
+
+    _locks = {}
+
     @property
     def builder_name(self):
         return '/'.join(
@@ -56,19 +60,24 @@ class StorageConfiguration(object):
     def slave_class(self):
         if self.provider == 'aws':
             return self.distribution
-        elif self.provider == 'rackspace':
-            return 'flocker/functional/rackspace/centos-7/storage-driver'
-        elif self.provider == 'pistoncloud':
-            return 'flocker/functional/pistoncloud/centos-7/storage-driver'
+        else:
+            return '/'.join([self.provider, self.distribution])
         raise NotImplementedError("Unsupported provider %s" % (self.provider,))
 
     @property
     def driver(self):
         if self.provider == 'aws':
             return 'flocker/node/agents/ebs.py'
-        elif self.provider in ('rackspace', 'pistoncloud'):
+        elif self.provider in ('rackspace', 'redhat-openstack'):
             return 'flocker/node/agents/cinder.py'
         raise NotImplementedError("Unsupported provider %s" % (self.provider,))
+
+    @property
+    def locks(self):
+        lock_name = '/'.join(['functional', 'api', self.provider])
+        lock = self._locks.setdefault(
+            self.provider, MasterLock(lock_name, maxCount=1))
+        return [lock.access("counting")]
 
 
 STORAGE_CONFIGURATIONS = [
@@ -79,18 +88,8 @@ STORAGE_CONFIGURATIONS = [
     StorageConfiguration(
         provider='rackspace', distribution='centos-7'),
     StorageConfiguration(
-        provider='pistoncloud', distribution='centos-7'),
+        provider='redhat-openstack', distribution='centos-7'),
 ]
-
-
-functional_rackspace_lock = MasterLock("functional-rackspace-lock", maxCount=1)
-functional_aws_lock = MasterLock("functional-aws-lock", maxCount=1)
-functional_pistoncloud_lock = MasterLock("functional-pistoncloud-lock", maxCount=1)
-STORAGE_LOCKS = {
-    'rackspace': [functional_rackspace_lock.access("counting")],
-    'aws': [functional_aws_lock.access("counting")],
-    'pistoncloud': [functional_pistoncloud_lock.access("counting")],
-}
 
 
 def getFlockerFactory(python):
@@ -745,7 +744,7 @@ def getBuilders(slavenames):
                     ],
                     env={'FLOCKER_FUNCTIONAL_TEST': 'TRUE'},
                 ),
-                locks=STORAGE_LOCKS.get(configuration.provider, []),
+                locks=configuration.locks,
             )
         ])
 
