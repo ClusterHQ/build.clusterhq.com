@@ -234,7 +234,7 @@ def _configure(index, password, master='build.staging.clusterhq.com'):
         u"buildslave create-slave "
         u"{buildslave_home}/{builddir} "
         u"{master} "
-        u"{buildslave_name}-{index} "
+        u"{buildslave_name}/{index} "
         u"{password}".format(
             buildslave_home=BUILDSLAVE_HOME,
             builddir=builddir,

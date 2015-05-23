@@ -74,7 +74,7 @@ yum install -y https://kojipkgs.fedoraproject.org//packages/kernel/${KV}/${SV}/$
     ]
     run("yum install -y " + " ".join(packages))
     run("useradd buildslave")
-    sudo("buildslave create-slave /home/buildslave/fedora-vagrant %(master)s fedora-20/vagrant-%(index)s %(password)s"  # noqa
+    sudo("buildslave create-slave /home/buildslave/fedora-vagrant %(master)s fedora-20/vagrant/%(index)s %(password)s"  # noqa
          % {'index': index, 'password': password, 'master': master},
          user='buildslave')
     put(FilePath(__file__).sibling('start').path,
