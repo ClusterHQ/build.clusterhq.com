@@ -53,19 +53,19 @@ buildmaster:
 coveralls:
     token: "<coveralls repo token>"
 slaves:
-    fedora-20:
+    aws/fedora-20:
         ami: "buildslave-fedora-20"
         slaves: 3
         instance_type: "c3.large"
-    fedora-20/zfs-head:
+    aws/fedora-20/zfs-head:
         ami: "buildslave-fedora-20-zfs-head"
         slaves: 1
         instance_type: "c3.large"
-    ubuntu-14.04:
+    aws/ubuntu-14.04:
         ami: "buildslave-ubuntu-14.04"
         slaves: 1
         instance_type: "c3.large"
-    centos-7:
+    aws/centos-7:
         ami: "buildslave-centos-7"
         slaves: 1
         instance_type: "c3.large"

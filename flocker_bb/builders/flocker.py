@@ -58,11 +58,7 @@ class StorageConfiguration(object):
 
     @property
     def slave_class(self):
-        if self.provider == 'aws':
-            return self.distribution
-        else:
-            return '/'.join([self.provider, self.distribution])
-        raise NotImplementedError("Unsupported provider %s" % (self.provider,))
+        return '/'.join([self.provider, self.distribution])
 
     @property
     def driver(self):
@@ -643,19 +639,19 @@ def getBuilders(slavenames):
     builders = [
         BuilderConfig(name='flocker-fedora-20',
                       builddir='flocker',
-                      slavenames=slavenames['fedora-20'],
+                      slavenames=slavenames['aws/fedora-20'],
                       category='flocker',
                       factory=makeFactory(b'python2.7'),
                       locks=[functionalLock.access('counting')],
                       nextSlave=idleSlave),
         BuilderConfig(name='flocker-ubuntu-14.04',
-                      slavenames=slavenames['ubuntu-14.04'],
+                      slavenames=slavenames['aws/ubuntu-14.04'],
                       category='flocker',
                       factory=makeFactory(b'python2.7'),
                       locks=[functionalLock.access('counting')],
                       nextSlave=idleSlave),
         BuilderConfig(name='flocker-centos-7',
-                      slavenames=slavenames['centos-7'],
+                      slavenames=slavenames['aws/centos-7'],
                       category='flocker',
                       factory=makeFactory(b'python2.7'),
                       locks=[functionalLock.access('counting')],
@@ -672,41 +668,41 @@ def getBuilders(slavenames):
                       ),
                       nextSlave=idleSlave),
         BuilderConfig(name='flocker-zfs-head',
-                      slavenames=slavenames['fedora-20/zfs-head'],
+                      slavenames=slavenames['aws/fedora-20/zfs-head'],
                       category='flocker',
                       factory=makeFactory(b'python2.7'),
                       locks=[functionalLock.access('counting')],
                       nextSlave=idleSlave),
         BuilderConfig(name='flocker-twisted-trunk',
-                      slavenames=slavenames['fedora-20'],
+                      slavenames=slavenames['aws/fedora-20'],
                       category='flocker',
                       factory=makeFactory(b'python2.7', twistedTrunk=True),
                       locks=[functionalLock.access('counting')],
                       nextSlave=idleSlave),
         BuilderConfig(name='flocker-coverage',
-                      slavenames=slavenames['fedora-20'],
+                      slavenames=slavenames['aws/fedora-20'],
                       category='flocker',
                       factory=makeCoverageFactory(),
                       locks=[functionalLock.access('counting')],
                       nextSlave=idleSlave),
         BuilderConfig(name='flocker-lint',
-                      slavenames=slavenames['fedora-20'],
+                      slavenames=slavenames['aws/fedora-20'],
                       category='flocker',
                       factory=makeLintFactory(),
                       nextSlave=idleSlave),
         BuilderConfig(name='flocker-docs',
-                      slavenames=slavenames['fedora-20'],
+                      slavenames=slavenames['aws/fedora-20'],
                       category='flocker',
                       factory=makeInternalDocsFactory(),
                       nextSlave=idleSlave),
         BuilderConfig(name='flocker-admin',
-                      slavenames=slavenames['fedora-20'],
+                      slavenames=slavenames['aws/fedora-20'],
                       category='flocker',
                       factory=makeAdminFactory(),
                       nextSlave=idleSlave),
         BuilderConfig(name='flocker/homebrew/create',
                       builddir='flocker-homebrew-create',
-                      slavenames=slavenames['fedora-20'],
+                      slavenames=slavenames['aws/fedora-20'],
                       category='flocker',
                       factory=makeHomebrewRecipeCreationFactory(),
                       nextSlave=idleSlave),
@@ -721,7 +717,7 @@ def getBuilders(slavenames):
         builders.append(
             BuilderConfig(
                 name='flocker-omnibus-%s' % (distribution,),
-                slavenames=slavenames['fedora-20'],
+                slavenames=slavenames['aws/fedora-20'],
                 category='flocker',
                 factory=makeOmnibusFactory(
                     distribution=distribution,
