@@ -74,14 +74,14 @@ yum install -y https://kojipkgs.fedoraproject.org//packages/kernel/${KV}/${SV}/$
     ]
     run("yum install -y " + " ".join(packages))
     run("useradd buildslave")
-    sudo("buildslave create-slave /home/buildslave/fedora-vagrant %(master)s fedora-vagrant-%(index)s %(password)s"  # noqa
+    sudo("buildslave create-slave /home/buildslave/fedora-vagrant %(master)s fedora-20/vagrant/%(index)s %(password)s"  # noqa
          % {'index': index, 'password': password, 'master': master},
          user='buildslave')
     put(FilePath(__file__).sibling('start').path,
         '/home/buildslave/fedora-vagrant/start', mode=0755)
 
     slave_home = FilePath('/home/buildslave')
-    with settings(sudo_user='buildslave', shell_env={'HOME': slave_home.path}), cd(slave_home.path): # noqa
+    with settings(sudo_user='buildslave', shell_env={'HOME': slave_home.path}), cd(slave_home.path):  # noqa
         sudo("vagrant plugin install vagrant-reload vagrant-vbguest")
     configure_acceptance()
     configure_s3cmd(config=config['boto'])

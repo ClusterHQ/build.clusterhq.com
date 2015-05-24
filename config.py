@@ -123,8 +123,8 @@ for base, slaveConfig in privateData['slaves'].items():
         )
         c['slaves'].append(slave)
     elif 'ami' in slaveConfig:
-        for i in range(slaveConfig['slaves']):
-            name = '%s-%d' % (base, i)
+        for index in range(slaveConfig['slaves']):
+            name = '%s/%d' % (base, index)
             password = generate_password(32)
 
             SLAVENAMES[base].append(name)
@@ -148,8 +148,8 @@ for base, slaveConfig in privateData['slaves'].items():
             )
             c['slaves'].append(slave)
     else:
-        for i, password in enumerate(slaveConfig['passwords']):
-            name = '%s-%d' % (base, i)
+        for index, password in enumerate(slaveConfig['passwords']):
+            name = '%s/%d' % (base, index)
             SLAVENAMES[base].append(name)
             c['slaves'].append(BuildSlave(name, password=password))
 

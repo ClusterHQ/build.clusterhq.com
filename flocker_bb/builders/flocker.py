@@ -41,7 +41,11 @@ class StorageConfiguration(object):
 
     :ivar provider: The storage provider to use.
     :ivar distribution: The distribution to use.
+    :cvar _locks: Dictionary mapping provider names to locks.
     """
+
+    _locks = {}
+
     @property
     def builder_name(self):
         return '/'.join(
@@ -54,21 +58,24 @@ class StorageConfiguration(object):
 
     @property
     def slave_class(self):
-        if self.provider == 'aws':
-            return self.distribution
-        elif self.provider == 'rackspace':
-            return 'flocker/functional/rackspace/centos-7/storage-driver'
-        elif self.provider == 'pistoncloud':
-            return 'flocker/functional/pistoncloud/centos-7/storage-driver'
-        raise NotImplementedError("Unsupported provider %s" % (self.provider,))
+        return '/'.join([self.provider, self.distribution])
 
     @property
     def driver(self):
         if self.provider == 'aws':
             return 'flocker/node/agents/ebs.py'
-        elif self.provider in ('rackspace', 'pistoncloud'):
+        elif self.provider in ('rackspace', 'redhat-openstack'):
             return 'flocker/node/agents/cinder.py'
         raise NotImplementedError("Unsupported provider %s" % (self.provider,))
+
+    @property
+    def locks(self):
+        # We use a shared dictionary here, since locks are compared via
+        # identity, not by name.
+        lock_name = '/'.join(['functional', 'api', self.provider])
+        lock = self._locks.setdefault(
+            self.provider, MasterLock(lock_name, maxCount=1))
+        return [lock.access("counting")]
 
 
 STORAGE_CONFIGURATIONS = [
@@ -79,18 +86,8 @@ STORAGE_CONFIGURATIONS = [
     StorageConfiguration(
         provider='rackspace', distribution='centos-7'),
     StorageConfiguration(
-        provider='pistoncloud', distribution='centos-7'),
+        provider='redhat-openstack', distribution='centos-7'),
 ]
-
-
-functional_rackspace_lock = MasterLock("functional-rackspace-lock", maxCount=1)
-functional_aws_lock = MasterLock("functional-aws-lock", maxCount=1)
-functional_pistoncloud_lock = MasterLock("functional-pistoncloud-lock", maxCount=1)
-STORAGE_LOCKS = {
-    'rackspace': [functional_rackspace_lock.access("counting")],
-    'aws': [functional_aws_lock.access("counting")],
-    'pistoncloud': [functional_pistoncloud_lock.access("counting")],
-}
 
 
 def getFlockerFactory(python):
@@ -642,19 +639,19 @@ def getBuilders(slavenames):
     builders = [
         BuilderConfig(name='flocker-fedora-20',
                       builddir='flocker',
-                      slavenames=slavenames['fedora'],
+                      slavenames=slavenames['aws/fedora-20'],
                       category='flocker',
                       factory=makeFactory(b'python2.7'),
                       locks=[functionalLock.access('counting')],
                       nextSlave=idleSlave),
         BuilderConfig(name='flocker-ubuntu-14.04',
-                      slavenames=slavenames['ubuntu-14.04'],
+                      slavenames=slavenames['aws/ubuntu-14.04'],
                       category='flocker',
                       factory=makeFactory(b'python2.7'),
                       locks=[functionalLock.access('counting')],
                       nextSlave=idleSlave),
         BuilderConfig(name='flocker-centos-7',
-                      slavenames=slavenames['centos-7'],
+                      slavenames=slavenames['aws/centos-7'],
                       category='flocker',
                       factory=makeFactory(b'python2.7'),
                       locks=[functionalLock.access('counting')],
@@ -671,41 +668,41 @@ def getBuilders(slavenames):
                       ),
                       nextSlave=idleSlave),
         BuilderConfig(name='flocker-zfs-head',
-                      slavenames=slavenames['fedora-zfs-head'],
+                      slavenames=slavenames['aws/fedora-20/zfs-head'],
                       category='flocker',
                       factory=makeFactory(b'python2.7'),
                       locks=[functionalLock.access('counting')],
                       nextSlave=idleSlave),
         BuilderConfig(name='flocker-twisted-trunk',
-                      slavenames=slavenames['fedora'],
+                      slavenames=slavenames['aws/fedora-20'],
                       category='flocker',
                       factory=makeFactory(b'python2.7', twistedTrunk=True),
                       locks=[functionalLock.access('counting')],
                       nextSlave=idleSlave),
         BuilderConfig(name='flocker-coverage',
-                      slavenames=slavenames['fedora'],
+                      slavenames=slavenames['aws/fedora-20'],
                       category='flocker',
                       factory=makeCoverageFactory(),
                       locks=[functionalLock.access('counting')],
                       nextSlave=idleSlave),
         BuilderConfig(name='flocker-lint',
-                      slavenames=slavenames['fedora'],
+                      slavenames=slavenames['aws/fedora-20'],
                       category='flocker',
                       factory=makeLintFactory(),
                       nextSlave=idleSlave),
         BuilderConfig(name='flocker-docs',
-                      slavenames=slavenames['fedora'],
+                      slavenames=slavenames['aws/fedora-20'],
                       category='flocker',
                       factory=makeInternalDocsFactory(),
                       nextSlave=idleSlave),
         BuilderConfig(name='flocker-admin',
-                      slavenames=slavenames['fedora'],
+                      slavenames=slavenames['aws/fedora-20'],
                       category='flocker',
                       factory=makeAdminFactory(),
                       nextSlave=idleSlave),
         BuilderConfig(name='flocker/homebrew/create',
                       builddir='flocker-homebrew-create',
-                      slavenames=slavenames['fedora'],
+                      slavenames=slavenames['aws/fedora-20'],
                       category='flocker',
                       factory=makeHomebrewRecipeCreationFactory(),
                       nextSlave=idleSlave),
@@ -720,7 +717,7 @@ def getBuilders(slavenames):
         builders.append(
             BuilderConfig(
                 name='flocker-omnibus-%s' % (distribution,),
-                slavenames=slavenames['fedora'],
+                slavenames=slavenames['aws/fedora-20'],
                 category='flocker',
                 factory=makeOmnibusFactory(
                     distribution=distribution,
@@ -745,7 +742,7 @@ def getBuilders(slavenames):
                     ],
                     env={'FLOCKER_FUNCTIONAL_TEST': 'TRUE'},
                 ),
-                locks=STORAGE_LOCKS.get(configuration.provider, []),
+                locks=configuration.locks,
             )
         ])
 
