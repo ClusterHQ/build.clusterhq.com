@@ -6,7 +6,7 @@ Configuration for a buildslave to run on redhat-openstack
     This points at the staging buildserver by default.
 """
 from pipes import quote as shellQuote
-from fabric.api import sudo, task, env, execute, put, run, local
+from fabric.api import sudo, task, env, put, run, local
 from fabric.context_managers import shell_env
 from twisted.python.filepath import FilePath
 from StringIO import StringIO
@@ -52,7 +52,8 @@ def get_lastpass_config(key):
     return config
 
 
-def _configure_acceptance():
+@task
+def configure_acceptance():
     """
     Download the entire acceptance.yml file from lastpass but only
     upload the metadata and openstack credentials.
@@ -73,16 +74,6 @@ def _configure_acceptance():
         BUILDSLAVE_HOME + '/acceptance.yml',
         use_sudo=True,
     )
-
-
-@task
-def configure_acceptance():
-    """
-    Upload the redhat-openstack acceptance credentials to the buildslave.
-    """
-    # The alias for the build slave server in ``.ssh/config``.
-    env.hosts = ['redhat-openstack-buildslave']
-    execute(_configure_acceptance)
 
 
 def put_template(template, replacements, remote_path, **put_kwargs):
@@ -127,7 +118,8 @@ def set_google_dns():
     )
 
 
-def _create_server(
+@task
+def create_server(
         keypair_name,
         # m1.large
         flavor=u'4',
@@ -139,6 +131,9 @@ def _create_server(
     """
     Run ``nova boot`` to create a new server on which to run the
     redhat-openstack build slave.
+
+    :param str keypair_name: The name of an SSH keypair that has been
+        registered on the redhat-openstack nova tenant.
     """
     with shell_env(OS_TENANT_NAME=TENANT_NAME):
         commandline = cmd(
@@ -159,21 +154,7 @@ def _create_server(
 
 
 @task
-def create_server(keypair_name):
-    """
-    Create a redhat-openstack buildslave VM and wait for it to boot.
-    Finally print its IP address.
-
-    :param str keypair_name: The name of an SSH keypair that has been
-        registered on the redhat-openstack nova tenant.
-    """
-    # The alias for the openstack / nova administration server in
-    # ``.ssh/config``.
-    env.hosts = ['redhat-openstack-novahost']
-    execute(_create_server, keypair_name)
-
-
-def _delete_server():
+def delete_server():
     """
     Call ``nova delete`` to delete the server on which the redhat-openstack
     build slave is running.
@@ -183,20 +164,17 @@ def _delete_server():
 
 
 @task
-def delete_server():
-    """
-    Delete the redhat-openstack buildslave VM.
-    """
-    # The alias for the openstack / nova administration server in
-    # ``.ssh/config``.
-    env.hosts = ['redhat-openstack-novahost']
-    execute(_delete_server)
-
-
-def _configure(index, password, master='build.staging.clusterhq.com'):
+def configure(index, password, master='build.staging.clusterhq.com'):
     """
     Install all the packages required by ``buildslave`` and then
     configure the redhat-openstack buildslave.
+
+    :param int index: The index of this redhat-openstack build slave. You
+        should probably just say 0.
+    :param unicode password: The password that the build slave will
+        use when authenticating with the build master.
+    :param unicode master: The hostname or IP address of the build
+        master that this build slave will attempt to connect to.
     """
     # The default DNS servers on our redhat-openstack tenant prevent
     # resolution of public DNS names.
@@ -228,7 +206,7 @@ def _configure(index, password, master='build.staging.clusterhq.com'):
 
     sudo("mkdir -p {}".format(BUILDSLAVE_HOME))
 
-    _configure_acceptance()
+    configure_acceptance()
 
     sudo(
         u"buildslave create-slave "
@@ -268,21 +246,3 @@ def _configure(index, password, master='build.staging.clusterhq.com'):
 
     sudo('systemctl start {}'.format(remote_service_filename))
     sudo('systemctl enable {}'.format(remote_service_filename))
-
-
-@task
-def configure(index, password, master='build.staging.clusterhq.com'):
-    """
-    Install and configure the buildslave on the redhat-openstack buildslave
-    VM.
-
-    :param int index: The index of this redhat-openstack build slave. You
-        should probably just say 0.
-    :param unicode password: The password that the build slave will
-        use when authenticating with the build master.
-    :param unicode master: The hostname or IP address of the build
-        master that this build slave will attempt to connect to.
-    """
-    # The alias for the build slave server in ``.ssh/config``.
-    env.hosts = ['redhat-openstack-buildslave']
-    execute(_configure, index, password, master)

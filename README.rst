@@ -300,7 +300,7 @@ With that ``~/.ssh/config`` content in place, run:
 
 .. code-block:: console
 
-   [laptop] $ fab -f slave/redhat-openstack/fabfile.py create_server:clusterhq_joebloggs
+   [laptop] $ fab -H redhat-openstack-novahost -f slave/redhat-openstack/fabfile.py create_server:clusterhq_joebloggs
 
 
 The argument ``clusterhq_joebloggs`` should be replaced with the name of the SSH public key that you registered using ``nova keypair-add`` in an earlier step.
@@ -338,7 +338,7 @@ Run the following ``fabric`` task:
 
 .. code-block:: console
 
-   [laptop] $ fab -f slave/redhat-openstack/fabfile.py configure:0,${PASSWORD},${BUILDMASTER}
+   [laptop] $ fab -H redhat-openstack-buildslave -f slave/redhat-openstack/fabfile.py configure:0,${PASSWORD},${BUILDMASTER}
 
 Where ``${PASSWORD}`` is the password in ``slaves.redhat-openstack/centos-7.passwords`` from the ``config.yml`` or ``staging.yml`` file,
 and ``${BUILDMASTER}`` is the IP address of the BuildBot master that you want this buildslave to connect to.
