@@ -36,7 +36,7 @@ def install(index, password, master='build.staging.clusterhq.com'):
         sudo("python get-pip.py --user")
         sudo("~/Library/Python/2.7/bin/pip install --user buildbot-slave==0.8.10 virtualenv==12.1.1")  # noqa
 
-        sudo("~/Library/Python/2.7/bin/buildslave create-slave ~/flocker-osx %(master)s osx-%(index)s %(password)s"  # noqa
+        sudo("~/Library/Python/2.7/bin/buildslave create-slave ~/flocker-osx %(master)s osx/%(index)s %(password)s"  # noqa
              % {'index': index, 'password': password, 'master': master})
 
     put(FilePath(__file__).sibling('launchd.plist').path,

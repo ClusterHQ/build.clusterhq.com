@@ -53,35 +53,38 @@ buildmaster:
 coveralls:
     token: "<coveralls repo token>"
 slaves:
-    fedora:
+    aws/fedora-20:
         distribution: "fedora-20"
         ami: "buildslave-fedora-20"
         slaves: 3
         instance_type: "c3.large"
-    fedora-zfs-head:
+    aws/fedora-20/zfs-head:
         distribution: "fedora-20"
         ami: "buildslave-fedora-20-zfs-head"
         slaves: 1
         instance_type: "c3.large"
-    ubuntu-14.04:
+    aws/ubuntu-14.04:
         distribution: "ubuntu-14.04"
         ami: "buildslave-ubuntu-14.04"
         slaves: 1
         instance_type: "c3.large"
-    centos-7:
+    aws/centos-7:
         distribution: "centos-7"
         ami: "buildslave-centos-7"
         slaves: 1
         instance_type: "c3.large"
-    fedora-vagrant:
+    fedora-20/vagrant:
         distribution: "fedora-20"
         passwords: ['<password>']
     osx:
         distribution: "osx-10.10"
         passwords: ['<password>']
-    flocker/functional/rackspace/centos-7/storage-driver:
+    rackspace/centos-7:
         distribution: "centos-7"
         openstack-image: "buildslave-centos-7-zfs-head"
+    redhat-openstack/centos-7:
+        distribution: "centos-7"
+        passwords: ['<password>']
 # List of builders whose failures should not be reported.  Tests listed here
 # will be reported in a separate section of the Buildbot web page, to indicate
 # that they are expected failures.
