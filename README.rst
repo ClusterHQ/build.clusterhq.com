@@ -259,14 +259,14 @@ Red Hat Openstack
 
 The following builders need to run on Centos-7 on Red Hat Open Stack:
 
-* ``flocker/functional/redhat-openstack/centos-7/storage-driver``
+* ``redhat-openstack/centos-7``
 
 To create this machine you'll need to access various machines within redhat-openstack via an "SSH jump host".
 
 The machines are referred to here as:
  * **redhat-openstack-jumphost**: The SSH proxy through which you will connect to servers inside the redhat-openstack network.
  * **redhat-openstack-novahost**: The server which has ``nova`` and other openstack administrative tools installed.
- * **redhat-openstack-buildslave**: The server which will be created to run the ``flocker/functional/redhat-openstack/centos-7/storage-driver`` builder.
+ * **redhat-openstack-buildslave**: The server which will be created to run the ``redhat-openstack/centos-7`` builder.
 
 You'll need to add your public SSH key to the ``redhat-openstack-jumphost``.
 A username and key for initial access to the jump host can be found in LastPass.
