@@ -168,6 +168,15 @@ The buildslave is constructed with a ``pip.conf`` file that points at https://s3
 Slaves
 ======
 
+Naming
+------
+
+Slaves are named with a number of components, separated by ``\``.
+The primary component is the name of the operating system running on the slave (e.g. ``fedora-20``).
+There is usually a prefix indicating where the slave is hosted (e.g. ``aws`` or ``redhat-openstack``).
+If there is an unusual configuration to the slave, there is a tag describing it (e.g. ``zfs-head``).
+There is usually a numberical suffix indicating which instance of similarily configured slaves this is.
+
 Slave AMIs
 ----------
 
