@@ -92,7 +92,7 @@ class Monitor(StatusReceiverMultiService):
         Reports to github that a build has started, along with a link to the
         build.
         """
-        slave_name, slave_number = build.getSlavename().rsplit('-', 1)
+        slave_name, slave_number = build.getSlavename().rsplit('/', 1)
         self.building_counts_gauge.labels(
             builderName, slave_name, slave_number).inc()
 
@@ -103,7 +103,7 @@ class Monitor(StatusReceiverMultiService):
         Reports to github that a build has started, along with a link to the
         build.
         """
-        slave_name, slave_number = build.getSlavename().rsplit('-', 1)
+        slave_name, slave_number = build.getSlavename().rsplit('/', 1)
         self.building_counts_gauge.labels(
             builderName, slave_name, slave_number,
         ).dec()
