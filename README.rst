@@ -12,7 +12,7 @@ in case another push arrives shortly afterwards.
 Most builds are tested as merges against the Flocker ``master`` branch.
 
 Install dependencies
---------------------
+====================
 
 The code uses Fabric to start and manage the Buildbot master.
 
@@ -23,7 +23,7 @@ To install dependencies::
 
 
 Create the configuration
-------------------------
+========================
 
 The configuration requires secret data that must not be committed to the Github repository.
 The secret data is provided in a file ``config.yml``.
@@ -39,12 +39,12 @@ Fabric passes these variables to Buildbot via a Docker environment variable as J
 
 
 Test changes on staging server
-------------------------------
+==============================
 
 Changes to the Buildbot master can be tested on a staging machine.
 
 Create a staging Docker image
-=============================
+-----------------------------
 
 To create a new staging image in the Docker registry, update the ``staging`` branch and push to Github.
 The Docker registry will automatically build an image based on the ``staging`` branch of https://github.com/ClusterHQ/build.clusterhq.com whenever it is updated.
@@ -62,7 +62,7 @@ The status is available `here <https://registry.hub.docker.com/u/clusterhq/build
 You will need to a member of the ``clusterhq`` group on Docker Hub in order to click on build id's to see detailed information about build progress or errors.
 
 Create a staging server
-=======================
+-----------------------
 
 Create an AWS EC2 Security Group to allow inbound traffic as shown below.
 
@@ -83,7 +83,7 @@ This command will display the external IP address of the EC2 instance.
 Run ``python start-aws.py --help`` to see the available options to this command.
 
 Create staging configuration
-============================
+----------------------------
 
 Create a file ``staging.yml`` from the ``config.yml``.
 
@@ -97,7 +97,7 @@ Make the following changes to the ``staging.yml`` file:
 
 
 Start staging server
-====================
+--------------------
 
 To start a Buildbot master on this machine run::
 
@@ -116,7 +116,7 @@ To start a Mac OS X slave, see below.
 
 
 Deploy changes to production server
------------------------------------
+===================================
 
 Ensure the dependencies have been installed and configuration created, as described above.
 
@@ -150,7 +150,7 @@ To restart the live Buildbot with the current image::
 
 
 Wheelhouse
-----------
+==========
 
 There is a wheelhouse hosted on s3 (thus near the buildslaves).
 Credentials [1]_ for ``s3cmd`` can be configured using ``s3cmd --configure``.
@@ -164,6 +164,9 @@ It can be updated to include available wheels of packages which are in flocker's
 The buildslave is constructed with a ``pip.conf`` file that points at https://s3-us-west-2.amazonaws.com/clusterhq-wheelhouse/fedora20-x86_64/index.
 
 .. [1] Create credentials at https://console.aws.amazon.com/iam/home#users.
+
+Slaves
+======
 
 Slave AMIs
 ----------
@@ -354,7 +357,7 @@ Next steps:
 * The redhat-openstack build slave can be destroyed by running ``fab -f slave/redhat-openstack/fabfile.py delete_server``.
 
 Fixing issues
--------------
+=============
 
 **VirtualBox errors**
 
@@ -395,7 +398,7 @@ Kill all VBoxHead processes and unregister the killed VMs from VirtualBox:
    done
 
 Monitoring
-----------
+==========
 
 There is monitoring setup for buildbot, using `prometheus <http://prometheus.io/>`_.
 It is configured to poll ``/metrics`` on both the production and staging buildbots.
