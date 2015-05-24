@@ -41,7 +41,7 @@ class StorageConfiguration(object):
 
     :ivar provider: The storage provider to use.
     :ivar distribution: The distribution to use.
-    :cvar _locks:
+    :cvar _locks: Dictionary mapping provider names to locks.
     """
 
     _locks = {}
@@ -74,6 +74,8 @@ class StorageConfiguration(object):
 
     @property
     def locks(self):
+        # We use a shared dictionary here, since locks are compared via
+        # identity, not by name.
         lock_name = '/'.join(['functional', 'api', self.provider])
         lock = self._locks.setdefault(
             self.provider, MasterLock(lock_name, maxCount=1))
