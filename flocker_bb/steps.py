@@ -336,6 +336,7 @@ def pip(what, packages):
     @param packages: L{list} of packages to install
     @returns: L{BuildStep}
     """
+    from flocker_bb import privateData
     return ShellCommand(
         name="install-" + what,
         description=["installing", what],
@@ -347,6 +348,7 @@ def pip(what, packages):
                      discriminator=Property('distribution'),
                      branch='',
                      isAbsolute=True),
+                 "--trusted-host", privateData['buildmaster']['host'],
                  packages,
                  ],
         haltOnFailure=True)
