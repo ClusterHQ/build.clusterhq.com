@@ -149,21 +149,13 @@ To restart the live Buildbot with the current image::
    $ fab restart
 
 
-Wheelhouse
-==========
+Wheels
+======
 
-There is a wheelhouse hosted on s3 (thus near the buildslaves).
-Credentials [1]_ for ``s3cmd`` can be configured using ``s3cmd --configure``.
-It can be updated to include available wheels of packages which are in flocker's ``setup.py`` by running the following commands::
+Buildbot builds wheels on the ``flocker/wheelhouse/*`` builders.
+These get uploaded to bulidbot in a per-distribution location (`/results/wheelhouse/<distribution>/`).
+Buildbot refers to this when installing dependencies.
 
-   python setup.py sdist
-   pip wheel -f dist "Flocker[doc,dev]==$(python setup.py --version)"
-   s3cmd put -P -m "Content-Type:application/python+wheel" wheelhouse/*.whl s3://clusterhq-wheelhouse/fedora20-x86_64
-   s3cmd ls s3://clusterhq-wheelhouse/fedora20-x86_64/ | sed 's,^.*/\(.*\),<a href="\1">\1</a><br/>,' | s3cmd put -P -m "text/html" - s3://clusterhq-wheelhouse/fedora20-x86_64/index
-
-The buildslave is constructed with a ``pip.conf`` file that points at https://s3-us-west-2.amazonaws.com/clusterhq-wheelhouse/fedora20-x86_64/index.
-
-.. [1] Create credentials at https://console.aws.amazon.com/iam/home#users.
 
 Slaves
 ======
