@@ -76,14 +76,3 @@ docker pull fedora:20
 docker pull fedora:21
 docker pull ubuntu:14.04
 docker pull centos:centos7
-
-
-# Configure pip wheelhouse and cache
-mkdir ~root/.pip
-cat > ~root/.pip/pip.conf <<EOF
-[global]
-find-links = https://s3-us-west-2.amazonaws.com/clusterhq-wheelhouse/fedora20-x86_64/index
-find-links = file:///var/cache/wheelhouse
-EOF
-mkdir /var/cache/wheelhouse
-wget -r -nd -P /var/cache/wheelhouse https://s3-us-west-2.amazonaws.com/clusterhq-wheelhouse/fedora20-x86_64/index

@@ -54,11 +54,3 @@ systemctl start docker
 docker pull busybox
 docker pull openshift/busybox-http-app
 docker pull python:2.7-slim
-
-
-# Configure pip wheelhouse and cache
-mkdir ~root/.pip
-cat > ~root/.pip/pip.conf <<EOF
-[global]
-find-links = file:///var/cache/wheelhouse
-EOF
