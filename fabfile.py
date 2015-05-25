@@ -186,6 +186,7 @@ def saveConfig():
     local('lpass show --notes "config@build.clusterhq.com" >config.yml.old')
     local('lpass edit --non-interactive '
           '--notes "config@build.clusterhq.com" <config.yml')
+    local('lpass sync')
 
 
 @task
