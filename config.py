@@ -120,6 +120,7 @@ for base, slaveConfig in privateData['slaves'].items():
             build_wait_timeout=50*60,
             keepalive_interval=60,
             buildmaster=privateData['buildmaster']['host'],
+            max_builds=slaveConfig.get('max_builds'),
         )
         c['slaves'].append(slave)
     elif 'ami' in slaveConfig:
@@ -145,13 +146,17 @@ for base, slaveConfig in privateData['slaves'].items():
                 build_wait_timeout=50*60,
                 keepalive_interval=60,
                 buildmaster=privateData['buildmaster']['host'],
+                max_builds=slaveConfig.get('max_builds'),
             )
             c['slaves'].append(slave)
     else:
         for index, password in enumerate(slaveConfig['passwords']):
             name = '%s/%d' % (base, index)
             SLAVENAMES[base].append(name)
-            c['slaves'].append(BuildSlave(name, password=password))
+            c['slaves'].append(BuildSlave(
+                name, password=password,
+                max_builds=slaveConfig.get('max_builds'),
+            ))
 
 
 
