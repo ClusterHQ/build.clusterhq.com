@@ -6,7 +6,7 @@ from twisted.python import log
 from buildbot.status.base import StatusReceiverMultiService
 from buildbot.status.results import Results
 
-from prometheus_client import Gauge, Counter
+from prometheus_client import Gauge, Counter, Histogram
 
 
 class Monitor(StatusReceiverMultiService):
@@ -31,6 +31,13 @@ class Monitor(StatusReceiverMultiService):
         labelnames=['builder', 'slave_class', 'slave_number', 'result'],
         namespace='buildbot',
     )
+
+    build_duration = Histogram(
+        'build_duration_minutes',
+        "Length of build.",
+        labelnames=['builder', 'slave_class', 'slave_number', 'result'],
+        namespace="buildbot",
+        buckets=[1, 2, 3, 4, 5, 10, 15, 20, 25, 30, 35, 40, 45, 60])
 
     def __init__(self):
         StatusReceiverMultiService.__init__(self)
@@ -110,3 +117,10 @@ class Monitor(StatusReceiverMultiService):
         self.build_counts.labels(
             builderName, slave_name, slave_number, Results[build.getResults()],
         ).inc()
+
+        (start, end) = build.getTimes()
+        self.build_duration.labels(
+            builderName, slave_name, slave_number, Results[build.getResults()],
+        ).observe(
+            (end-start)/60
+        )
