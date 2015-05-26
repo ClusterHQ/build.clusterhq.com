@@ -190,6 +190,16 @@ def saveConfig():
 
 
 @task
+def diff_config(configFile="config.yml"):
+    """
+    Show the differences between the production config and a local
+    configuration.
+    """
+    local('lpass show --notes "config@build.clusterhq.com" | diff -u - %s'
+          % shellQuote(configFile))
+
+
+@task
 def check_config(configFile="config.yml.sample"):
     """
     Check that buildbot can load the configuration.
