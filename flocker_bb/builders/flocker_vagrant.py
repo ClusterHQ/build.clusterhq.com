@@ -218,6 +218,40 @@ def buildTutorialBox():
     return factory
 
 
+def run_client_installation_tests(configuration):
+    """Run the installation tests for clients.
+
+    :param ClientConfiguration configuration: Configuration for a client
+        installation test run.
+    """
+    factory = getFlockerFactory()
+
+    if configuration.provider == 'vagrant':
+        # We have to insert this before the first step, so we don't
+        # destroy the vagrant meta-data. Normally .addStep adapts
+        # to IBuildStepFactory.
+        factory.steps.insert(0, IBuildStepFactory(
+            destroy_box(path='build/admin/vagrant-acceptance-targets/%s'
+                             % configuration.distribution)))
+
+    factory.addStep(ShellCommand(
+        name='test-client-installation',
+        description=["testing", "client"],
+        descriptionDone=["test", "client"],
+        command=[
+            virtualenvBinary('python'),
+            Interpolate('%(prop:builddir)s/build/admin/run-client-tests'),
+            '--distribution', configuration.distribution,
+            '--provider', configuration.provider,
+            '--branch', flockerBranch,
+            '--build-server', buildbotURL,
+            '--config-file', Interpolate("%(kw:home)s/acceptance.yml",
+                                         home=slave_environ("HOME")),
+        ],
+        haltOnFailure=True))
+    return factory
+
+
 def run_acceptance_tests(configuration):
     factory = getFlockerFactory()
 
@@ -341,11 +375,43 @@ from ..steps import idleSlave
 from buildbot.locks import MasterLock
 
 
+# Configuration for client installation testing.
+@attributes([
+    Attribute('provider'),
+    Attribute('distribution'),
+])
+class ClientConfiguration(object):
+    """
+    Configuration for a client installation test run.
+
+    :ivar provider: The provider to use.
+    :ivar distribution: The distribution to use.
+    """
+
+    @property
+    def builder_name(self):
+        return '/'.join(
+            ['flocker', 'client',
+             self.provider,
+             self.distribution])
+
+    @property
+    def builder_directory(self):
+        return self.builder_name.replace('/', '-')
+
+    @property
+    def slave_class(self):
+        if self.provider == 'vagrant':
+            return 'fedora-20/vagrant'
+        else:
+            return 'aws/centos-7'
+
+
 # Dictionary mapping providers for acceptence testing to a list of
 # sets of variants to test on each provider.
 @attributes([
     Attribute('provider'),
-    # Vagrant doesn't take a distrubtion.
+    # Vagrant doesn't take a distribution.
     Attribute('distribution', default_value=None),
     Attribute('dataset_backend'),
     Attribute('variants', default_factory=set),
@@ -380,6 +446,11 @@ class AcceptanceConfiguration(object):
         else:
             return 'aws/centos-7'
 
+
+CLIENT_INSTALLATION_CONFIGURATIONS = [
+    ClientConfiguration(
+        provider='rackspace', distribution='ubuntu-14.04'),
+]
 
 ACCEPTANCE_CONFIGURATIONS = [
     # There is only one vagrant box.
@@ -434,6 +505,15 @@ def getBuilders(slavenames):
                           box='tutorial'),
                       nextSlave=idleSlave),
         ]
+    for configuration in CLIENT_INSTALLATION_CONFIGURATIONS:
+        builders.append(BuilderConfig(
+            name=configuration.builder_name,
+            builddir=configuration.builder_directory,
+            slavenames=slavenames[configuration.slave_class],
+            category='flocker',
+            factory=run_client_installation_tests(configuration),
+            locks=ACCEPTANCE_LOCKS.get(configuration.provider, []),
+            nextSlave=idleSlave))
     for configuration in ACCEPTANCE_CONFIGURATIONS:
         builders.append(BuilderConfig(
             name=configuration.builder_name,
@@ -505,7 +585,9 @@ def getSchedulers():
     for distribution in ('fedora-20', 'centos-7', 'ubuntu-14.04'):
         builders = [
             configuration.builder_name
-            for configuration in ACCEPTANCE_CONFIGURATIONS
+            for configuration in (
+                ACCEPTANCE_CONFIGURATIONS +
+                CLIENT_INSTALLATION_CONFIGURATIONS)
             if configuration.provider != 'vagrant'
             and configuration.distribution == distribution
         ]
