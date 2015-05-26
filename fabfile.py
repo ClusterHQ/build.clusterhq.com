@@ -9,6 +9,16 @@ env.user = 'fedora'
 
 
 def cmd(*args):
+    """
+    Quote the supplied ``list`` of ``args`` and return a command line
+    string.
+
+    XXX: This is duplicated in ``slaves/redhat-openstack/fabfile.py``. It
+    should be shared.
+
+    :param list args: The componants of the command line.
+    :return: The quoted command line string.
+    """
     return ' '.join(map(shellQuote, args))
 
 
@@ -176,10 +186,11 @@ def saveConfig():
     local('lpass show --notes "config@build.clusterhq.com" >config.yml.old')
     local('lpass edit --non-interactive '
           '--notes "config@build.clusterhq.com" <config.yml')
+    local('lpass sync')
 
 
 @task
-def check_config(configFile="staging.yml"):
+def check_config(configFile="config.yml.sample"):
     """
     Check that buildbot can load the configuration.
     """

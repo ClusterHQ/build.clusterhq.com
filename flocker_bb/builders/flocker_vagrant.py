@@ -276,6 +276,7 @@ def run_acceptance_tests(configuration):
             Interpolate('%(prop:builddir)s/build/admin/run-acceptance-tests'),
             '--distribution', configuration.distribution,
             '--provider', configuration.provider,
+            '--dataset-backend', configuration.dataset_backend,
             '--branch', flockerBranch,
             '--build-server', buildbotURL,
             '--config-file', Interpolate("%(kw:home)s/acceptance.yml",
@@ -412,6 +413,7 @@ class ClientConfiguration(object):
     Attribute('provider'),
     # Vagrant doesn't take a distribution.
     Attribute('distribution', default_value=None),
+    Attribute('dataset_backend'),
     Attribute('variants', default_factory=set),
 ])
 class AcceptanceConfiguration(object):
@@ -420,6 +422,7 @@ class AcceptanceConfiguration(object):
 
     :ivar provider: The provider to use.
     :ivar distribution: The distribution to use.
+    :ivar dataset_backend: The dataset backend to use.
     :ivar variants: The variants to use.
     """
 
@@ -428,8 +431,9 @@ class AcceptanceConfiguration(object):
         return '/'.join(
             ['flocker', 'acceptance',
              self.provider,
-             self.distribution]
-            + sorted(self.variants))
+             self.distribution,
+             self.dataset_backend,
+             ] + sorted(self.variants))
 
     @property
     def builder_directory(self):
@@ -438,9 +442,9 @@ class AcceptanceConfiguration(object):
     @property
     def slave_class(self):
         if self.provider == 'vagrant':
-            return 'fedora-vagrant'
+            return 'fedora-20/vagrant'
         else:
-            return 'centos-7'
+            return 'aws/centos-7'
 
 
 CLIENT_INSTALLATION_CONFIGURATIONS = [
@@ -449,20 +453,27 @@ CLIENT_INSTALLATION_CONFIGURATIONS = [
 ]
 
 ACCEPTANCE_CONFIGURATIONS = [
+    # There is only one vagrant box.
     AcceptanceConfiguration(
-        provider='vagrant', distribution='fedora-20'),
+        provider='vagrant', distribution='fedora-20',
+        dataset_backend='zfs'),
+] + [
     AcceptanceConfiguration(
-        provider='rackspace', distribution='fedora-20'),
-    AcceptanceConfiguration(
-        provider='rackspace', distribution='ubuntu-14.04'),
-    AcceptanceConfiguration(
-        provider='rackspace', distribution='centos-7'),
+        provider=provider, distribution=distribution,
+        dataset_backend=dataset_backend)
+    for provider in ['rackspace']
+    for distribution in ['centos-7', 'ubuntu-14.04']
+    for dataset_backend in ['loopback', 'zfs']
+] + [
+    # flocker currently only know about docker-head and zfs-testing
+    # on centos-7. It isn't worth testing either of these combinations
+    # on multiple cloud providers.
     AcceptanceConfiguration(
         provider='rackspace', distribution='centos-7',
-        variants={'docker-head'}),
+        dataset_backend='loopback', variants={'docker-head'}),
     AcceptanceConfiguration(
         provider='rackspace', distribution='centos-7',
-        variants={'zfs-testing'}),
+        dataset_backend='zfs', variants={'zfs-testing'}),
 ]
 
 
@@ -477,18 +488,18 @@ ACCEPTANCE_LOCKS = {
 def getBuilders(slavenames):
     builders = [
         BuilderConfig(name='flocker-vagrant-dev-box',
-                      slavenames=slavenames['fedora-vagrant'],
+                      slavenames=slavenames['fedora-20/vagrant'],
                       category='flocker',
                       factory=buildDevBox(),
                       nextSlave=idleSlave),
         BuilderConfig(name='flocker-vagrant-tutorial-box',
-                      slavenames=slavenames['fedora-vagrant'],
+                      slavenames=slavenames['fedora-20/vagrant'],
                       category='flocker',
                       factory=buildTutorialBox(),
                       nextSlave=idleSlave),
         BuilderConfig(name='flocker/installed-package/fedora-20',
                       builddir='flocker-installed-package-fedora-20',
-                      slavenames=slavenames['fedora-vagrant'],
+                      slavenames=slavenames['fedora-20/vagrant'],
                       category='flocker',
                       factory=test_installed_package(
                           box='tutorial'),

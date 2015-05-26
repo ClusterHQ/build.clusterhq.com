@@ -1,0 +1,5 @@
+#!/bin/sh
+exec /usr/bin/twistd \
+    --nodaemon \
+    --pidfile= \
+    --python={buildslave_home}/{builddir}/buildbot.tac
