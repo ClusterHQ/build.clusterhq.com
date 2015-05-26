@@ -402,9 +402,9 @@ class ClientConfiguration(object):
     @property
     def slave_class(self):
         if self.provider == 'vagrant':
-            return 'fedora-vagrant'
+            return 'fedora-20/vagrant'
         else:
-            return 'centos-7'
+            return 'aws/centos-7'
 
 
 # Dictionary mapping providers for acceptence testing to a list of
