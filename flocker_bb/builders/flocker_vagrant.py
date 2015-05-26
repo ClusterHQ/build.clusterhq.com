@@ -240,10 +240,9 @@ def run_client_installation_tests(configuration):
         descriptionDone=["test", "client"],
         command=[
             virtualenvBinary('python'),
-            Interpolate('%(prop:builddir)s/build/admin/run-acceptance-tests'),
+            Interpolate('%(prop:builddir)s/build/admin/run-client-tests'),
             '--distribution', configuration.distribution,
             '--provider', configuration.provider,
-            '--type', 'client',
             '--branch', flockerBranch,
             '--build-server', buildbotURL,
             '--config-file', Interpolate("%(kw:home)s/acceptance.yml",
