@@ -222,4 +222,13 @@ def startPrometheus():
         '-p', '9090:9090',
         '-v', '/srv/prometheus/prometheus.conf:/prometheus.conf',
         '--volumes-from', 'prometheus-data',
-        'prom/prometheus'))
+        # This fix image to what we have been using.
+        'prom/prometheus:3da188cfdce7',
+        # Store metrics for two months
+        '-storage.local.retention=720h0m0s',
+        # Options from `CMD`.
+        '-logtostderr',
+        '-config.file=/prometheus.conf',
+        '-web.console.libraries=/go/src/github.com/prometheus/prometheus/console_libraries',
+        '-web.console.templates=/go/src/github.com/prometheus/prometheus/consoles',
+        ))
