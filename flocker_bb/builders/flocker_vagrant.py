@@ -447,7 +447,7 @@ class AcceptanceConfiguration(object):
             return 'aws/centos-7'
 
 
-TUTORIAL_DISTRIBUTION = "fedora-20"
+TUTORIAL_DISTRIBUTION = "centos-7"
 
 CLIENT_INSTALLATION_CONFIGURATIONS = [
     ClientConfiguration(
