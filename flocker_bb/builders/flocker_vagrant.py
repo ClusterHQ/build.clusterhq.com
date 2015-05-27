@@ -447,6 +447,8 @@ class AcceptanceConfiguration(object):
             return 'aws/centos-7'
 
 
+TUTORIAL_DISTRIBUTION = "fedora-20"
+
 CLIENT_INSTALLATION_CONFIGURATIONS = [
     ClientConfiguration(
         provider='rackspace', distribution='ubuntu-14.04'),
@@ -455,7 +457,7 @@ CLIENT_INSTALLATION_CONFIGURATIONS = [
 ACCEPTANCE_CONFIGURATIONS = [
     # There is only one vagrant box.
     AcceptanceConfiguration(
-        provider='vagrant', distribution='fedora-20',
+        provider='vagrant', distribution=TUTORIAL_DISTRIBUTION,
         dataset_backend='zfs'),
 ] + [
     AcceptanceConfiguration(
@@ -528,7 +530,7 @@ def getBuilders(slavenames):
 BUILDERS = [
     'flocker-vagrant-dev-box',
     'flocker-vagrant-tutorial-box',
-    'flocker/installed-package/fedora-20',
+    'flocker/installed-package/' + TUTORIAL_DISTRIBUTION,
 ] + [
     configuration.builder_name
     for configuration in ACCEPTANCE_CONFIGURATIONS
@@ -571,7 +573,7 @@ def getSchedulers():
         Triggerable(
             name='trigger/built-vagrant-box/flocker-tutorial',
             builderNames=[
-                'flocker/installed-package/fedora-20',
+                'flocker/installed-package/' + TUTORIAL_DISTRIBUTION,
             ] + [
                 configuration.builder_name
                 for configuration in ACCEPTANCE_CONFIGURATIONS
@@ -591,7 +593,7 @@ def getSchedulers():
             if configuration.provider != 'vagrant'
             and configuration.distribution == distribution
         ]
-        if distribution == 'fedora-20':
+        if distribution == TUTORIAL_DISTRIBUTION:
             builders.append('flocker-vagrant-tutorial-box')
         schedulers.append(
             Triggerable(
