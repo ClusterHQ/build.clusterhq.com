@@ -46,8 +46,6 @@ def maybeAddManhole(config, privateData):
 maybeAddManhole(c, privateData)
 
 
-####### BUILDSLAVES
-
 # 'slavePortnum' defines the TCP port to listen on for connections from slaves.
 # This must match the value configured into the buildslaves (with their
 # --master option)
@@ -159,9 +157,6 @@ for base, slaveConfig in privateData['slaves'].items():
             ))
 
 
-
-####### CODEBASE GENERATOR
-
 # A codebase generator synthesizes an internal identifier from a ... change.
 # The codebase identifier lets parts of the build configuration more easily
 # inspect attributes of the change without ambiguity when there are potentially
@@ -179,8 +174,6 @@ c['codebaseGenerator'] = lambda change: CODEBASES[change["repository"]]
 
 c['change_source'] = []
 
-####### BUILDERS
-
 from flocker_bb.builders import flocker, maint, flocker_vagrant
 
 c['builders'] = []
@@ -195,8 +188,6 @@ addBuilderModule(flocker)
 addBuilderModule(flocker_vagrant)
 addBuilderModule(maint)
 
-
-####### STATUS TARGETS
 
 # 'status' is a list of Status Targets. The results of each build will be
 # pushed to these targets. buildbot/status/*.py has a variety to choose from,
@@ -258,7 +249,6 @@ if 'zulip' in privateData:
         failing_builders=failing_builders,
     ))
 
-####### PROJECT IDENTITY
 
 # the 'title' string will appear at the top of this buildbot
 # installation's html.WebStatus home page (linked to the
@@ -275,15 +265,14 @@ c['titleURL'] = "http://www.clusterhq.com/"
 
 c['buildbotURL'] = "http://%s/" % (privateData['buildmaster']['host'],)
 
-####### DB URL
-
 # This specifies what database buildbot uses to store change and scheduler
 # state.  You can leave this at its default for all but the largest
 # installations.
 c['db_url'] = "sqlite:///" + sibpath(__file__, "data/state.sqlite")
 
 
-# Keep a bunch of build in memory rather than constantly re-reading them from disk.
+# Keep a bunch of build in memory rather than constantly re-reading them from
+# disk.
 c['buildCacheSize'] = 1000
 # Cleanup old builds.
 c['buildHorizon'] = 1000

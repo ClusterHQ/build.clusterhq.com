@@ -17,7 +17,8 @@ from ..zulip_status import _Zulip
 
 @implementer(IResponse)
 class MemoryResponse(object):
-    def __init__(self, version, code, phrase, headers, request, previousResponse, body):
+    def __init__(self, version, code, phrase, headers,
+                 request, previousResponse, body):
         self.version = version
         self.code = code
         self.phrase = phrase
@@ -27,10 +28,8 @@ class MemoryResponse(object):
         self.setPreviousResponse(previousResponse)
         self._body = body
 
-
     def setPreviousResponse(self, previousResponse):
         self.previousResponse = previousResponse
-
 
     def deliverBody(self, protocol):
         protocol.makeConnection(_StubProducer())
@@ -44,22 +43,18 @@ class _StubProducer(object):
     def pauseProducing(self):
         pass
 
-
     def resumeProducing(self):
         pass
-
 
     def stopProducing(self):
         pass
 verifyClass(IPushProducer, _StubProducer)
 
 
-
 def _consume(body):
     if not isinstance(body, FileBodyProducer):
         raise TypeError()
     return body._inputFile.read()
-
 
 
 @implementer(IAgent)
@@ -76,7 +71,6 @@ class SpyAgent(object):
         return succeed(response)
 
 verifyClass(IAgent, SpyAgent)
-
 
 
 @implementer(IAgent)
@@ -111,7 +105,6 @@ class ZulipTests(SynchronousTestCase):
               )],
             requestLog)
 
-
     def test_sendEncodes(self):
         """
         If called with unicode values, L{_Zulip.send} encodes them to UTF-8
@@ -141,8 +134,6 @@ class ZulipTests(SynchronousTestCase):
               )],
             requestLog)
 
-
-
     def test_sendResultBefore(self):
         """
         L{_Zulip.send} returns a L{Deferred} that does not fire before the
@@ -150,9 +141,9 @@ class ZulipTests(SynchronousTestCase):
         """
         agent = SlowAgent()
         zulip = _Zulip(b"some test", b"abcdef1234", agent)
-        sending = zulip.send(b"the type", b"the content", b"the to", b"the subject")
+        sending = zulip.send(
+            b"the type", b"the content", b"the to", b"the subject")
         self.assertNoResult(sending)
-
 
     def test_sendResultAfter(self):
         """
@@ -161,6 +152,7 @@ class ZulipTests(SynchronousTestCase):
         """
         agent = SpyAgent([])
         zulip = _Zulip(b"some test", b"abcdef1234", agent)
-        sending = zulip.send(b"the type", b"the content", b"the to", b"the subject")
+        sending = zulip.send(
+            b"the type", b"the content", b"the to", b"the subject")
         # SpyAgent always returns an empty response body
         self.assertEqual(b"", self.successResultOf(sending))
