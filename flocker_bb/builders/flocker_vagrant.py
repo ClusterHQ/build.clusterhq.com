@@ -271,6 +271,7 @@ def run_acceptance_tests(configuration):
             'sigtermTime': 5*60,
             'logfiles': {
                 'run-acceptance-tests.log': 'run-acceptance-tests.log',
+                'remote_logs.log': 'remote_logs.log',
             },
         },
         tests=[],
