@@ -73,8 +73,22 @@ class StorageConfiguration(object):
         # We use a shared dictionary here, since locks are compared via
         # identity, not by name.
         lock_name = '/'.join(['functional', 'api', self.provider])
+
+        # This should be in the config file (FLOC-2025)
+        # Allow up to 2 AWS functional storage driver tests to run in parallel.
+        # This is a temporary fix to get around test wait time being
+        # queued up to run.
+        # OpenStack tests have not experienced long queued wait times.
+        # So, leave the max count at 1.
+        if self.provider == 'aws':
+            maxCount = 2
+        elif self.provider in ('rackspace', 'redhat-openstack'):
+            maxCount = 1
+        else:
+            raise NotImplementedError("Unsupported provider %s" %
+                                      (self.provider,))
         lock = self._locks.setdefault(
-            self.provider, MasterLock(lock_name, maxCount=1))
+            self.provider, MasterLock(lock_name, maxCount=maxCount))
         return [lock.access("counting")]
 
 
