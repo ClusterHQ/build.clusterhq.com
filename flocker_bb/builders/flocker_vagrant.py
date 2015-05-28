@@ -456,6 +456,8 @@ TUTORIAL_DISTRIBUTION = "centos-7"
 CLIENT_INSTALLATION_CONFIGURATIONS = [
     ClientConfiguration(
         provider='rackspace', distribution='ubuntu-14.04'),
+    ClientConfiguration(
+        provider='rackspace', distribution='ubuntu-15.04'),
 ]
 
 ACCEPTANCE_CONFIGURATIONS = [
@@ -546,6 +548,8 @@ BUILDERS = [
 
 from ..steps import MergeForward, report_expected_failures_parameter
 
+from .flocker import OMNIBUS_DISTRIBUTIONS
+
 
 def getSchedulers():
     schedulers = [
@@ -592,7 +596,7 @@ def getSchedulers():
             },
         ),
     ]
-    for distribution in ('fedora-20', 'centos-7', 'ubuntu-14.04'):
+    for distribution in OMNIBUS_DISTRIBUTIONS:
         builders = [
             configuration.builder_name
             for configuration in (
