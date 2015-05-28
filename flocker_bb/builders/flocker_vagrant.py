@@ -499,14 +499,15 @@ def getBuilders(slavenames):
                       category='flocker',
                       factory=buildDevBox(),
                       nextSlave=idleSlave),
-        BuilderConfig(name='flocker-vagrant-tutorial-box',
+        BuilderConfig(name='flocker/vagrant/build/tutorial',
+                      builddir='flocker-vagrant-build-tutorial',
                       slavenames=slavenames['fedora-20/vagrant'],
                       category='flocker',
                       factory=buildTutorialBox(),
                       nextSlave=idleSlave),
-        BuilderConfig(name='flocker/installed-package/' +
+        BuilderConfig(name='flocker/installed-package/vagrant/' +
                       TUTORIAL_DISTRIBUTION,
-                      builddir='flocker-installed-package-' +
+                      builddir='flocker-installed-package-vagrant-' +
                       TUTORIAL_DISTRIBUTION,
                       slavenames=slavenames['fedora-20/vagrant'],
                       category='flocker',
@@ -536,8 +537,8 @@ def getBuilders(slavenames):
 
 BUILDERS = [
     'flocker-vagrant-dev-box',
-    'flocker-vagrant-tutorial-box',
-    'flocker/installed-package/' + TUTORIAL_DISTRIBUTION,
+    'flocker/vagrant/build/tutorial',
+    'flocker/installed-package/vagrant/' + TUTORIAL_DISTRIBUTION,
 ] + [
     configuration.builder_name
     for configuration in ACCEPTANCE_CONFIGURATIONS
@@ -580,7 +581,7 @@ def getSchedulers():
         Triggerable(
             name='trigger/built-vagrant-box/flocker-tutorial',
             builderNames=[
-                'flocker/installed-package/' + TUTORIAL_DISTRIBUTION,
+                'flocker/installed-package/vagrant/' + TUTORIAL_DISTRIBUTION,
             ] + [
                 configuration.builder_name
                 for configuration in ACCEPTANCE_CONFIGURATIONS
@@ -601,7 +602,7 @@ def getSchedulers():
             and configuration.distribution == distribution
         ]
         if distribution == TUTORIAL_DISTRIBUTION:
-            builders.append('flocker-vagrant-tutorial-box')
+            builders.append('flocker/vagrant/build/tutorial')
         schedulers.append(
             Triggerable(
                 name='trigger/built-packages/%s' % (distribution,),

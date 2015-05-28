@@ -247,9 +247,9 @@ Fedora hardware builders
 The following builders need to run on Fedora 20 on bare metal hardware:
 
 * flocker-vagrant-dev-box
-* flocker-vagrant-tutorial-box
-* flocker/acceptance/vagrant/fedora-20
-* flocker/installed-package/fedora-20
+* flocker/vagrant/build/tutorial
+* flocker/acceptance/vagrant/centos-7
+* flocker/installed-package/centos-7
 
 To create a Rackspace OnMetal slave to serve this purpose:
 

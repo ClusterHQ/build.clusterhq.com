@@ -643,7 +643,6 @@ from ..steps import idleSlave
 functionalLock = SlaveLock('functional-tests')
 
 OMNIBUS_DISTRIBUTIONS = [
-    'fedora-20',
     'ubuntu-14.04',
     'centos-7',
 ]
@@ -651,13 +650,6 @@ OMNIBUS_DISTRIBUTIONS = [
 
 def getBuilders(slavenames):
     builders = [
-        BuilderConfig(name='flocker-fedora-20',
-                      builddir='flocker',
-                      slavenames=slavenames['aws/fedora-20'],
-                      category='flocker',
-                      factory=makeFactory(b'python2.7'),
-                      locks=[functionalLock.access('counting')],
-                      nextSlave=idleSlave),
         BuilderConfig(name='flocker-ubuntu-14.04',
                       slavenames=slavenames['aws/ubuntu-14.04'],
                       category='flocker',
@@ -763,7 +755,6 @@ def getBuilders(slavenames):
     return builders
 
 BUILDERS = [
-    'flocker-fedora-20',
     'flocker-ubuntu-14.04',
     'flocker-centos-7',
     'flocker-osx-10.10',
