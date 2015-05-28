@@ -642,14 +642,14 @@ from ..steps import idleSlave
 # A lock to prevent multiple functional tests running at the same time
 functionalLock = SlaveLock('functional-tests')
 
-OMNIBUS_DISTRIBUTIONS = [
-    'fedora-20',
-    'ubuntu-14.04',
-    'centos-7',
-]
 
-
-def getBuilders(slavenames):
+def getBuilders(slavenames, omnibus_distributions):
+    """
+    :param list omnibus_distributions: A ``list`` of strings giving the names
+        of distributions for which omnibus packages should be built.  These
+        must be supported by the Flocker package builder in
+        ``Flocker/admin/build-package``.
+    """
     builders = [
         BuilderConfig(name='flocker-fedora-20',
                       builddir='flocker',
@@ -727,7 +727,7 @@ def getBuilders(slavenames):
                       factory=makeHomebrewRecipeTestFactory(),
                       nextSlave=idleSlave),
         ]
-    for distribution in OMNIBUS_DISTRIBUTIONS:
+    for distribution in omnibus_distributions:
         builders.append(
             BuilderConfig(
                 name='flocker-omnibus-%s' % (distribution,),
@@ -762,31 +762,29 @@ def getBuilders(slavenames):
 
     return builders
 
-BUILDERS = [
-    'flocker-fedora-20',
-    'flocker-ubuntu-14.04',
-    'flocker-centos-7',
-    'flocker-osx-10.10',
-    'flocker-twisted-trunk',
-    'flocker-coverage',
-    'flocker-lint',
-    'flocker-docs',
-    'flocker-zfs-head',
-    'flocker-admin',
-    'flocker/homebrew/create',
-] + [
-    'flocker-omnibus-%s' % (dist,) for dist in OMNIBUS_DISTRIBUTIONS
-] + [
-    configuration.builder_name for configuration in STORAGE_CONFIGURATIONS
-]
+
+# These builders will not be triggered by commits or a force-build scheduler.
+# Instead, they must be triggered by some other build completing.
+EXCEPT_BUILDERS = {
+    "flocker/homebrew/test",
+}
 
 
-def getSchedulers():
+def getSchedulers(builder_names):
+    """
+    :param list builder_names: The names of all the builders these schedulers
+        should be responsible for.  This is basically all of the names of the
+        builders returned by ``getBuilders``.
+    """
+    automatic_builders = sorted(
+        set(builder_names) - EXCEPT_BUILDERS,
+        key=builder_names.index,
+    )
     return [
         AnyBranchScheduler(
             name="flocker",
             treeStableTimer=5,
-            builderNames=BUILDERS,
+            builderNames=automatic_builders,
             codebases={
                 "flocker": {"repository": GITHUB + b"/flocker"},
             },
@@ -805,8 +803,9 @@ def getSchedulers():
             properties=[
                 report_expected_failures_parameter,
             ],
-            builderNames=BUILDERS,
+            builderNames=automatic_builders,
             ),
+        # TODO Unify this with EXCEPT_BUILDERS.
         Triggerable(
             name='trigger/created-homebrew',
             builderNames=['flocker/homebrew/test'],

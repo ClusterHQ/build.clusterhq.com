@@ -181,8 +181,15 @@ c['schedulers'] = []
 
 
 def addBuilderModule(module):
-    c['builders'].extend(module.getBuilders(SLAVENAMES))
-    c['schedulers'].extend(module.getSchedulers())
+    builders = module.getBuilders(
+        SLAVENAMES,
+        **privateData["builders"].get(module.__name__, {})
+    )
+    builder_names = list(
+        builder.name for builder in builders
+    )
+    c['builders'].extend(builders)
+    c['schedulers'].extend(module.getSchedulers(builder_names))
 
 addBuilderModule(flocker)
 addBuilderModule(flocker_vagrant)

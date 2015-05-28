@@ -44,6 +44,23 @@ rackspace:
 ## Thus ends the credentials section.
 ##
 
+##
+## This section configures which builders exist.  Keys beneath ``builders`` in
+## this section correspond to modules which define builders and schedulers.
+## Items beneath those are passed as keyword arguments to the ``getBuilders``
+## function on that module.
+##
+
+builders:
+    flocker:
+        omnibus_distributions:
+            - "fedora-20"
+            - "ubuntu-14.04"
+            - "centos-7"
+
+##
+## End of the builder configuration section.
+##
 
 github:
     token: "<github api token>"

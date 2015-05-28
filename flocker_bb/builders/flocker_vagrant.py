@@ -546,7 +546,14 @@ BUILDERS = [
 from ..steps import MergeForward, report_expected_failures_parameter
 
 
-def getSchedulers():
+def getSchedulers(builder_names):
+    """
+    :param builder_names: Ignored.  The dependencies between different
+        acceptance test builders are more complicated.  It would be nice to
+        express those dependencies more generally eventually but for now this
+        function sticks with some hard-coded logic and must be kept manually
+        synchronized with ``getBuilders``.
+    """
     schedulers = [
         AnyBranchScheduler(
             name="flocker-vagrant",
