@@ -494,7 +494,7 @@ def getBuilders(slavenames):
                       category='flocker',
                       factory=buildDevBox(),
                       nextSlave=idleSlave),
-        BuilderConfig(name='flocker-vagrant-tutorial-box',
+        BuilderConfig(name='flocker/vagrant/build/tutorial',
                       slavenames=slavenames['fedora-20/vagrant'],
                       category='flocker',
                       factory=buildTutorialBox(),
@@ -531,7 +531,7 @@ def getBuilders(slavenames):
 
 BUILDERS = [
     'flocker-vagrant-dev-box',
-    'flocker-vagrant-tutorial-box',
+    'flocker/vagrant/build/tutorial',
     'flocker/installed-package/' + TUTORIAL_DISTRIBUTION,
 ] + [
     configuration.builder_name
@@ -596,7 +596,7 @@ def getSchedulers():
             and configuration.distribution == distribution
         ]
         if distribution == TUTORIAL_DISTRIBUTION:
-            builders.append('flocker-vagrant-tutorial-box')
+            builders.append('flocker/vagrant/build/tutorial')
         schedulers.append(
             Triggerable(
                 name='trigger/built-packages/%s' % (distribution,),
