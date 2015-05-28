@@ -480,10 +480,11 @@ ACCEPTANCE_CONFIGURATIONS = [
 ]
 
 
+# This should be in the config file (FLOC-2025)
+# 256000M available ram, 8192M per node, 2 nodes per test
+# We allocate slightly less to avoid using all the RAM.
 rackspace_lock = MasterLock("rackspace-lock", maxCount=12)
 ACCEPTANCE_LOCKS = {
-    # 256000M available ram, 8192M per node, 2 nodes per test
-    # We allocate slightly less to avoid using all the RAM.
     'rackspace': [rackspace_lock.access("counting")],
 }
 

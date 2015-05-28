@@ -74,6 +74,7 @@ class StorageConfiguration(object):
         # identity, not by name.
         lock_name = '/'.join(['functional', 'api', self.provider])
 
+        # This should be in the config file (FLOC-2025)
         # Allow up to 2 AWS functional storage driver tests to run in parallel.
         # This is a temporary fix to get around test wait time being
         # queued up to run.
