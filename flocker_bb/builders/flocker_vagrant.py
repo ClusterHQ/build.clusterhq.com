@@ -266,6 +266,9 @@ def run_acceptance_tests(configuration):
     factory.addSteps(_flockerTests(
         kwargs={
             'trialMode': [],
+            # Typicall acceptance tests runs take <30 m.
+            # Assume something is wrong, if it takes more than twice that.
+            'maxTime': 60*60,
             # Allow 5 minutes for acceptance test runner to shutdown gracefully
             # In particular, this allows it to clean up the VMs it spawns.
             'sigtermTime': 5*60,
