@@ -226,9 +226,10 @@ authz_cfg = authz.Authz(
     # Leave all this stuff disabled for now, but maybe enable it with "auth"
     # later.
     gracefulShutdown=False,
-    pingBuilder=False,
+    pingBuilder='auth',
     stopAllBuilds=False,
-    cancelPendingBuild=False,
+    cancelPendingBuild='auth',
+    cancelAllPendingBuilds=False,
 )
 c['status'].append(WebStatus(
     http_port=80, authz=authz_cfg,
