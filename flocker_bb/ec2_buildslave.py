@@ -163,6 +163,19 @@ class OnDemandBuildSlave(BuildSlave):
         return d
 
     def _stopInstance(self):
+        """
+        Shutdown the slave and then stop the instance.
+
+        We need to do both, to avoid the following sequence:
+        - Shutdown instance
+        - Pending build triggers new instance
+        - When new slave connects, duplicate slave detection kicks in, causing
+          the original slave to disconnect. That disconnect triggers the new
+          slave instance to shutdown.
+        - Loop.
+
+        https://clusterhq.atlassian.net/browse/FLOC-1938
+        """
         with start_action(
                 action_type="ondemand_slave:stop_instance",
                 slave=self.slavename,
