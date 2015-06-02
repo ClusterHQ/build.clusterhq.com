@@ -215,30 +215,32 @@ def check_config(configFile="config.yml.sample"):
 
 @task
 def startPrometheus():
+    PROMETHEUS_IMAGE = 'prom/prometheus:21da4f1821b3'
     removeContainer('prometheus')
     if not containerExists('prometheus-data'):
         sudo(cmd(
             'docker', 'run',
             '--name', 'prometheus-data',
-            # https://github.com/prometheus/prometheus/pull/574
-            '-v', '/tmp/metrics',
             '--entrypoint', '/bin/true',
-            'prom/prometheus'))
+            PROMETHEUS_IMAGE))
     sudo(cmd('mkdir', '-p', '/srv/prometheus'))
-    put('prometheus.conf', '/srv/prometheus/prometheus.conf', use_sudo=True)
+    put('prometheus.yml', '/srv/prometheus/prometheus.yml', use_sudo=True)
+    sudo(cmd('chcon', '-t', 'svirt_sandbox_file_t',
+             '/srv/prometheus/prometheus.yml'))
     sudo(cmd(
         'docker', 'run', '-d',
         '--name', 'prometheus',
         '-p', '9090:9090',
-        '-v', '/srv/prometheus/prometheus.conf:/prometheus.conf',
+        '-v', ':'.join(['/srv/prometheus/prometheus.yml',
+                        '/etc/prometheus/prometheus.yml',
+                        'ro']),
         '--volumes-from', 'prometheus-data',
-        # This fix image to what we have been using.
-        'prom/prometheus:3da188cfdce7',
+        PROMETHEUS_IMAGE,
         # Store metrics for two months
         '-storage.local.retention=720h0m0s',
         # Options from `CMD`.
-        '-logtostderr',
-        '-config.file=/prometheus.conf',
-        '-web.console.libraries=/go/src/github.com/prometheus/prometheus/console_libraries',  # noqa
-        '-web.console.templates=/go/src/github.com/prometheus/prometheus/consoles',   # noqa
+        '-config.file=/etc/prometheus/prometheus.yml',
+        "-storage.local.path=/prometheus",
+        "-web.console.libraries=/etc/prometheus/console_libraries",
+        "-web.console.templates=/etc/prometheus/consoles",
         ))
