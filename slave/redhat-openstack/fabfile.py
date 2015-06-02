@@ -8,6 +8,7 @@ Configuration for a buildslave to run on redhat-openstack
 from pipes import quote as shellQuote
 from fabric.api import sudo, task, env, put, run, local
 from fabric.context_managers import shell_env
+from cuisine import file_write, file_read, text_ensure_line
 from twisted.python.filepath import FilePath
 from StringIO import StringIO
 import yaml
@@ -17,9 +18,12 @@ import yaml
 # See http://stackoverflow.com/a/9685171
 env.use_ssh_config = True
 
-BUILDSLAVE_NAME = "redhat-openstack/centos-7"
+BUILDSLAVE_NAME     = "redhat-openstack/centos-7"
 BUILDSLAVE_NODENAME = "clusterhq_flocker_buildslave"
-BUILDSLAVE_HOME = '/srv/buildslave'
+BUILDSLAVE_HOME     = '/srv/buildslave'
+MAC_EOL             = "\n"
+UNIX_EOL            = "\n"
+WINDOWS_EOL         = "\r\n"
 
 # Be careful here! If our script has bugs we don't want to accidentally
 # modify VMs or resources of another more important tenant
@@ -116,6 +120,12 @@ def set_google_dns():
         use_sudo=True,
         mode=0o644,
     )
+
+    network_manager_conf = text_ensure_line(file_read(
+        '/etc/NetworkManager/NetworkManager.conf'),
+        'dns=none')
+    file_write('/etc/NetworkManager/NetworkManager.conf',
+        network_manager_conf)
 
 
 @task
