@@ -14,7 +14,7 @@
 # Portions Copyright Buildbot Team Members
 # Portions Copyright Canonical Ltd. 2009
 
-from __future__ import with_statement
+from __future__ import with_statement, absolute_import
 
 """
 An improved latent or on-demand slave implementation.
@@ -66,6 +66,10 @@ from buildbot.buildslave.base import BuildSlave
 from buildbot import config
 
 from machinist import WrongState
+from eliot import start_action
+from eliot.twisted import DeferredContext
+
+from .util import timeoutDeferred
 
 
 class OnDemandBuildSlave(BuildSlave):
@@ -122,7 +126,7 @@ class OnDemandBuildSlave(BuildSlave):
         self.building.discard(sb.builder_name)
         if not self.building:
             if self.build_wait_timeout == 0:
-                self.instance_booter.stop()
+                self._stopInstance()
             else:
                 self._setBuildWaitTimer()
 
@@ -158,6 +162,34 @@ class OnDemandBuildSlave(BuildSlave):
         d.addCallback(set_metadata_and_timer)
         return d
 
+    def _stopInstance(self):
+        """
+        Shutdown the slave and then stop the instance.
+
+        We need to do both, to avoid the following sequence:
+        - Shutdown instance
+        - Pending build triggers new instance
+        - When new slave connects, duplicate slave detection kicks in, causing
+          the original slave to disconnect. That disconnect triggers the new
+          slave instance to shutdown.
+        - Loop.
+
+        https://clusterhq.atlassian.net/browse/FLOC-1938
+        """
+        with start_action(
+                action_type="ondemand_slave:stop_instance",
+                slave=self.slavename,
+                ).context():
+            with start_action(
+                    action_type="ondemand_slave:shutdown"
+                    ).context():
+                d = DeferredContext(self.shutdown())
+                timeoutDeferred(reactor, d, 60)
+                d = d.addActionFinish()
+            d = DeferredContext(d)
+            d.addBoth(lambda _: self.instance_booter.stop())
+            d.addActionFinish()
+
     def detached(self, mind):
         BuildSlave.detached(self, mind)
         # If the slave disconnects, assuming it is a problem with the instance,
@@ -167,7 +199,7 @@ class OnDemandBuildSlave(BuildSlave):
     def _setBuildWaitTimer(self):
         self._clearBuildWaitTimer()
         self.build_wait_timer = reactor.callLater(
-            self.build_wait_timeout, self.instance_booter.stop)
+            self.build_wait_timeout, self._stopInstance)
 
     def requestSubmitted(self, request):
         builder_names = [b.name for b in
@@ -179,7 +211,7 @@ class OnDemandBuildSlave(BuildSlave):
         BuildSlave.startService(self)
 
         self._shutdown_callback_handle = reactor.addSystemEventTrigger(
-            'before', 'shutdown', self.instance_booter.stop)
+            'before', 'shutdown', self._stopInstance)
 
         self.master.subscribeToBuildRequests(self.requestSubmitted)
 

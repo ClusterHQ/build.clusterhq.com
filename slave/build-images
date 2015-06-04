@@ -106,7 +106,7 @@ def build_image(name, base_ami, deploy, username,
         print "Creating image %(name)s." % dict(name=ami_name)
         image = create_image(node, ami_name)
         driver.ex_create_tags(image, tags={
-            'base-name': name,
+            'base_name': name,
             'timestamp': timestamp,
             })
     finally:

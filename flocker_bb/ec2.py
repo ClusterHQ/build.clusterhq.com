@@ -468,7 +468,7 @@ def get_image_tags(credentials):
 
 def rackspace_slave(
         name, password, config, credentials, user_data, buildmaster,
-        build_wait_timeout, keepalive_interval
+        build_wait_timeout, keepalive_interval, max_builds,
 ):
     """
     :return: An ``OnDemandBuildSlave`` that uses a ``RackspaceCloudDriver`` for
@@ -499,12 +499,14 @@ def rackspace_slave(
         instance_booter=instance_booter,
         build_wait_timeout=build_wait_timeout,
         keepalive_interval=keepalive_interval,
+        max_builds=max_builds,
     )
 
 
 def ec2_slave(
         name, password, config, credentials, user_data, region, keypair_name,
-        security_name, build_wait_timeout, keepalive_interval, buildmaster
+        security_name, build_wait_timeout, keepalive_interval, buildmaster,
+        max_builds,
 ):
     """
     :return: An ``OnDemandBuildSlave`` that uses an ``EC2CloudDriver`` for
@@ -539,4 +541,5 @@ def ec2_slave(
         instance_booter=instance_booter,
         build_wait_timeout=build_wait_timeout,
         keepalive_interval=keepalive_interval,
+        max_builds=max_builds,
     )
