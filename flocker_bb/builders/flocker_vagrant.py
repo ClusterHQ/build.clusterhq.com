@@ -420,7 +420,7 @@ class ClientConfiguration(object):
     Attribute('provider'),
     # Vagrant doesn't take a distribution.
     Attribute('distribution', default_value=None),
-    Attribute('dataset_backend'),
+    Attribute('_dataset_backend'),
     Attribute('variants', default_factory=set),
 ])
 class AcceptanceConfiguration(object):
@@ -445,6 +445,12 @@ class AcceptanceConfiguration(object):
     @property
     def builder_directory(self):
         return self.builder_name.replace('/', '-')
+
+    @property
+    def dataset_backend(self):
+        if self._dataset_backend == 'native':
+            return self.provider
+        return self._dataset_backend
 
     @property
     def slave_class(self):
@@ -474,7 +480,7 @@ ACCEPTANCE_CONFIGURATIONS = [
         dataset_backend=dataset_backend)
     for provider in ['rackspace', 'aws']
     for distribution in ['centos-7', 'ubuntu-14.04']
-    for dataset_backend in ['loopback', 'zfs']
+    for dataset_backend in ['loopback', 'zfs', 'native']
     # Rebooting doesn't work, which is necesary on AWS for zfs.
     if not (provider == 'aws' and dataset_backend == 'zfs')
 ] + [
