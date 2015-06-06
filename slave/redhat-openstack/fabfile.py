@@ -127,6 +127,7 @@ def create_server(
         image=u'ab32525b-f565-49ca-9595-48cdb5eaa794',
         # tmz-mdl-net1
         net_id=u'74632532-1629-44b4-a464-dd31657f46a3',
+        node_name=BUILDSLAVE_NODENAME
 ):
     """
     Run ``nova boot`` to create a new server on which to run the
@@ -146,11 +147,11 @@ def create_server(
             '--config-drive', 'true',
             # Wait for the machine to become active.
             '--poll',
-            BUILDSLAVE_NODENAME
+            node_name
         )
 
         run(commandline)
-        run('nova list | grep {!r}'.format(BUILDSLAVE_NODENAME))
+        run('nova list | grep {!r}'.format(node_name))
 
 
 @task
