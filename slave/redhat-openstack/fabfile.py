@@ -187,7 +187,40 @@ def create_server(
         )
 
         run(commandline)
-        run('nova list | grep {!r}'.format(node_name))
+        output = run(
+            'nova list --fields="Networks" --name={!r}'.format(node_name)
+        )
+        ip_address = extract_ip_from_nova_list_table(output)
+        print "IPADDRESS", ip_address
+
+
+def extract_ip_from_nova_list_table(table_text):
+    """
+    $ nova list --name=clusterhq_flocker_buildslave --fields=Networks
+    +--------------------------------------+----------------------------+
+    | ID                                   | Networks                   |
+    +--------------------------------------+----------------------------+
+    | 7965dddd-809d-4fa3-90fe-73c582536a3c | tmz-mdl-net1=172.19.139.51 |
+    +--------------------------------------+----------------------------+
+    """
+    lines = []
+    for line in table_text.splitlines():
+        line = line.rstrip()
+        if set(line) == set('+-'):
+            continue
+        lines.append(line)
+
+    assert len(lines) == 2
+    # Remove first and last pipes
+    headings, values = list(line.lstrip('| ').rstrip(' |') for line in lines)
+    # Split on internal pipes
+    headings = list(heading.strip() for heading in headings.split(' | '))
+    values = list(values.strip() for value in values.split(' | '))
+    assert len(headings) == len(values)
+    assert headings == ['ID', 'Networks']
+    networks = values[-1]
+    network, ip_address = networks.split('=')
+    return ip_address
 
 
 @task
