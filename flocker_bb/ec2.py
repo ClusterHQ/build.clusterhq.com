@@ -8,6 +8,14 @@ from machinist import (
     trivialInput, constructFiniteStateMachine, Transition,
     IRichInput, stateful)
 from flocker_bb.ec2_buildslave import OnDemandBuildSlave
+from retry import retry
+
+
+class RequestLimitExceeded(Exception):
+    pass
+
+retry_on_request_limit = retry(
+    RequestLimitExceeded, delay=1, backoff=2, max_delay=60, jitter=(0, 5))
 
 
 # A metadata key name which can be found in image metadata.  This metadata
@@ -346,22 +354,28 @@ class EC2CloudDriver(object):
         image_metadata.update(image.extra['tags'])
         return image_metadata
 
+    @retry_on_request_limit
     def create(self):
         """
         Create and start a new EC2 instance.
 
         All parameters are fixed to the values used to initialize this driver.
         """
-        image = self.get_image()
-        return self.driver.create_node(
-            name=self.name,
-            size=get_size(self.driver, self.instance_type),
-            image=image,
-            ex_keyname=self.keypair_name,
-            ex_userdata=self.user_data,
-            ex_metadata=self.instance_tags,
-            ex_securitygroup=[self.security_name],
-        )
+        try:
+            image = self.get_image()
+            return self.driver.create_node(
+                name=self.name,
+                size=get_size(self.driver, self.instance_type),
+                image=image,
+                ex_keyname=self.keypair_name,
+                ex_userdata=self.user_data,
+                ex_metadata=self.instance_tags,
+                ex_securitygroup=[self.security_name],
+            )
+        except Exception as e:
+            if "RequestLimitExceeded" in e.message:
+                raise RequestLimitExceeded()
+            raise
 
 
 @attributes(
