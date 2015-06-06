@@ -27,6 +27,7 @@ BUILDSLAVE_HOME = '/srv/buildslave'
 TENANT_NAME = "tmz-mdl-1"
 
 NETWORK_MANAGER_CONF_PATH = '/etc/NetworkManager/NetworkManager.conf'
+SSHD_CONFIG_PATH = '/etc/ssh/sshd_config'
 
 
 def cmd(*args):
@@ -99,7 +100,7 @@ def put_template(template, replacements, remote_path, **put_kwargs):
 
 
 @task
-def set_google_dns():
+def configure_resolvconf():
     """
     Replace the ``/etc/resolv.conf`` file on the target server.
     """
@@ -117,7 +118,7 @@ def set_google_dns():
 
 
 @task
-def disable_dhcp_dns():
+def configure_networkmanager():
     """
     Configure NetworkManager to not modify ``resolve.conf``.
     """
@@ -132,6 +133,25 @@ def disable_dhcp_dns():
             )
     if updated:
         sudo("systemctl restart NetworkManager")
+
+
+@task
+def configure_sshd():
+    """
+    Configure SSH to not perform reverse DNS lookups for the IP addresses of in
+    coming connections.
+    """
+    with mode_remote():
+        with mode_sudo():
+            updated = file_update(
+                SSHD_CONFIG_PATH,
+                lambda content: text_ensure_line(
+                    content,
+                    'UseDNS no'
+                )
+            )
+    if updated:
+        sudo("systemctl restart sshd")
 
 
 @task
@@ -195,9 +215,13 @@ def configure(index, password, master='build.staging.clusterhq.com'):
     """
     # The default DNS servers on our redhat-openstack tenant prevent
     # resolution of public DNS names.
-    # Instead use Google's public DNS servers for the duration of the
+    # Prevent NetworkManager from using them
+    configure_networkmanager()
+    # And instead use Google's public DNS servers for the duration of the
     # build slave installation.
-    set_google_dns()
+    configure_resolvconf()
+    # Prevent reverse DNS lookups
+    configure_sshd()
 
     sudo("yum install -y epel-release")
 
