@@ -141,7 +141,7 @@ class CleanAcceptanceInstances(LoggingBuildStep):
                     'id': node.id,
                     'name': node.name,
                     'provider': node.driver.name,
-                    'creatation_time': get_creation_time(node),
+                    'creatation_time': get_creation_time(node).isoformat(),
                 }
                 for node in nodes
             ], sort_keys=True, indent=4, separators=(',', ': '))
