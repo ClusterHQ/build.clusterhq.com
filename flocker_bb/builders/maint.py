@@ -6,6 +6,7 @@ import yaml
 from characteristic import attributes, Attribute
 
 from dateutil.parser import parse as parse_date
+from dateutil.tz import tzutc
 
 from libcloud.compute.providers import get_driver, Provider
 from libcloud.compute.base import NodeState
@@ -91,7 +92,7 @@ class CleanAcceptanceInstances(LoggingBuildStep):
         prefixes = tuple(map(lambda prefix: prefix + creator, self.prefixes))
 
         # Find out the cutoff time to use.
-        now = datetime.utcnow()
+        now = datetime.now(tzutc())
         cutoff = now - self.lag
 
         # Get all the nodes from the cloud providers
