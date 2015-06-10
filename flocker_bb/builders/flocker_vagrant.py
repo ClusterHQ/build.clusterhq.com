@@ -469,6 +469,7 @@ CLIENT_INSTALLATION_CONFIGURATIONS = [
         provider='rackspace', distribution='ubuntu-15.04'),
 ]
 
+
 ACCEPTANCE_CONFIGURATIONS = [
     # There is only one vagrant box.
     AcceptanceConfiguration(
@@ -480,19 +481,9 @@ ACCEPTANCE_CONFIGURATIONS = [
         dataset_backend=dataset_backend)
     for provider in ['rackspace', 'aws']
     for distribution in ['centos-7', 'ubuntu-14.04']
-    for dataset_backend in ['loopback', 'zfs', 'native']
+    for dataset_backend in ['loopback', 'native']
     # Rebooting doesn't work, which is necesary on AWS for zfs.
     if not (provider == 'aws' and dataset_backend == 'zfs')
-] + [
-    # flocker currently only know about docker-head and zfs-testing
-    # on centos-7. It isn't worth testing either of these combinations
-    # on multiple cloud providers.
-    AcceptanceConfiguration(
-        provider='rackspace', distribution='centos-7',
-        dataset_backend='loopback', variants={'docker-head'}),
-    AcceptanceConfiguration(
-        provider='rackspace', distribution='centos-7',
-        dataset_backend='zfs', variants={'zfs-testing'}),
 ]
 
 
