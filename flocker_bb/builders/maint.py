@@ -1,6 +1,7 @@
 import os
 from datetime import datetime, timedelta
 import json
+import yaml
 
 from characteristic import attributes, Attribute
 
@@ -74,6 +75,7 @@ class CleanAcceptanceInstances(LoggingBuildStep):
 
     def _thd_clean_nodes(self, config):
         # Get the libcloud drivers corresponding to the acceptance tests.
+        config = yaml.safe_load(config)
         rackspace = get_driver(Provider.RACKSPACE)(
             config['rackspace']['username'], config['rackspace']['key'],
             region=config['rackspace']['region'])
