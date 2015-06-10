@@ -1,0 +1,20 @@
+images:
+- name: buildslave-ubuntu-15.04-zfs-head
+  base-ami: ami-81211eb1
+  deploy:
+    file: cloud-init-base.sh
+  username: ubuntu
+
+- name: buildslave-ubuntu-15.04
+  base-ami: buildslave-ubuntu-15.04-zfs-head
+  # Specify --confold so that /etc/default/zfs is not overwritten (and dpkg
+  # doesn't hang). See
+  # - https://github.com/zfsonlinux/pkg-zfs/issues/133
+  # - http://raphaelhertzog.com/2010/09/21/debian-conffile-configuration-file-managed-by-dpkg/
+  deploy:
+    script: >-
+      sudo env DEBIAN_FRONTEND=noninteractive
+      apt-get -o Dpkg::Options::="--force-confdef"
+      -o Dpkg::Options::="--force-confold" install -y zfsutils
+  username: ubuntu
+  size: c3.large
