@@ -18,7 +18,7 @@ from buildbot.config import BuilderConfig
 from buildbot.process.factory import BuildFactory
 from buildbot.schedulers.timed import Periodic
 from buildbot.process.buildstep import LoggingBuildStep
-from buildbot.status.results import SUCCESS
+from buildbot.status.results import SUCCESS, FAILURE
 
 from flocker_bb import privateData
 
@@ -71,7 +71,7 @@ class CleanAcceptanceInstances(LoggingBuildStep):
     name = 'clean-acceptance-instances'
     description = ['Cleaning', 'acceptance', 'instances']
     descriptionDone = ['Clean', 'acceptance', 'instances']
-    haltOnFailure = True
+    haltOnFailure = False
     flunkOnFailure = True
 
     def _thd_clean_nodes(self, config):
@@ -146,7 +146,12 @@ class CleanAcceptanceInstances(LoggingBuildStep):
                 for node in nodes
             ], sort_keys=True, indent=4, separators=(',', ': '))
             self.addCompleteLog(name=kind, text=content)
-        self.finished(SUCCESS)
+        if len(result['destroyed']) > 0:
+            # We fail if we destroyed any nodes, because that means that
+            # something is leaking nodes.
+            self.finished(FAILURE)
+        else:
+            self.finished(SUCCESS)
 
 
 def makeCleanOldAcceptanceInstances():
