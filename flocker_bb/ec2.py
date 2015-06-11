@@ -424,26 +424,32 @@ class RackspaceCloudDriver(object):
             get_tags=lambda image: image.extra['metadata'],
         )
 
+    @retry_on_request_limit
     def create(self):
         """
         Create and start a new Rackspace Cloud Server.
 
         All parameters are fixed to the values used to initialize this driver.
         """
-        image = self.get_image()
-        return self.driver.create_node(
-            name=self.name,
-            size=get_size(self.driver, self.flavor),
-            image=image,
+        try:
+            image = self.get_image()
+            return self.driver.create_node(
+                name=self.name,
+                size=get_size(self.driver, self.flavor),
+                image=image,
 
-            ex_keyname=self.keypair_name,
-            ex_metadata=self.instance_tags,
+                ex_keyname=self.keypair_name,
+                ex_metadata=self.instance_tags,
 
-            # If you don't turn on the config drive then your user data gets
-            # tossed in a black hole.
-            ex_config_drive=True,
-            ex_userdata=self.user_data,
-        )
+                # If you don't turn on the config drive then your user data
+                # gets tossed in a black hole.
+                ex_config_drive=True,
+                ex_userdata=self.user_data,
+            )
+        except Exception as e:
+            if "Request Entity Too Large OverLimit Retry" in e.message:
+                raise RequestLimitExceeded()
+            raise
 
     def get_image_metadata(self):
         image = self.get_image()
