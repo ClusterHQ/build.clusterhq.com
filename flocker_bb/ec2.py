@@ -23,7 +23,7 @@ class RetryLogger(object):
     def warning(fmt, error, delay):
         Message.new(
             message_type="flocker_bb:ec2:retry",
-            error=error, delay=delay,
+            error=str(error), delay=delay,
         ).write()
 
 
