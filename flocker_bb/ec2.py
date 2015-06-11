@@ -1,6 +1,7 @@
 from __future__ import absolute_import
 
-from eliot import Message
+from eliot import Message, start_action, Action
+from eliot.twisted import DeferredContext
 from zope.interface import implementer, Interface
 from twisted.python.constants import Names, NamedConstant
 from twisted.internet.threads import deferToThread
@@ -151,39 +152,54 @@ class InstanceBooter(object):
         """
         Create a node.
         """
-        def thread_start():
-            # Since loading the image metadata is done separately from booting
-            # the node, it's possible the metadata here won't actually match
-            # the metadata of the image the node ends up running (someone could
-            # replace the image with a different one between this call and the
-            # node being started).  Since generating images is currently a
-            # manual step, this probably won't happen very often and if it does
-            # there's a person there who can deal with it.  Also it will be
-            # resolved after the next node restart.  It would be better to
-            # extract the image metadata from the booted node, though.
-            # FLOC-1905
-            self.image_metadata = self.driver.get_image_metadata()
-            return self.driver.create()
-        d = deferToThread(thread_start)
+        action = start_action(
+            action_type="flocker_bb:ec2:start",
+            name=self.identifier())
+        with action.context():
 
-        def started(node):
-            self.node = node
-            instance_metadata = {
-                'instance_id': node.id,
-                'instance_name': node.name,
-            }
-            self._fsm.receive(InstanceStarted(
-                instance_id=node.id,
-                image_metadata=self.image_metadata,
-                instance_metadata=instance_metadata,
-            ))
-            self.instance_metadata = instance_metadata
+            def thread_start(task_id):
+                # Since loading the image metadata is done separately from
+                # booting the node, it's possible the metadata here won't
+                # actually match the metadata of the image the node ends up
+                # running (someone could replace the image with a different one
+                # between this call and the node being started).  Since
+                # generating images is currently a manual step, this probably
+                # won't happen very often and if it does there's a person there
+                # who can deal with it.  Also it will be resolved after the
+                # next node restart.  It would be better to extract the image
+                # metadata from the booted node, though.
+                # FLOC-1905
+                with Action.continue_task(task_id=task_id):
+                    self.image_metadata = self.driver.get_image_metadata()
+                    return self.driver.create()
 
-        def failed(f):
-            log.err(f, "while starting %s" % (self.identifier(),))
-            self._fsm.receive(StartFailed())
+            d = DeferredContext(
+                deferToThread(thread_start, action.serialize_task_id())
+            )
 
-        d.addCallbacks(started, failed)
+            def started(node):
+                self.node = node
+                instance_metadata = {
+                    'instance_id': node.id,
+                    'instance_name': node.name,
+                }
+                self._fsm.receive(InstanceStarted(
+                    instance_id=node.id,
+                    image_metadata=self.image_metadata,
+                    instance_metadata=instance_metadata,
+                ))
+                self.instance_metadata = instance_metadata
+
+            def failed(f):
+                # We log the exception twice.
+                # For Zulip
+                log.err(f, "while starting %s" % (self.identifier(),))
+                self._fsm.receive(StartFailed())
+                # For eliot
+                return f
+
+            d.addCallbacks(started, failed)
+            d.addActionFinish()
 
     def output_STOP(self, context):
         """
