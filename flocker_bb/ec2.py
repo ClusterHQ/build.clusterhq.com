@@ -1,3 +1,6 @@
+from __future__ import absolute_import
+
+from eliot import Message
 from zope.interface import implementer, Interface
 from twisted.python.constants import Names, NamedConstant
 from twisted.internet.threads import deferToThread
@@ -11,11 +14,25 @@ from flocker_bb.ec2_buildslave import OnDemandBuildSlave
 from retry import retry
 
 
+class RetryLogger(object):
+    """
+    A stdlib-like logger that implements the method used by :module:`retry`.
+    """
+    @staticmethod
+    def warning(fmt, error, delay):
+        Message.new(
+            message_type="flocker_bb:ec2:retry",
+            error=error, delay=delay,
+        ).write()
+
+
 class RequestLimitExceeded(Exception):
     pass
 
 retry_on_request_limit = retry(
-    RequestLimitExceeded, delay=1, backoff=2, max_delay=60, jitter=(0, 5))
+    RequestLimitExceeded, delay=10, backoff=2, max_delay=240, jitter=(0, 10),
+    logger=RetryLogger(),
+)
 
 
 # A metadata key name which can be found in image metadata.  This metadata
