@@ -1,3 +1,7 @@
+from __future__ import absolute_import
+
+from eliot import Message, start_action, Action
+from eliot.twisted import DeferredContext
 from zope.interface import implementer, Interface
 from twisted.python.constants import Names, NamedConstant
 from twisted.internet.threads import deferToThread
@@ -11,11 +15,25 @@ from flocker_bb.ec2_buildslave import OnDemandBuildSlave
 from retry import retry
 
 
+class RetryLogger(object):
+    """
+    A stdlib-like logger that implements the method used by :module:`retry`.
+    """
+    @staticmethod
+    def warning(fmt, error, delay):
+        Message.new(
+            message_type="flocker_bb:ec2:retry",
+            error=str(error), delay=delay,
+        ).write()
+
+
 class RequestLimitExceeded(Exception):
     pass
 
 retry_on_request_limit = retry(
-    RequestLimitExceeded, delay=1, backoff=2, max_delay=60, jitter=(0, 5))
+    RequestLimitExceeded, delay=10, backoff=2, max_delay=240, jitter=(0, 10),
+    logger=RetryLogger(),
+)
 
 
 # A metadata key name which can be found in image metadata.  This metadata
@@ -134,39 +152,54 @@ class InstanceBooter(object):
         """
         Create a node.
         """
-        def thread_start():
-            # Since loading the image metadata is done separately from booting
-            # the node, it's possible the metadata here won't actually match
-            # the metadata of the image the node ends up running (someone could
-            # replace the image with a different one between this call and the
-            # node being started).  Since generating images is currently a
-            # manual step, this probably won't happen very often and if it does
-            # there's a person there who can deal with it.  Also it will be
-            # resolved after the next node restart.  It would be better to
-            # extract the image metadata from the booted node, though.
-            # FLOC-1905
-            self.image_metadata = self.driver.get_image_metadata()
-            return self.driver.create()
-        d = deferToThread(thread_start)
+        action = start_action(
+            action_type="flocker_bb:ec2:start",
+            name=self.identifier())
+        with action.context():
 
-        def started(node):
-            self.node = node
-            instance_metadata = {
-                'instance_id': node.id,
-                'instance_name': node.name,
-            }
-            self._fsm.receive(InstanceStarted(
-                instance_id=node.id,
-                image_metadata=self.image_metadata,
-                instance_metadata=instance_metadata,
-            ))
-            self.instance_metadata = instance_metadata
+            def thread_start(task_id):
+                # Since loading the image metadata is done separately from
+                # booting the node, it's possible the metadata here won't
+                # actually match the metadata of the image the node ends up
+                # running (someone could replace the image with a different one
+                # between this call and the node being started).  Since
+                # generating images is currently a manual step, this probably
+                # won't happen very often and if it does there's a person there
+                # who can deal with it.  Also it will be resolved after the
+                # next node restart.  It would be better to extract the image
+                # metadata from the booted node, though.
+                # FLOC-1905
+                with Action.continue_task(task_id=task_id):
+                    self.image_metadata = self.driver.get_image_metadata()
+                    return self.driver.create()
 
-        def failed(f):
-            log.err(f, "while starting %s" % (self.identifier(),))
-            self._fsm.receive(StartFailed())
+            d = DeferredContext(
+                deferToThread(thread_start, action.serialize_task_id())
+            )
 
-        d.addCallbacks(started, failed)
+            def started(node):
+                self.node = node
+                instance_metadata = {
+                    'instance_id': node.id,
+                    'instance_name': node.name,
+                }
+                self._fsm.receive(InstanceStarted(
+                    instance_id=node.id,
+                    image_metadata=self.image_metadata,
+                    instance_metadata=instance_metadata,
+                ))
+                self.instance_metadata = instance_metadata
+
+            def failed(f):
+                # We log the exception twice.
+                # For Zulip
+                log.err(f, "while starting %s" % (self.identifier(),))
+                self._fsm.receive(StartFailed())
+                # For eliot
+                return f
+
+            d.addCallbacks(started, failed)
+            d.addActionFinish()
 
     def output_STOP(self, context):
         """
@@ -424,26 +457,32 @@ class RackspaceCloudDriver(object):
             get_tags=lambda image: image.extra['metadata'],
         )
 
+    @retry_on_request_limit
     def create(self):
         """
         Create and start a new Rackspace Cloud Server.
 
         All parameters are fixed to the values used to initialize this driver.
         """
-        image = self.get_image()
-        return self.driver.create_node(
-            name=self.name,
-            size=get_size(self.driver, self.flavor),
-            image=image,
+        try:
+            image = self.get_image()
+            return self.driver.create_node(
+                name=self.name,
+                size=get_size(self.driver, self.flavor),
+                image=image,
 
-            ex_keyname=self.keypair_name,
-            ex_metadata=self.instance_tags,
+                ex_keyname=self.keypair_name,
+                ex_metadata=self.instance_tags,
 
-            # If you don't turn on the config drive then your user data gets
-            # tossed in a black hole.
-            ex_config_drive=True,
-            ex_userdata=self.user_data,
-        )
+                # If you don't turn on the config drive then your user data
+                # gets tossed in a black hole.
+                ex_config_drive=True,
+                ex_userdata=self.user_data,
+            )
+        except Exception as e:
+            if "Request Entity Too Large OverLimit Retry" in e.message:
+                raise RequestLimitExceeded()
+            raise
 
     def get_image_metadata(self):
         image = self.get_image()
