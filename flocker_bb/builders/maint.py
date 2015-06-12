@@ -47,9 +47,10 @@ def get_creation_time(node):
     """
     Get the creation time of a libcloud node.
 
-    Rackspace and EC2 store the information in different metadta.
+    Rackspace and EC2 store the information in different metadeta.
 
-    :return datetime:
+    :return: The creation time, if available.
+    :rtype: datetime or None
     """
     date_string = node.extra.get("created", node.extra.get("launch_time"))
     if date_string is None:
@@ -65,7 +66,7 @@ def get_creation_time(node):
 ])
 class CleanAcceptanceInstances(LoggingBuildStep):
     """
-    :ivar timedelta lag: THe age of instances to destroy.
+    :ivar timedelta lag: The age of instances to destroy.
     :param prefixes: List of prefixes of instances to destroy.
     """
     name = 'clean-acceptance-instances'
@@ -141,7 +142,7 @@ class CleanAcceptanceInstances(LoggingBuildStep):
                     'id': node.id,
                     'name': node.name,
                     'provider': node.driver.name,
-                    'creatation_time': get_creation_time(node).isoformat(),
+                    'creation_time': get_creation_time(node).isoformat(),
                 }
                 for node in nodes
             ], sort_keys=True, indent=4, separators=(',', ': '))
