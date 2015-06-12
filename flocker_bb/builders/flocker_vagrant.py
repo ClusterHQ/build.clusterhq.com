@@ -494,7 +494,7 @@ ACCEPTANCE_CONFIGURATIONS = [
 # We allocate slightly less to avoid using all the RAM.
 rackspace_lock = MasterLock("rackspace-lock", maxCount=12)
 # We can have up to 30 instances, 2 per test, with some slack.
-aws_lock = MasterLock('aws-lock', maxCount=12)
+aws_lock = MasterLock('aws-lock', maxCount=6)
 ACCEPTANCE_LOCKS = {
     'rackspace': [rackspace_lock.access("counting")],
     'aws': [aws_lock.access("counting")],
