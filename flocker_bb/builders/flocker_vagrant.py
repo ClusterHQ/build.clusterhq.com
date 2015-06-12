@@ -463,10 +463,9 @@ class AcceptanceConfiguration(object):
 TUTORIAL_DISTRIBUTION = "centos-7"
 
 CLIENT_INSTALLATION_CONFIGURATIONS = [
-    ClientConfiguration(
-        provider='rackspace', distribution='ubuntu-14.04'),
-    ClientConfiguration(
-        provider='rackspace', distribution='ubuntu-15.04'),
+    ClientConfiguration(provider=provider, distribution=distribution)
+    for provider in ('rackspace', 'aws')
+    for distribution in ('centos-7', 'ubuntu-14.04', 'ubuntu-15.04')
 ]
 
 
