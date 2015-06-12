@@ -59,6 +59,23 @@ def get_creation_time(node):
         return parse_date(date_string)
 
 
+def fmap(_f, _value, *args, **kwargs):
+    """
+    Apply a function to a value unless the value is None
+
+    :param _f: Function to call. Should be passed positionally.
+    :param _value: Value to pass to function, if it is not None.
+    :param *args: Extra parameters to pass to function.
+    :param *kwargs: Extra parameters to pass to function.
+
+    :return: The result of calling the function, or None if the value is None.
+    """
+    if _value is None:
+        return None
+    else:
+        return _f(_value, *args, **kwargs)
+
+
 @attributes([
     Attribute('lag'),
     Attribute('prefixes',
@@ -142,7 +159,8 @@ class CleanAcceptanceInstances(LoggingBuildStep):
                     'id': node.id,
                     'name': node.name,
                     'provider': node.driver.name,
-                    'creation_time': get_creation_time(node).isoformat(),
+                    'creation_time':
+                        fmap(datetime.isoformat, get_creation_time(node)),
                 }
                 for node in nodes
             ], sort_keys=True, indent=4, separators=(',', ': '))
