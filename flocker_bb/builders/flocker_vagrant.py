@@ -480,7 +480,10 @@ ACCEPTANCE_CONFIGURATIONS = [
         dataset_backend=dataset_backend)
     for provider in ['rackspace', 'aws']
     for distribution in ['centos-7', 'ubuntu-14.04']
-    for dataset_backend in ['loopback', 'native']
+    for dataset_backend in [
+        # 'loopback',
+        'native'
+    ]
     # Rebooting doesn't work, which is necesary on AWS for zfs.
     if not (provider == 'aws' and dataset_backend == 'zfs')
 ]
