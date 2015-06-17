@@ -465,7 +465,7 @@ TUTORIAL_DISTRIBUTION = "centos-7"
 CLIENT_INSTALLATION_CONFIGURATIONS = [
     ClientConfiguration(provider=provider, distribution=distribution)
     for provider in ('rackspace', 'aws')
-    for distribution in ('centos-7', 'ubuntu-14.04', 'ubuntu-15.04')
+    for distribution in ('ubuntu-14.04', 'ubuntu-15.04')
 ]
 
 
