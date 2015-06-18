@@ -193,6 +193,24 @@ def buildDevBox():
     return factory
 
 
+def buildVagrantBaseboxDevBox():
+    """
+    Build the vagrant basebox image for the vagrant dev box.
+    """
+    factory = getFlockerFactory()
+
+    # We have to insert this before the first step, so we don't
+    # destroy the vagrant meta-data. Normally .addStep adapts
+    # to IBuildStepFactory.
+    factory.steps.insert(0, IBuildStepFactory(
+        destroy_box(path='build/vagrant/basebox')))
+
+    factory.addSteps(buildVagrantBox('basebox', add=True))
+    factory.addSteps(destroy_box(path='build/vagrant/basebox'))
+
+    return factory
+
+
 def buildTutorialBox():
     factory = getFlockerFactory()
 
@@ -369,7 +387,7 @@ def test_installed_package(box):
 
 
 from buildbot.config import BuilderConfig
-from buildbot.schedulers.basic import AnyBranchScheduler
+from buildbot.schedulers.basic import AnyBranchScheduler, timed
 from buildbot.schedulers.forcesched import (
     CodebaseParameter, StringParameter, ForceScheduler, FixedParameter)
 from buildbot.schedulers.triggerable import Triggerable
@@ -508,6 +526,11 @@ def getBuilders(slavenames):
                       category='flocker',
                       factory=buildDevBox(),
                       nextSlave=idleSlave),
+        BuilderConfig(name='flocker-build-vagrant-basebox-dev-box',
+                      slavenames=slavenames['fedora-20/vagrant'],
+                      category='flocker',
+                      factory=buildVagrantBaseboxDevBox(),
+                      nextSlave=idleSlave),
         BuilderConfig(name='flocker/vagrant/build/tutorial',
                       builddir='flocker-vagrant-build-tutorial',
                       slavenames=slavenames['fedora-20/vagrant'],
@@ -573,6 +596,25 @@ def getSchedulers():
                         or MergeForward._isRelease(branch)),
             )
         ),
+        timed.Nightly(
+            name="flocker-build-vagrant-basebox-dev-box",
+            treeStableTimer=5,
+            builderNames=['flocker-build-vagrant-basebox-dev-box'],
+            codebases={
+                "flocker": {"repository": GITHUB + b"/flocker"},
+            },
+            change_filter=ChangeFilter(
+                branch_fn=lambda branch:
+                    (MergeForward._isMaster(branch)
+                        or MergeForward._isRelease(branch)),
+            ),
+            dayOfWeek=[range(0, 7)],
+            hour=[5],
+            minute=7,
+            onlyIfChanged=True
+        ),
+
+
         ForceScheduler(
             name="force-flocker-vagrant",
             codebases=[
@@ -623,3 +665,5 @@ def getSchedulers():
                 },
             ))
     return schedulers
+
+# vim: tabstop=8 expandtab shiftwidth=4 softtabstop=4 fdm=indent
