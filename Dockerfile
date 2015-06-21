@@ -1,6 +1,9 @@
 FROM fedora:20
 #ADD https://copr.fedoraproject.org/coprs/tomprince/hybridlogic/repo/fedora-20-x86_64/tomprince-hybridlogic-fedora-20-x86_64.repo /etc/yum.repos.d/
 ADD tomprince-hybridlogic-fedora-20-x86_64.repo /etc/yum.repos.d/
+RUN sed -i s/'metalink=/#metalink='/g /etc/yum.repos.d/*
+RUN sed -i s/'#baseurl=/baseurl='/g /etc/yum.repos.d/*
+RUN sed -i s/'download.fedoraproject.org\/pub\/fedora/fedora\.osuosl\.org'/g  /etc/yum.repos.d/*
 RUN yum upgrade -y
 RUN yum install -y python-devel python-pip gcc libffi-devel openssl-devel gmp-devel git s3cmd dpkg-dev createrepo_c libyaml-devel libyaml
 RUN ["pip", "install", "twisted[conch]", "buildbot==0.8.10", "txgithub==15.0.0", "eliot", "apache-libcloud", "service_identity", "machinist", "prometheus_client"]
