@@ -206,8 +206,6 @@ def buildVagrantBaseboxDevBox():
         destroy_box(path='build/vagrant/basebox')))
 
     factory.addSteps(buildVagrantBox('basebox', add=True))
-    factory.addSteps(destroy_box(path='build/vagrant/basebox'))
-
     return factory
 
 
@@ -387,7 +385,8 @@ def test_installed_package(box):
 
 
 from buildbot.config import BuilderConfig
-from buildbot.schedulers.basic import AnyBranchScheduler, timed
+from buildbot.schedulers.basic import AnyBranchScheduler
+from buildbot.schedulers import timed
 from buildbot.schedulers.forcesched import (
     CodebaseParameter, StringParameter, ForceScheduler, FixedParameter)
 from buildbot.schedulers.triggerable import Triggerable
@@ -598,18 +597,17 @@ def getSchedulers():
         ),
         timed.Nightly(
             name="flocker-build-vagrant-basebox-dev-box",
-            treeStableTimer=5,
             builderNames=['flocker-build-vagrant-basebox-dev-box'],
             codebases={
                 "flocker": {"repository": GITHUB + b"/flocker"},
             },
-            change_filter=ChangeFilter(
+            branch=ChangeFilter(
                 branch_fn=lambda branch:
                     (MergeForward._isMaster(branch)
                         or MergeForward._isRelease(branch)),
             ),
-            dayOfWeek=[range(0, 7)],
-            hour=[5],
+            dayOfWeek=range(0, 7),
+            hour=5,
             minute=7,
             onlyIfChanged=True
         ),
