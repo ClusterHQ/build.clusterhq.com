@@ -567,6 +567,7 @@ def getBuilders(slavenames):
     return builders
 
 BUILDERS = [
+    'flocker-build-vagrant-basebox-dev-box',
     'flocker-vagrant-dev-box',
     'flocker/vagrant/build/tutorial',
     'flocker/installed-package/vagrant/' + TUTORIAL_DISTRIBUTION,
