@@ -610,7 +610,7 @@ def getSchedulers():
             dayOfWeek=range(0, 7),
             hour=5,
             minute=7,
-            onlyIfChanged=True
+            onlyIfChanged=False
         ),
 
 
