@@ -75,6 +75,26 @@ def fmap(_f, _value, *args, **kwargs):
     else:
         return _f(_value, *args, **kwargs)
 
+# FLOC-2288
+# New CleanVolumes LoggingBuildStep
+# parameterized on age (lag, like CleanAcceptanceInstances)
+#
+# libcloud configured just as it is in CleanAcceptanceInstances
+#
+# start method which uses libcloud in a thread to list volumes on AWS and Rackspace
+# Flocker-managed Rackspace and AWS volumes have flocker-cluster-id in their metadata
+# Destroy unattached volumes with this tag that are older than the age parameter
+#
+# return result object representing any volumes we destroyed and any we saw and
+# didn't destroy
+#
+# XXX Should really have a way to identify volumes created by the test suite.
+# Maybe also change Flocker test suite so it generates recognizable volumes and
+# then rely on that here.
+#
+# log method that reports every volume destroyed
+# if any volumes were destroyed, the build step finishes with FAILURE
+# otherwise with SUCCESS
 
 @attributes([
     Attribute('lag'),
@@ -196,6 +216,9 @@ def getBuilders(slavenames):
             # These slaves are dedicated slaves.
             slavenames=slavenames['fedora-20/vagrant'],
             factory=makeCleanOldAcceptanceInstances()),
+        # FLOC-2288
+        # Make a builder config using CleanVolumes
+        # It can run on the same slave as the above
     ]
 
 
@@ -211,5 +234,7 @@ def getSchedulers():
                       periodicBuildTimer=3600)
     # This is so the zulip reporter gives better message.
     hourly.codebases = {'maint': {'branch': 'hourly'}}
+
+    # FLOC-2288 Schedule the clean-old-volumes hourly
 
     return [daily, hourly]
