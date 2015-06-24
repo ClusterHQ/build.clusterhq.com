@@ -112,9 +112,30 @@ def getFlockerFactory(python):
 
 def installDependencies():
     return [
-        pip("dependencies", ["."]),
-        pip("extras", ["Flocker[doc,dev,release]"]),
-        ]
+        ShellCommand(
+            command=Interpolate(
+                "\n".join([
+                    "if [ -f dev-requirements.txt ]",
+                    "then",
+                    "%(kw:pip)s install --no-deps -rdev-requirements.txt ; ",
+                    "%(kw:pip)s install --no-deps .; ",
+                    "else",
+                    "%(kw:pip)s install .",
+                    "%(kw:pip)s install Flocker[doc,dev,release]",
+                    "fi"
+                ]),
+                pip=Interpolate(path.join(VIRTUALENV_DIR, "bin", "pip"),)
+            ),
+            name="install-dependencies",
+            description=["installing", "dependencies"],
+            descriptionDone=["install", "dependencies"],
+            haltOnFailure=True,
+        ),
+        # pip("dependencies", [
+        #     "--no-deps", "dev-requiments.txt",
+        # ]),
+        # pip("flocker", ["--no-deps", "."]),
+    ]
 
 
 def _flockerTests(kwargs, tests=None, env=None, trial=None):
