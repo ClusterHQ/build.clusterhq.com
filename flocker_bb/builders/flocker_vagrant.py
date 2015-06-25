@@ -357,14 +357,11 @@ def test_installed_package(box):
         tests='flocker',
         workdir='test',
     ))
-    # TODO: FLOC-253
-    # Quick ugly hack to get the test.log output out of the vagrant ssh
-    # trial run.
     factory.addStep(ShellCommand(
         name='dump-trial-test-log',
         description=['dumping', 'trial', 'test', 'log'],
         descriptionDone=['dump', 'trial', 'test', 'log', 'complete'],
-        command=['vagrant', 'ssh', '--', 'sudo', 'cat _trial_temp/test.log '],
+        command=['vagrant', 'ssh', '--', 'sudo', 'cat _trial_temp/test.log'],
         workdir='test',
         haltOnFailure=True,
         ))
