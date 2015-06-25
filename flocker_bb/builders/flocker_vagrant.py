@@ -358,6 +358,17 @@ def test_installed_package(box):
         workdir='test',
     ))
     factory.addStep(ShellCommand(
+        name='dump-trial-test-log',
+        description=['dumping', 'trial', 'test', 'log'],
+        descriptionDone=['dump', 'trial', 'test', 'log', 'complete'],
+        command=['vagrant', 'ssh', '--', 'sudo', 'cat _trial_temp/test.log'],
+        workdir='test',
+        haltOnFailure=False,
+        flunkOnWarnings=False,
+        flunkOnFailure=False,
+        WarnOnFailure=True,
+        ))
+    factory.addStep(ShellCommand(
         name='destroy-%s-box' % (box,),
         description=['destroy', box, 'box'],
         descriptionDone=['destroy', box, 'box'],
