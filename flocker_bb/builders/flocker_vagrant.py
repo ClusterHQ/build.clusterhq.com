@@ -366,7 +366,7 @@ def test_installed_package(box):
         haltOnFailure=False,
         flunkOnWarnings=False,
         flunkOnFailure=False,
-        WarnOnFailure=True,
+        warnOnFailure=True,
         ))
     factory.addStep(ShellCommand(
         name='destroy-%s-box' % (box,),
