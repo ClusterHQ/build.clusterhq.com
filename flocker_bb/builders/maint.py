@@ -17,6 +17,7 @@ from buildbot.steps.master import MasterShellCommand
 from buildbot.config import BuilderConfig
 from buildbot.process.factory import BuildFactory
 from buildbot.schedulers.timed import Periodic
+from buildbot.schedulers.forcesched import ForceScheduler
 from buildbot.process.buildstep import LoggingBuildStep
 from buildbot.status.results import SUCCESS, FAILURE
 
@@ -384,6 +385,9 @@ def getSchedulers():
     # This is so the zulip reporter gives better message.
     hourly.codebases = {'maint': {'branch': 'hourly'}}
 
-    # FLOC-2288 Schedule the clean-old-volumes hourly
+    force = ForceScheduler(
+        name="force-maintenance",
+        builderNames=["clean-old-builds", RESOURCE_CLEANUP_BUILDER],
+    )
 
-    return [daily, hourly]
+    return [daily, hourly, force]
