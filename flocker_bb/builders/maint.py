@@ -222,7 +222,7 @@ class CleanVolumes(LoggingBuildStep):
                 datetime.isoformat, self._get_volume_creation_time(volume),
             ),
             'provider': volume.driver.name,
-            'extra': volume.extra,
+            'extra': extra,
         }
 
     def log(self, result):
