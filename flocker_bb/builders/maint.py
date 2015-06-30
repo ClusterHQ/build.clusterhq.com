@@ -247,6 +247,10 @@ def _format_time(when):
     return fmap(datetime.isoformat, when)
 
 
+def _get_tag(volume, tag_name):
+    return volume.extra.get("tags", volume.extra.get("metadata"))[tag_name]
+
+
 @attributes(["destroy", "keep"])
 class VolumeActions(object):
     pass
