@@ -2,6 +2,7 @@ import os
 from datetime import datetime, timedelta
 import json
 import yaml
+from uuid import UUID
 
 from characteristic import attributes, Attribute
 
@@ -11,6 +12,7 @@ from dateutil.tz import tzutc
 from libcloud.compute.providers import get_driver, Provider
 from libcloud.compute.base import NodeState
 
+from twisted.python.log import err
 from twisted.internet.threads import deferToThread
 
 from buildbot.steps.master import MasterShellCommand
@@ -22,6 +24,9 @@ from buildbot.process.buildstep import LoggingBuildStep
 from buildbot.status.results import SUCCESS, FAILURE
 
 from flocker_bb import privateData
+
+
+MAGIC = 42
 
 
 def makeCleanOldBuildsFactory():
@@ -107,18 +112,6 @@ def get_ec2_driver(aws):
 @attributes(["lag"])
 class CleanVolumes(LoggingBuildStep):
     def start(self):
-        pass
-
-# start method which uses libcloud in a thread to list volumes on AWS and
-# Rackspace Flocker-managed Rackspace and AWS volumes have flocker-cluster-id
-# in their metadata Rely on the cluster_id convention implemented in FLOC-2545
-# to identify volumes belonging to test-created clusters.  Destroy unattached
-# such volumes that are older than the age parameter
-#
-# return result object representing any volumes we destroyed and any we saw and
-# didn't destroy
-#
-    def start(self):
         config = privateData['acceptance']['config']
         d = deferToThread(self._blocking_clean_volumes, yaml.safe_load(config))
         d.addCallback(self.log)
@@ -154,7 +147,7 @@ class CleanVolumes(LoggingBuildStep):
         try:
             return UUID(cluster_id).node == MAGIC
         except:
-            log.err(None, "Could not parse cluster_id {!r}".format(cluster_id))
+            err(None, "Could not parse cluster_id {!r}".format(cluster_id))
             return False
 
     def _is_test_volume(self, volume):
