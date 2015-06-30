@@ -216,7 +216,7 @@ class CleanVolumes(LoggingBuildStep):
         except KeyError:
             pass
 
-        return {
+        result = {
             'id': volume.id,
             'creation_time': fmap(
                 datetime.isoformat, self._get_volume_creation_time(volume),
@@ -224,6 +224,8 @@ class CleanVolumes(LoggingBuildStep):
             'provider': volume.driver.name,
             'extra': extra,
         }
+        print result
+        return result
 
     def log(self, result):
         for (kind, volumes) in result.items():
