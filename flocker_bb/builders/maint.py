@@ -355,6 +355,9 @@ def makeCleanOldResources():
     return factory
 
 
+RESOURCE_CLEANUP_BUILDER = 'clean-old-resources'
+
+
 def getBuilders(slavenames):
     return [
         BuilderConfig(
@@ -363,7 +366,7 @@ def getBuilders(slavenames):
             slavenames=slavenames['fedora-20/vagrant'],
             factory=makeCleanOldBuildsFactory()),
         BuilderConfig(
-            name='clean-old-resources',
+            name=RESOURCE_CLEANUP_BUILDER,
             slavenames=slavenames['aws/ubuntu-14.04'],
             factory=makeCleanOldResources()),
     ]
@@ -377,7 +380,7 @@ def getSchedulers():
     daily.codebases = {'maint': {'branch': 'daily'}}
 
     hourly = Periodic(name='hourly',
-                      builderNames=['clean-old-nodes'],
+                      builderNames=[RESOURCE_CLEANUP_BUILDER],
                       periodicBuildTimer=3600)
     # This is so the zulip reporter gives better message.
     hourly.codebases = {'maint': {'branch': 'hourly'}}
