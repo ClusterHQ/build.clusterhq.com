@@ -65,22 +65,6 @@ def get_creation_time(node):
         return parse_date(date_string)
 
 
-def fmap(_f, _value, *args, **kwargs):
-    """
-    Apply a function to a value unless the value is None
-
-    :param _f: Function to call. Should be passed positionally.
-    :param _value: Value to pass to function, if it is not None.
-    :param *args: Extra parameters to pass to function.
-    :param *kwargs: Extra parameters to pass to function.
-
-    :return: The result of calling the function, or None if the value is None.
-    """
-    if _value is None:
-        return None
-    else:
-        return _f(_value, *args, **kwargs)
-
 # FLOC-2288
 # New CleanVolumes LoggingBuildStep
 # parameterized on age (lag, like CleanAcceptanceInstances)
@@ -111,6 +95,10 @@ def get_ec2_driver(aws):
 
 @attributes(["lag"])
 class CleanVolumes(LoggingBuildStep):
+    """
+    Destroy volumes that leaked into the cloud from the acceptance and
+    functional test suites.
+    """
     def start(self):
         config = privateData['acceptance']['config']
         d = deferToThread(self._blocking_clean_volumes, yaml.safe_load(config))
@@ -118,6 +106,10 @@ class CleanVolumes(LoggingBuildStep):
         d.addErrback(self.failed)
 
     def _get_cloud_drivers(self, config):
+        """
+        From the private buildbot configuration, construct a list of all of the
+        libcloud drivers where leaked volumes might be found.
+        """
         base_ec2 = config["aws"]
 
         drivers = [
@@ -132,18 +124,30 @@ class CleanVolumes(LoggingBuildStep):
         return drivers
 
     def _get_cloud_volumes(self, drivers):
+        """
+        From the given libcloud drivers, look up all existing volumes.
+        """
         volumes = []
         for driver in drivers:
             volumes.extend(driver.list_volumes())
         return volumes
 
     def _get_cluster_id(self, volume):
-        return _get_tag(volume, 'flocker-cluster-id')
+        """
+        Extract the Flocker-specific cluster identifier from the given volume.
 
-    def _get_dataset_id(self, volume):
+        :raise: ``KeyError`` if the given volume is not tagged with a Flocker
+            cluster id.
+        """
         return _get_tag(volume, 'flocker-cluster-id')
 
     def _is_test_cluster(self, cluster_id):
+        """
+        Determine whether or not the given Flocker cluster identifier belongs
+        to a cluster created by a test suite run.
+
+        :return: ``True`` if it does, ``False`` if it does not.
+        """
         try:
             return UUID(cluster_id).node == MAGIC
         except:
@@ -151,6 +155,12 @@ class CleanVolumes(LoggingBuildStep):
             return False
 
     def _is_test_volume(self, volume):
+        """
+        Determine whether or not the given volume belongs to a test-created
+        Flocker cluster (and is therefore subject to automatic destruction).
+
+        :return: ``True`` if it does, ``False`` if it does not.
+        """
         try:
             cluster_id = self._get_cluster_id(volume)
         except KeyError:
@@ -158,6 +168,13 @@ class CleanVolumes(LoggingBuildStep):
         return self._is_test_cluster(cluster_id)
 
     def _get_volume_creation_time(self, volume):
+        """
+        Extract the creation time from an AWS or Rackspace volume.
+
+        libcloud doesn't represent volume creation time uniformly across
+        drivers.  Thus this method only works on drivers specifically accounted
+        for.
+        """
         try:
             # AWS
             return volume.extra['create_time']
@@ -193,10 +210,16 @@ class CleanVolumes(LoggingBuildStep):
         return VolumeActions(destroy=destroy, keep=keep)
 
     def _destroy_cloud_volumes(self, volumes):
+        """
+        Unconditionally and irrevocably destroy all of the given cloud volumes.
+        """
         for volume in volumes:
             volume.destroy()
 
     def _blocking_clean_volumes(self, config):
+        """
+        Clean up old volumes belonging to test-created Flocker clusters.
+        """
         drivers = self._get_cloud_drivers(config)
         volumes = self._get_cloud_volumes(drivers)
         actions = self._filter_test_volumes(self.lag, volumes)
@@ -207,10 +230,13 @@ class CleanVolumes(LoggingBuildStep):
         }
 
     def _describe_volume(self, volume):
+        """
+        Create a dictionary giving lots of interesting details about a cloud
+        volume.
+        """
         return {
             'id': volume.id,
-            'creation_time': fmap(
-                datetime.isoformat, self._get_volume_creation_time(volume),
+            'creation_time': _format_time(self._get_volume_creation_time(volume)),
             ),
             'provider': volume.driver.name,
             # *Stuffed* with non-JSON-encodable goodies.
@@ -218,6 +244,15 @@ class CleanVolumes(LoggingBuildStep):
         }
 
     def log(self, result):
+        """
+        Log the results of a cleanup run.
+
+        The log will include volumes that were destroyed and volumes that were
+        kept.  If volumes are destroyed, the step is considered to have failed.
+        The test suite should have cleaned those volumes up.  This is an
+        unfortunate time to be reporting the problem but it's better than never
+        reporting it.
+        """
         for (kind, volumes) in result.items():
             content = _dumps(
                 sorted(
@@ -237,20 +272,42 @@ class CleanVolumes(LoggingBuildStep):
 
 
 def _dumps(obj):
+    """
+    JSON encode an object using some visually pleasing formatting.
+    """
     return json.dumps(obj, sort_keys=True, indent=4, separators=(',', ': '))
 
 
 def _format_time(when):
-    return fmap(datetime.isoformat, when)
+    """
+    Format a time to ISO8601 format.  Or if there is no time, just return
+    ``None``.
+    """
+    if when is None:
+        return None
+    return datetime.isoformat(when)
 
 
 def _get_tag(volume, tag_name):
+    """
+    Get a "tag" from an EBS or Rackspace volume.
+
+    libcloud doesn't represent tags uniformly across drivers.  Thus this method
+    only works on drivers specifically account for.
+
+    :raise: ``KeyError`` if the tag is not present.
+    """
     return volume.extra.get("tags", volume.extra.get("metadata"))[tag_name]
 
 
 @attributes(["destroy", "keep"])
 class VolumeActions(object):
-    pass
+    """
+    Represent something to be done to some volumes.
+
+    :ivar destroy: Volumes to destroy.
+    :ivar keep: Volumes to keep.
+    """
 
 
 @attributes([
