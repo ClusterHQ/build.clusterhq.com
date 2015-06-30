@@ -65,19 +65,11 @@ def get_creation_time(node):
         return parse_date(date_string)
 
 
-# FLOC-2288
-# New CleanVolumes LoggingBuildStep
-# parameterized on age (lag, like CleanAcceptanceInstances)
-#
-# libcloud configured just as it is in CleanAcceptanceInstances (But with
-# multiple AWS regions since, unlike instances, volumes are created in more
-# than one AWS region by the test suite).
-#
-# log method that reports every volume destroyed
-# if any volumes were destroyed, the build step finishes with FAILURE
-# otherwise with SUCCESS
-
 def get_rackspace_driver(rackspace):
+    """
+    Get a libcloud Rackspace driver given some credentials and other
+    configuration.
+    """
     rackspace = get_driver(Provider.RACKSPACE)(
         rackspace['username'], rackspace['key'],
         region=rackspace['region'],
@@ -86,6 +78,9 @@ def get_rackspace_driver(rackspace):
 
 
 def get_ec2_driver(aws):
+    """
+    Get a libcloud EC2 driver given some credentials and other configuration.
+    """
     ec2 = get_driver(Provider.EC2)(
         aws['access_key'], aws['secret_access_token'],
         region=aws['region'],
