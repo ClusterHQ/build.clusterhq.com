@@ -159,8 +159,12 @@ class CleanVolumes(LoggingBuildStep):
             # AWS
             return volume.extra['create_time']
         except KeyError:
-            # Rackspace
-            return parse_date(volume.extra['created_at'])
+            # Rackspace.  Timestamps have no timezone indicated.  Manual
+            # experimentation indicates timestamps are in UTC (which of course
+            # is the only reasonable thing).
+            return parse_date(
+                volume.extra['created_at']
+            ).replace(tzinfo=tzutc())
 
     def _filter_test_volumes(self, maximum_age, volumes):
         """
