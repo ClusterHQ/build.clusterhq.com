@@ -151,7 +151,10 @@ class CleanVolumes(LoggingBuildStep):
             return False
 
     def _is_test_volume(self, volume):
-        cluster_id = self._get_cluster_id(volume)
+        try:
+            cluster_id = self._get_cluster_id(volume)
+        except KeyError:
+            return False
         return self._is_test_cluster(cluster_id)
 
     def _get_volume_creation_time(self, volume):
@@ -211,8 +214,6 @@ class CleanVolumes(LoggingBuildStep):
             'creation_time': fmap(
                 datetime.isoformat, self._get_volume_creation_time(volume),
             ),
-            'flocker-cluster-id': self._get_cluster_id(volume),
-            'flocker-dataset-id': self._get_dataset_id(volume),
             'provider': volume.driver.name,
             'extra': volume.extra,
         }
