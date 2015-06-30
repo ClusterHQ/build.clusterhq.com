@@ -224,7 +224,7 @@ class CleanVolumes(LoggingBuildStep):
                 sorted(
                     list(
                         self._describe_volume(volume) for volume in volumes
-                    ), key=self._get_volume_creation_time,
+                    ), key=lambda description: description['creation_time'],
                 )
             )
             self.addCompleteLog(name=kind, text=content)
