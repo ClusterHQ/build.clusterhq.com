@@ -79,18 +79,18 @@ def fmap(_f, _value, *args, **kwargs):
 # New CleanVolumes LoggingBuildStep
 # parameterized on age (lag, like CleanAcceptanceInstances)
 #
-# libcloud configured just as it is in CleanAcceptanceInstances
+# libcloud configured just as it is in CleanAcceptanceInstances (But with
+# multiple AWS regions since, unlike instances, volumes are created in more
+# than one AWS region by the test suite).
 #
-# start method which uses libcloud in a thread to list volumes on AWS and Rackspace
-# Flocker-managed Rackspace and AWS volumes have flocker-cluster-id in their metadata
-# Destroy unattached volumes with this tag that are older than the age parameter
+# start method which uses libcloud in a thread to list volumes on AWS and
+# Rackspace Flocker-managed Rackspace and AWS volumes have flocker-cluster-id
+# in their metadata Rely on the cluster_id convention implemented in FLOC-2545
+# to identify volumes belonging to test-created clusters.  Destroy unattached
+# such volumes that are older than the age parameter
 #
 # return result object representing any volumes we destroyed and any we saw and
 # didn't destroy
-#
-# XXX Should really have a way to identify volumes created by the test suite.
-# Maybe also change Flocker test suite so it generates recognizable volumes and
-# then rely on that here.
 #
 # log method that reports every volume destroyed
 # if any volumes were destroyed, the build step finishes with FAILURE
