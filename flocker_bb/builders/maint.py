@@ -245,6 +245,7 @@ class CleanVolumes(LoggingBuildStep):
 
 
 def _dumps(obj):
+    print(obj)
     return json.dumps(obj, sort_keys=True, indent=4, separators=(',', ': '))
 
 
