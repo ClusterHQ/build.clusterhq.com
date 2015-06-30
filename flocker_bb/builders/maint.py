@@ -209,23 +209,15 @@ class CleanVolumes(LoggingBuildStep):
         }
 
     def _describe_volume(self, volume):
-        extra = volume.extra.copy()
-        try:
-            # Not JSON serializable
-            del extra["create_time"]
-        except KeyError:
-            pass
-
-        result = {
+        return {
             'id': volume.id,
             'creation_time': fmap(
                 datetime.isoformat, self._get_volume_creation_time(volume),
             ),
             'provider': volume.driver.name,
-            'extra': extra,
+            # *Stuffed* with non-JSON-encodable goodies.
+            'extra': repr(volume.extra),
         }
-        print result
-        return result
 
     def log(self, result):
         for (kind, volumes) in result.items():
@@ -247,7 +239,6 @@ class CleanVolumes(LoggingBuildStep):
 
 
 def _dumps(obj):
-    print(obj)
     return json.dumps(obj, sort_keys=True, indent=4, separators=(',', ': '))
 
 
