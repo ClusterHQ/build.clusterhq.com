@@ -26,7 +26,9 @@ from buildbot.status.results import SUCCESS, FAILURE
 from flocker_bb import privateData
 
 
-MAGIC = 42
+# Use flocker/common/testtools/cluster_utils:ClusterIdMarkers.version
+# number as MAGIC. Please update this value if version increments.
+MAGIC = long(1)
 
 
 def makeCleanOldBuildsFactory():
@@ -144,7 +146,7 @@ class CleanVolumes(LoggingBuildStep):
         :return: ``True`` if it does, ``False`` if it does not.
         """
         try:
-            return UUID(cluster_id).node == MAGIC
+            return UUID(cluster_id).clock_seq_hi_variant == MAGIC
         except:
             err(None, "Could not parse cluster_id {!r}".format(cluster_id))
             return False
