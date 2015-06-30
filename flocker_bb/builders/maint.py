@@ -125,7 +125,7 @@ class CleanVolumes(LoggingBuildStep):
         d.addErrback(self.failed)
 
     def _get_cloud_drivers(self, config):
-        base_ec2 = config["ec2"]
+        base_ec2 = config["aws"]
 
         drivers = [
             get_rackspace_driver(config["rackspace"]),
