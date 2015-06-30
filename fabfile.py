@@ -5,7 +5,7 @@ import json
 
 # We assume we are running on a fedora 20 AWS image.
 # These are setup with an `fedora` user, so hard code that.
-env.user = 'fedora'
+env.user = 'exarkun'
 
 
 def cmd(*args):

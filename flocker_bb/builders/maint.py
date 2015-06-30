@@ -343,14 +343,15 @@ class CleanAcceptanceInstances(LoggingBuildStep):
             self.finished(SUCCESS)
 
 
-def makeCleanOldAcceptanceInstances():
+def makeCleanOldResources():
     """
-    Remove acceptance and client test nodes older than 2 hours.
+    Remove cloud instances (from acceptance and client tests) and cloud volumes
+    nodes more than two hours old.
     """
     factory = BuildFactory()
-    factory.addStep(CleanAcceptanceInstances(
-        lag=timedelta(hours=2),
-    ))
+    age = timedelta(hours=2)
+    factory.addStep(CleanAcceptanceInstances(lag=age))
+    factory.addStep(CleanVolumes(lag=age))
     return factory
 
 
@@ -362,13 +363,9 @@ def getBuilders(slavenames):
             slavenames=slavenames['fedora-20/vagrant'],
             factory=makeCleanOldBuildsFactory()),
         BuilderConfig(
-            name='clean-old-nodes',
-            # These slaves are dedicated slaves.
-            slavenames=slavenames['fedora-20/vagrant'],
-            factory=makeCleanOldAcceptanceInstances()),
-        # FLOC-2288
-        # Make a builder config using CleanVolumes
-        # It can run on the same slave as the above
+            name='clean-old-resources',
+            slavenames=slavenames['aws/ubuntu-14.04'],
+            factory=makeCleanOldResources()),
     ]
 
 
