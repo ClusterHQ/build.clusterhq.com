@@ -194,9 +194,7 @@ class CleanVolumes(LoggingBuildStep):
 
     def _destroy_cloud_volumes(self, volumes):
         for volume in volumes:
-            print(
-                "Would have destroyed {}".format(self._describe_volume(volume))
-            )
+            volume.destroy()
 
     def _blocking_clean_volumes(self, config):
         drivers = self._get_cloud_drivers(config)
