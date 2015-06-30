@@ -119,10 +119,9 @@ class CleanVolumes(LoggingBuildStep):
 #
     def start(self):
         config = privateData['acceptance']['config']
-        d = deferToThread(self._blocking_clean_volumes, config)
+        d = deferToThread(self._blocking_clean_volumes, yaml.safe_load(config))
         d.addCallback(self.log)
         d.addErrback(self.failed)
-
 
     def _get_cloud_drivers(self, config):
         base_ec2 = config["ec2"]
