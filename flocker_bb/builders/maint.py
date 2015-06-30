@@ -330,7 +330,7 @@ class CleanAcceptanceInstances(LoggingBuildStep):
                     'id': node.id,
                     'name': node.name,
                     'provider': node.driver.name,
-                    'creation_time': _format_time(get_creation_time(node),
+                    'creation_time': _format_time(get_creation_time(node)),
                 }
                 for node in nodes
             ])
