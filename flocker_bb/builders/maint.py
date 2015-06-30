@@ -209,6 +209,13 @@ class CleanVolumes(LoggingBuildStep):
         }
 
     def _describe_volume(self, volume):
+        extra = volume.extra.copy()
+        try:
+            # Not JSON serializable
+            del extra["create_time"]
+        except KeyError:
+            pass
+
         return {
             'id': volume.id,
             'creation_time': fmap(
