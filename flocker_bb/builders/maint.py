@@ -83,6 +83,31 @@ def fmap(_f, _value, *args, **kwargs):
 # multiple AWS regions since, unlike instances, volumes are created in more
 # than one AWS region by the test suite).
 #
+# log method that reports every volume destroyed
+# if any volumes were destroyed, the build step finishes with FAILURE
+# otherwise with SUCCESS
+
+def get_rackspace_driver(rackspace):
+    rackspace = get_driver(Provider.RACKSPACE)(
+        rackspace['username'], rackspace['key'],
+        region=rackspace['region'],
+    )
+    return rackspace
+
+
+def get_ec2_driver(aws):
+    ec2 = get_driver(Provider.EC2)(
+        aws['access_key'], aws['secret_access_token'],
+        region=aws['region'],
+    )
+    return ec2
+
+
+@attributes(["lag"])
+class CleanVolumes(LoggingBuildStep):
+    def start(self):
+        pass
+
 # start method which uses libcloud in a thread to list volumes on AWS and
 # Rackspace Flocker-managed Rackspace and AWS volumes have flocker-cluster-id
 # in their metadata Rely on the cluster_id convention implemented in FLOC-2545
@@ -92,9 +117,140 @@ def fmap(_f, _value, *args, **kwargs):
 # return result object representing any volumes we destroyed and any we saw and
 # didn't destroy
 #
-# log method that reports every volume destroyed
-# if any volumes were destroyed, the build step finishes with FAILURE
-# otherwise with SUCCESS
+    def start(self):
+        config = privateData['acceptance']['config']
+        d = deferToThread(self._blocking_clean_volumes, config)
+        d.addCallback(self.log)
+        d.addErrback(self.failed)
+
+
+    def _get_cloud_drivers(self, config):
+        base_ec2 = config["ec2"]
+
+        drivers = [
+            get_rackspace_driver(config["rackspace"]),
+            get_ec2_driver(base_ec2),
+        ]
+
+        for extra in config["extra-aws"]:
+            extra_driver_config = base_ec2.copy()
+            extra_driver_config.update(extra)
+            drivers.append(get_ec2_driver(config))
+        return drivers
+
+    def _get_cloud_volumes(self, drivers):
+        volumes = []
+        for driver in drivers:
+            volumes.extend(driver.list_volumes())
+        return volumes
+
+    def _get_cluster_id(self, volume):
+        return _get_tag(volume, 'flocker-cluster-id')
+
+    def _get_dataset_id(self, volume):
+        return _get_tag(volume, 'flocker-cluster-id')
+
+    def _is_test_cluster(self, cluster_id):
+        try:
+            return UUID(cluster_id).node == MAGIC
+        except:
+            log.err(None, "Could not parse cluster_id {!r}".format(cluster_id))
+            return False
+
+    def _is_test_volume(self, volume):
+        cluster_id = self._get_cluster_id(volume)
+        return self._is_test_cluster(cluster_id)
+
+    def _get_volume_creation_time(self, volume):
+        try:
+            # AWS
+            return volume.extra['create_time']
+        except KeyError:
+            # Rackspace
+            return parse_date(volume.extra['created_at'])
+
+    def _filter_test_volumes(self, maximum_age, volumes):
+        """
+        From the given list of volumes, find volumes created by tests which are
+        older than the maximum age.
+
+        :param timedelta maximum_age: The oldest a volume may be without being
+            considered old enough to include in the result.
+        :param list all_volumes: The libcloud volumes representing all the
+            volumes we can see on a particular cloud service.
+
+        :rtype: ``VolumeActions``
+        """
+        now = datetime.now(tz=tzutc())
+        destroy = []
+        keep = []
+        for volume in volumes:
+            created = self._get_volume_creation_time(volume)
+            if self._is_test_volume(volume) and now - created > maximum_age:
+                destroy.append(volume)
+            else:
+                keep.append(volume)
+        return VolumeActions(destroy=destroy, keep=keep)
+
+    def _destroy_cloud_volumes(self, volumes):
+        for volume in volumes:
+            print(
+                "Would have destroyed {}".format(self._describe_volume(volume))
+            )
+
+    def _blocking_clean_volumes(self, config):
+        drivers = self._get_cloud_drivers(config)
+        volumes = self._get_cloud_volumes(drivers)
+        actions = self._filter_test_volumes(self.lag, volumes)
+        self._destroy_cloud_volumes(actions.destroy)
+        return {
+            "destroyed": actions.destroy,
+            "kept": actions.keep,
+        }
+
+    def _describe_volume(self, volume):
+        return {
+            'id': volume.id,
+            'creation_time': fmap(
+                datetime.isoformat, self._get_volume_creation_time(volume),
+            ),
+            'flocker-cluster-id': self._get_cluster_id(volume),
+            'flocker-dataset-id': self._get_dataset_id(volume),
+            'provider': volume.driver.name,
+            'extra': volume.extra,
+        }
+
+    def log(self, result):
+        for (kind, volumes) in result.items():
+            content = _dumps(
+                sorted(
+                    list(
+                        self._describe_volume(volume) for volume in volumes
+                    ), key=self._get_volume_creation_time,
+                )
+            )
+            self.addCompleteLog(name=kind, text=content)
+
+        if len(result['destroyed']) > 0:
+            # We fail if we destroyed any volumes because that means that
+            # something is leaking volumes.
+            self.finished(FAILURE)
+        else:
+            self.finished(SUCCESS)
+
+
+def _dumps(obj):
+    return json.dumps(obj, sort_keys=True, indent=4, separators=(',', ': '))
+
+
+def _format_time(when):
+    return fmap(datetime.isoformat, when)
+
+
+@attributes(["destroy", "keep"])
+class VolumeActions(object):
+    pass
+
 
 @attributes([
     Attribute('lag'),
@@ -115,13 +271,8 @@ class CleanAcceptanceInstances(LoggingBuildStep):
     def _thd_clean_nodes(self, config):
         # Get the libcloud drivers corresponding to the acceptance tests.
         config = yaml.safe_load(config)
-        rackspace = get_driver(Provider.RACKSPACE)(
-            config['rackspace']['username'], config['rackspace']['key'],
-            region=config['rackspace']['region'])
-        ec2 = get_driver(Provider.EC2)(
-            config['aws']['access_key'], config['aws']['secret_access_token'],
-            region=config['aws']['region'])
-
+        rackspace = get_rackspace_driver(config["rackspace"])
+        ec2 = get_ec2_driver(config["aws"])
         drivers = [rackspace, ec2]
 
         # Get the prefixes of the instance names, appending the creator from
@@ -174,16 +325,15 @@ class CleanAcceptanceInstances(LoggingBuildStep):
         Log the nodes kept and destroyed.
         """
         for kind, nodes in result.iteritems():
-            content = json.dumps([
+            content = _dumps([
                 {
                     'id': node.id,
                     'name': node.name,
                     'provider': node.driver.name,
-                    'creation_time':
-                        fmap(datetime.isoformat, get_creation_time(node)),
+                    'creation_time': _format_time(get_creation_time(node),
                 }
                 for node in nodes
-            ], sort_keys=True, indent=4, separators=(',', ': '))
+            ])
             self.addCompleteLog(name=kind, text=content)
         if len(result['destroyed']) > 0:
             # We fail if we destroyed any nodes, because that means that
