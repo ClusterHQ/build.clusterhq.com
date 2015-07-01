@@ -81,7 +81,6 @@ def get_cloud_init(name, base, password, provider, privateData, slavePortnum):
     """
     return cloudInit % {
         "github_token": privateData['github']['token'],
-        "coveralls_token": privateData['coveralls']['token'],
         "name": name,
         "base": base,
         "password": password,

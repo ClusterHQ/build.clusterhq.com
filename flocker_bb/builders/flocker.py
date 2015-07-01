@@ -223,15 +223,6 @@ def _flockerCoverage():
             url=resultURL('complete-coverage'),
             name="upload-coverage-html",
             ),
-        ShellCommand(
-            command=[
-                virtualenvBinary('coveralls'),
-                "--coveralls_yaml",
-                Interpolate("%(prop:workdir)s/../coveralls.yml")],
-            description=[b"uploading", b"to", b"coveralls"],
-            descriptionDone=[b"upload", b"to", b"coveralls"],
-            name="coveralls-upload",
-            ),
         ]
     return steps
 
@@ -322,7 +313,6 @@ def installCoverage():
     return pip("coverage", [
          "coverage==3.7.1",
          "http://data.hybridcluster.net/python/coverage_reporter-0.01_hl0-py27-none-any.whl",  # noqa
-         "python-coveralls==2.4.2",
     ])
 
 
