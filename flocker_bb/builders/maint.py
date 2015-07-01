@@ -233,7 +233,8 @@ class CleanVolumes(LoggingBuildStep):
         """
         return {
             'id': volume.id,
-            'creation_time': _format_time(self._get_volume_creation_time(volume)),
+            'creation_time': _format_time(
+                self._get_volume_creation_time(volume),
             ),
             'provider': volume.driver.name,
             # *Stuffed* with non-JSON-encodable goodies.
