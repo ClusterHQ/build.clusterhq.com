@@ -160,3 +160,24 @@ class TestMergeForward(sourcesteps.SourceStepMixin, TestCase):
         self.expectOutcome(result=SUCCESS, status_text=['merge', 'forward'])
         self.expectProperty('lint_revision', COMMIT_HASH)
         return self.runStep()
+
+
+class VersionTests(TestCase):
+
+    def test_isRelease(self):
+        releases = [
+            b'0.3.2',
+            b'0.3.2dev1',
+            b'0.3.2pre1',
+            b'0.3.2.post11',
+        ]
+        non_releases = [
+            b'0.3.2+1.gf661a6a',
+            b'0.3.2dev1+1.gf661a6a',
+            b'0.3.2pre1+1.gf661a6a',
+            b'0.3.2.post1+1.gf661a6a',
+        ]
+        for version in releases:
+            self.assertTrue(MergeForward._isRelease(version))
+        for version in non_releases:
+            self.assertFalse(MergeForward._isRelease(version))
