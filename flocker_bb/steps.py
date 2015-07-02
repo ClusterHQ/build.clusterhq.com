@@ -212,9 +212,9 @@ class MergeForward(Source):
         # plus (optionally) any of:
         r'(?:'
         # weekly release
-        'dev[0-9]+'
+        '\.?dev[0-9]+'
         # prerelease
-        r'|pre[0-9]+'
+        r'|(?:pre|rc)[0-9]+'
         # documentation release
         r'|(?:\+doc|\.post)[0-9]+)?'
         r'$')

@@ -168,7 +168,9 @@ class VersionTests(TestCase):
         releases = [
             b'0.3.2',
             b'0.3.2dev1',
+            b'0.3.2.dev1',
             b'0.3.2pre1',
+            b'0.3.2rc1',
             b'0.3.2.post11',
         ]
         non_releases = [
