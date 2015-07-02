@@ -3,6 +3,7 @@ from twisted.application.internet import TimerService
 from twisted.internet.defer import inlineCallbacks, returnValue
 from twisted.python import log
 
+from buildbot.interfaces import IProperties
 from buildbot.status.base import StatusReceiverMultiService
 from buildbot.status.results import Results
 
@@ -28,14 +29,16 @@ class Monitor(StatusReceiverMultiService):
     build_counts = Counter(
         'finished_builds_total',
         'Number of finished builds',
-        labelnames=['builder', 'slave_class', 'slave_number', 'result'],
+        labelnames=[
+            'builder', 'slave_class', 'slave_number', 'result', 'branch'],
         namespace='buildbot',
     )
 
     build_duration = Histogram(
         'build_duration_minutes',
         "Length of build.",
-        labelnames=['builder', 'slave_class', 'slave_number', 'result'],
+        labelnames=[
+            'builder', 'slave_class', 'slave_number', 'result', 'branch'],
         namespace="buildbot",
         buckets=[1, 2, 3, 4, 5, 10, 15, 20, 25, 30, 35, 40, 45, 60])
 
@@ -114,13 +117,16 @@ class Monitor(StatusReceiverMultiService):
         self.building_counts_gauge.labels(
             builderName, slave_name, slave_number,
         ).dec()
+        branch = IProperties(build).getProperty('branch')
         self.build_counts.labels(
             builderName, slave_name, slave_number, Results[build.getResults()],
+            branch,
         ).inc()
 
         (start, end) = build.getTimes()
         self.build_duration.labels(
             builderName, slave_name, slave_number, Results[build.getResults()],
+            branch,
         ).observe(
             (end-start)/60
         )
