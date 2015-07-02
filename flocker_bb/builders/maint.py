@@ -96,6 +96,12 @@ class CleanVolumes(LoggingBuildStep):
     Destroy volumes that leaked into the cloud from the acceptance and
     functional test suites.
     """
+    name = 'clean-volumes'
+    description = ['Cleaning', 'volumes']
+    descriptionDone = ['Clean', 'volumes']
+    haltOnFailure = False
+    flunkOnFailure = True
+
     def start(self):
         config = privateData['acceptance']['config']
         d = deferToThread(self._blocking_clean_volumes, yaml.safe_load(config))
