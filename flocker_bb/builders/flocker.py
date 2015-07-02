@@ -367,7 +367,7 @@ def makeInternalDocsFactory():
     factory = getFlockerFactory(python="python2.7")
     factory.addSteps(installDependencies())
     factory.addStep(SetPropertyFromCommand(
-        command=["python", "setup.py", "--version"],
+        command=[virtualenvBinary('python'), "setup.py", "--version"],
         name='check-version',
         description=['checking', 'version'],
         descriptionDone=['checking', 'version'],
@@ -455,7 +455,7 @@ def makeOmnibusFactory(distribution):
     factory = getFlockerFactory(python="python2.7")
     factory.addSteps(installDependencies())
     factory.addStep(SetPropertyFromCommand(
-        command=["python", "setup.py", "--version"],
+        command=[virtualenvBinary('python'), "setup.py", "--version"],
         name='check-version',
         description=['checking', 'version'],
         descriptionDone=['checking', 'version'],
@@ -517,7 +517,7 @@ def makeHomebrewRecipeCreationFactory():
     factory = getFlockerFactory(python="python2.7")
     factory.addSteps(installDependencies())
     factory.addStep(SetPropertyFromCommand(
-        command=["python", "setup.py", "--version"],
+        command=[virtualenvBinary('python'), "setup.py", "--version"],
         name='check-version',
         description=['checking', 'version'],
         descriptionDone=['check', 'version'],
