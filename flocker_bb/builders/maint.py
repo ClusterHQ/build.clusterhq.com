@@ -232,6 +232,17 @@ class CleanVolumes(LoggingBuildStep):
             "kept": actions.keep,
         }
 
+    def _get_volume_region(self, volume):
+        """
+        Get the name of the region the volume is in.
+        """
+        return (
+            # Rackspace
+            getattr(volume.driver, "region", None) or
+            # AWS
+            getattr(volume.driver, "region_name", None)
+        )
+
     def _describe_volume(self, volume):
         """
         Create a dictionary giving lots of interesting details about a cloud
@@ -243,6 +254,7 @@ class CleanVolumes(LoggingBuildStep):
                 self._get_volume_creation_time(volume),
             ),
             'provider': volume.driver.name,
+            'region': self._get_volume_region(volume),
             # *Stuffed* with non-JSON-encodable goodies.
             'extra': repr(volume.extra),
         }
