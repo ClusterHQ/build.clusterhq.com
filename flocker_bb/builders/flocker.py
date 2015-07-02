@@ -365,6 +365,7 @@ def sphinxBuild(builder, workdir=b"build/docs", **kwargs):
 
 def makeInternalDocsFactory():
     factory = getFlockerFactory(python="python2.7")
+    factory.addSteps(installDependencies())
     factory.addStep(SetPropertyFromCommand(
         command=["python", "setup.py", "--version"],
         name='check-version',
@@ -372,7 +373,6 @@ def makeInternalDocsFactory():
         descriptionDone=['checking', 'version'],
         property='version'
     ))
-    factory.addSteps(installDependencies())
     factory.addStep(sphinxBuild(
         "spelling", "build/docs",
         logfiles={'errors': '_build/spelling/output.txt'},
@@ -453,6 +453,7 @@ def createRepository(distribution, repository_path):
 
 def makeOmnibusFactory(distribution):
     factory = getFlockerFactory(python="python2.7")
+    factory.addSteps(installDependencies())
     factory.addStep(SetPropertyFromCommand(
         command=["python", "setup.py", "--version"],
         name='check-version',
@@ -460,7 +461,6 @@ def makeOmnibusFactory(distribution):
         descriptionDone=['checking', 'version'],
         property='version'
     ))
-    factory.addSteps(installDependencies())
     factory.addStep(ShellCommand(
         name='build-sdist',
         description=["building", "sdist"],
@@ -515,6 +515,7 @@ def makeHomebrewRecipeCreationFactory():
     non-Mac platform.  Once complete, this triggers the Mac testing.
     """
     factory = getFlockerFactory(python="python2.7")
+    factory.addSteps(installDependencies())
     factory.addStep(SetPropertyFromCommand(
         command=["python", "setup.py", "--version"],
         name='check-version',
@@ -522,7 +523,6 @@ def makeHomebrewRecipeCreationFactory():
         descriptionDone=['check', 'version'],
         property='version'
     ))
-    factory.addSteps(installDependencies())
 
     # Create suitable names for files hosted on Buildbot master.
 
