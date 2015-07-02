@@ -1,0 +1,12 @@
+twisted[conch]
+buildbot==0.8.10
+# We need this because new pip doesn't support OR-dependencies
+sqlalchemy-migrate==0.7.2
+txgithub==15.0.0
+eliot
+apache-libcloud
+service_identity
+machinist
+prometheus_client
+retry
+PyYAML
