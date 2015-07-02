@@ -134,8 +134,8 @@ def start(configFile=None):
     """
     config = loadConfig(configFile)
     execute(bootstrap)
-
     execute(startBuildmaster, config)
+    execute(makeRsyslogForwardToLoggly, config)
 
 
 @task
@@ -244,3 +244,35 @@ def startPrometheus():
         "-web.console.libraries=/etc/prometheus/console_libraries",
         "-web.console.templates=/etc/prometheus/consoles",
         ))
+
+
+def makeRsyslogForwardToLoggly(config):
+    """ Configures the BB Master to forward all syslog to Loggly """
+    from fabric.contrib.files import append
+
+    api = config['loggly']['api']
+    port = config['loggly']['port']
+    tag = config['loggly']['tag']
+    target = config['loggly']['target']
+
+    lines = ['# Setup disk assisted queues',
+             '$WorkDirectory /var/spool/rsyslog',
+             '$ActionQueueFileName fwdRule1',
+             '$ActionQueueMaxDiskSpace 1g',
+             '$ActionQueueSaveOnShutdown on',
+             '$ActionQueueType LinkedList',
+             '$ActionResumeRetryCount -1',
+
+             '$template LogglyFormat,"<%pri%>%protocol-version% ' +
+             '%timestamp:::date-rfc3339% %HOSTNAME% %app-name% %procid% ' +
+             '%msgid% [{} tag=\\"{}\\"] %msg%"\\n'.format(api, tag),
+
+             '# Send messages to Loggly over TCP using the template.',
+
+             'action(type="omfwd" protocol="tcp" target="{}" '.format(target) +
+             'port="{}" template="LogglyFormat")'.format(port)]
+
+    for line in lines:
+        append('/etc/rsyslog.d/22-loggly.conf', line, use_sudo=True)
+
+    sudo('systemctl restart rsyslog')
