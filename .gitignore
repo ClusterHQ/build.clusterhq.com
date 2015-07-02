@@ -4,3 +4,4 @@ private_html
 /config.yml
 /staging.yml
 /aws_config.yml
+/.tox
