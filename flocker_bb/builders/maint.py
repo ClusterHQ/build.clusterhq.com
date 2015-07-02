@@ -402,7 +402,7 @@ class CleanAcceptanceInstances(LoggingBuildStep):
 def makeCleanOldResources():
     """
     Remove cloud instances (from acceptance and client tests) and cloud volumes
-    nodes more than two hours old.
+    more than two hours old.
     """
     factory = BuildFactory()
     age = timedelta(hours=2)
