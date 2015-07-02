@@ -9,6 +9,13 @@ env:
 - TOXENV=config
 - TOXENV=lint
 
+sudo: false
+addons:
+  apt:
+    packages:
+    - libgmp-dev
+    - libffi-dev
+
 script:
 - tox
 
