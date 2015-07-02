@@ -12,7 +12,7 @@ from twisted.python.failure import Failure
 from twisted.web.client import ResponseDone, FileBodyProducer
 from twisted.web.http_headers import Headers
 
-from ..zulip_status import _Zulip
+from ..zulip import _Zulip
 
 
 @implementer(IResponse)
