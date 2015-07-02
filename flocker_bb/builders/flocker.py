@@ -355,14 +355,8 @@ def sphinxBuild(builder, workdir=b"build/docs", **kwargs):
 
 def makeInternalDocsFactory():
     factory = getFlockerFactory(python="python2.7")
-    factory.addStep(SetPropertyFromCommand(
-        command=["python", "setup.py", "--version"],
-        name='check-version',
-        description=['checking', 'version'],
-        descriptionDone=['checking', 'version'],
-        property='version'
-    ))
     factory.addSteps(installDependencies())
+    factory.addSteps(check_version())
     factory.addStep(sphinxBuild(
         "spelling", "build/docs",
         logfiles={'errors': '_build/spelling/output.txt'},
@@ -443,14 +437,8 @@ def createRepository(distribution, repository_path):
 
 def makeOmnibusFactory(distribution):
     factory = getFlockerFactory(python="python2.7")
-    factory.addStep(SetPropertyFromCommand(
-        command=["python", "setup.py", "--version"],
-        name='check-version',
-        description=['checking', 'version'],
-        descriptionDone=['checking', 'version'],
-        property='version'
-    ))
     factory.addSteps(installDependencies())
+    factory.addSteps(check_version())
     factory.addStep(ShellCommand(
         name='build-sdist',
         description=["building", "sdist"],
@@ -498,6 +486,27 @@ def makeOmnibusFactory(distribution):
     return factory
 
 
+def check_version():
+    """
+    Get the version of the package and store it in the ``version`` property.
+    """
+    return [
+        SetPropertyFromCommand(
+            command=[virtualenvBinary('python'), "setup.py", "--version"],
+            name='check-version',
+            description=['checking', 'version'],
+            descriptionDone=['check', 'version'],
+            property='version',
+            env={
+                # Ignore warnings
+                # In particular, setuptools warns about normalization.
+                # Normalizing '..' to '..' normalized_version, ..
+                'PYTHONWARNINGS': 'ignore',
+            },
+        ),
+    ]
+
+
 def makeHomebrewRecipeCreationFactory():
     """Create the Homebrew recipe from a source distribution.
 
@@ -505,14 +514,8 @@ def makeHomebrewRecipeCreationFactory():
     non-Mac platform.  Once complete, this triggers the Mac testing.
     """
     factory = getFlockerFactory(python="python2.7")
-    factory.addStep(SetPropertyFromCommand(
-        command=["python", "setup.py", "--version"],
-        name='check-version',
-        description=['checking', 'version'],
-        descriptionDone=['check', 'version'],
-        property='version'
-    ))
     factory.addSteps(installDependencies())
+    factory.addSteps(check_version())
 
     # Create suitable names for files hosted on Buildbot master.
 
