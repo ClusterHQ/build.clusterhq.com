@@ -209,12 +209,14 @@ class MergeForward(Source):
     _RELEASE_TAG_RE = re.compile(
         # <major>.<minor>.<micro>
         r'^[0-9]+\.[0-9]+\.[0-9]+'
+        # plus (optionally) any of:
+        r'(?:'
         # weekly release
-        r'(?:dev[0-9]+'
+        'dev[0-9]+'
         # prerelease
         r'|pre[0-9]+'
         # documentation release
-        r'|(\+doc|\.post)[0-9]+)?'
+        r'|(?:\+doc|\.post)[0-9]+)?'
         r'$')
 
     @classmethod
