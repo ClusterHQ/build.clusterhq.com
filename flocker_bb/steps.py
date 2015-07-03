@@ -40,10 +40,10 @@ report_expected_failures_parameter = BooleanParameter(
 
 
 class BranchType(Names):
-    MASTER = NamedConstant()
-    RELEASE = NamedConstant()
-    MAINTENANCE = NamedConstant()
-    DEVELOPMENT = NamedConstant()
+    master = NamedConstant()
+    release = NamedConstant()
+    maintenance = NamedConstant()
+    development = NamedConstant()
 
 
 def getBranchType(branch):
@@ -54,18 +54,17 @@ def getBranchType(branch):
 
     :param branch: A string describing a branch. e.g. 'master',
         'some-feature-FLOC-1234'.
-    :return: One of MASTER_BRANCH, RELEASE_BRANCH, MAINTENANCE_BRANCH, or
-        DEVELOPMENT_BRANCH.
+    :return: ``BranchType`` constant.
     """
     # TODO: Have MergeForward use this, rather than the other way around.
     if MergeForward._isMaster(branch):
-        return BranchType.MASTER
+        return BranchType.master
     if MergeForward._isRelease(branch):
-        return BranchType.RELEASE
+        return BranchType.release
     match = MergeForward._MAINTENANCE_BRANCH_RE.match(branch)
     if match:
-        return BranchType.MAINTENANCE
-    return BranchType.DEVELOPMENT
+        return BranchType.maintenance
+    return BranchType.development
 
 
 @renderer
