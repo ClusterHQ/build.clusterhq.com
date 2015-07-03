@@ -3,7 +3,6 @@ from twisted.application.internet import TimerService
 from twisted.internet.defer import inlineCallbacks, returnValue
 from twisted.python import log
 
-from buildbot.interfaces import IProperties
 from buildbot.status.base import StatusReceiverMultiService
 from buildbot.status.results import Results
 
@@ -25,7 +24,7 @@ class Monitor(StatusReceiverMultiService):
     building_counts_gauge = Gauge(
         'running_builds',
         'Number of running builds',
-        labelnames=['builder', 'slave_class', 'slave_number'],
+        labelnames=['builder', 'slave_class', 'slave_number', 'branch_type'],
         namespace='buildbot',
     )
 
@@ -106,8 +105,9 @@ class Monitor(StatusReceiverMultiService):
         build.
         """
         slave_name, slave_number = build.getSlavename().rsplit('/', 1)
+        branch_type = getBranchType(getBranch(build))
         self.building_counts_gauge.labels(
-            builderName, slave_name, slave_number).inc()
+            builderName, slave_name, slave_number, branch_type).inc()
 
     def buildFinished(self, builderName, build, results):
         """
