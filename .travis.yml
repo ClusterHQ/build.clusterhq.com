@@ -1,0 +1,23 @@
+language: python
+python: 2.7
+
+install:
+- pip install tox
+
+env:
+- TOXENV=tests
+- TOXENV=config
+- TOXENV=lint
+
+sudo: false
+addons:
+  apt:
+    packages:
+    - libgmp-dev
+    - libffi-dev
+
+script:
+- tox
+
+notifications:
+    email: false

@@ -99,6 +99,7 @@ class EC2SlaveTests(OnDemandBuildSlaveTestsMixin, SynchronousTestCase):
             build_wait_timeout=50*60,
             keepalive_interval=60,
             buildmaster=sample_build_master(),
+            max_builds=None,
         )
 
 
@@ -119,4 +120,5 @@ class RackspaceSlaveTests(OnDemandBuildSlaveTestsMixin, SynchronousTestCase):
             build_wait_timeout=50*60,
             keepalive_interval=60,
             buildmaster=sample_build_master(),
+            max_builds=None,
         )
