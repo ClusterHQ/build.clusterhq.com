@@ -117,10 +117,10 @@ class Monitor(StatusReceiverMultiService):
         build.
         """
         slave_name, slave_number = build.getSlavename().rsplit('/', 1)
-        self.building_counts_gauge.labels(
-            builderName, slave_name, slave_number,
-        ).dec()
         branch_type = getBranchType(getBranch(build))
+        self.building_counts_gauge.labels(
+            builderName, slave_name, slave_number, branch_type,
+        ).dec()
         self.build_counts.labels(
             builderName, slave_name, slave_number, Results[build.getResults()],
             branch_type,
