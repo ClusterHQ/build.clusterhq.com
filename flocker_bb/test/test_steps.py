@@ -184,3 +184,26 @@ class TestBranchType(TestCase):
     def test_ordinary(self):
         self.assertEqual(
             BranchType.DEVELOPMENT, getBranchType('fix-a-thing-FLOC-1235'))
+
+
+class VersionTests(TestCase):
+
+    def test_isRelease(self):
+        releases = [
+            b'0.3.2',
+            b'0.3.2dev1',
+            b'0.3.2.dev1',
+            b'0.3.2pre1',
+            b'0.3.2rc1',
+            b'0.3.2.post11',
+        ]
+        non_releases = [
+            b'0.3.2+1.gf661a6a',
+            b'0.3.2dev1+1.gf661a6a',
+            b'0.3.2pre1+1.gf661a6a',
+            b'0.3.2.post1+1.gf661a6a',
+        ]
+        for version in releases:
+            self.assertTrue(MergeForward._isRelease(version))
+        for version in non_releases:
+            self.assertFalse(MergeForward._isRelease(version))

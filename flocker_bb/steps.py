@@ -237,7 +237,17 @@ class MergeForward(Source):
         return branch == 'master'
 
     _RELEASE_TAG_RE = re.compile(
-        '^[0-9]+\.[0-9]+\.[0-9]+(?:dev[0-9]+|pre[0-9]+|\+doc[0-9]+)?$')
+        # <major>.<minor>.<micro>
+        r'^[0-9]+\.[0-9]+\.[0-9]+'
+        # plus (optionally) any of:
+        r'(?:'
+        # weekly release
+        '\.?dev[0-9]+'
+        # prerelease
+        r'|(?:pre|rc)[0-9]+'
+        # documentation release
+        r'|(?:\+doc|\.post)[0-9]+)?'
+        r'$')
 
     @classmethod
     def _isRelease(cls, branch):
