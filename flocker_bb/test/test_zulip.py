@@ -12,7 +12,7 @@ from twisted.python.failure import Failure
 from twisted.web.client import ResponseDone, FileBodyProducer
 from twisted.web.http_headers import Headers
 
-from ..zulip_status import _Zulip
+from ..zulip import _Zulip
 
 
 @implementer(IResponse)
@@ -97,11 +97,13 @@ class ZulipTests(SynchronousTestCase):
         zulip.send(b"the type", b"the content", b"the to", b"the subject")
         self.assertEqual(
             [(b"POST", b"https://api.zulip.com/v1/messages",
-              Headers({b"content-type":
-                           [b"application/x-www-form-urlencoded"],
-                       b"authorization":
-                           [b"Basic " + b64encode(bot + b":" + key)]}),
-              b"type=the+type&content=the+content&to=the+to&subject=the+subject",
+              Headers({
+                  b"content-type":
+                      [b"application/x-www-form-urlencoded"],
+                  b"authorization":
+                      [b"Basic " + b64encode(bot + b":" + key)]}),
+              b"type=the+type&content=the+content"
+              b"&to=the+to&subject=the+subject",
               )],
             requestLog)
 
@@ -123,10 +125,11 @@ class ZulipTests(SynchronousTestCase):
         zulip.send(type, content, to, subject)
         self.assertEqual(
             [(b"POST", b"https://api.zulip.com/v1/messages",
-              Headers({b"content-type":
-                           [b"application/x-www-form-urlencoded"],
-                       b"authorization":
-                           [b"Basic " + b64encode(bot + b":" + key)]}),
+              Headers({
+                  b"content-type":
+                      [b"application/x-www-form-urlencoded"],
+                  b"authorization":
+                      [b"Basic " + b64encode(bot + b":" + key)]}),
               urlencode([(b"type", type.encode("utf-8")),
                          (b"content", content.encode("utf-8")),
                          (b"to", to.encode("utf-8")),
