@@ -168,22 +168,22 @@ class TestMergeForward(sourcesteps.SourceStepMixin, TestCase):
 class TestBranchType(TestCase):
 
     def test_master(self):
-        self.assertEqual(BranchType.MASTER, getBranchType('master'))
+        self.assertEqual(BranchType.master, getBranchType('master'))
 
     def test_releaseBranch(self):
-        self.assertEqual(BranchType.RELEASE, getBranchType('release/foo'))
+        self.assertEqual(BranchType.release, getBranchType('release/foo'))
 
     def test_releaseTag(self):
-        self.assertEqual(BranchType.RELEASE, getBranchType('1.0.0'))
+        self.assertEqual(BranchType.release, getBranchType('1.0.0'))
 
     def test_maintenance(self):
         self.assertEqual(
-            BranchType.MAINTENANCE,
+            BranchType.maintenance,
             getBranchType('release-maintenance/1.0.0/fix-everything'))
 
     def test_ordinary(self):
         self.assertEqual(
-            BranchType.DEVELOPMENT, getBranchType('fix-a-thing-FLOC-1235'))
+            BranchType.development, getBranchType('fix-a-thing-FLOC-1235'))
 
 
 class VersionTests(TestCase):
