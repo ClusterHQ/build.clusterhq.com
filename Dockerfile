@@ -1,8 +1,7 @@
-FROM fedora:20
-#ADD https://copr.fedoraproject.org/coprs/tomprince/hybridlogic/repo/fedora-20-x86_64/tomprince-hybridlogic-fedora-20-x86_64.repo /etc/yum.repos.d/
-ADD tomprince-hybridlogic-fedora-20-x86_64.repo /etc/yum.repos.d/
-#RUN yum upgrade -y
-RUN yum install -y python-devel python-pip gcc libffi-devel openssl-devel gmp-devel git s3cmd dpkg-dev createrepo_c
+FROM fedora:22
+RUN dnf upgrade -y && \
+    dnf install -y python-devel python-pip gcc libffi-devel openssl-devel gmp-devel git s3cmd dpkg-dev createrepo_c && \
+    dnf clean all
 
 ADD requirements.txt /srv/buildmaster/
 RUN ["pip", "install", "-r", "/srv/buildmaster/requirements.txt"]
