@@ -6,6 +6,9 @@ from twisted.python import log
 from buildbot.status.base import StatusReceiverMultiService
 from buildbot.status.results import Results
 
+from flocker_bb.steps import getBranchType
+from flocker_bb.util import getBranch
+
 from prometheus_client import Gauge, Counter, Histogram
 
 
@@ -21,21 +24,23 @@ class Monitor(StatusReceiverMultiService):
     building_counts_gauge = Gauge(
         'running_builds',
         'Number of running builds',
-        labelnames=['builder', 'slave_class', 'slave_number'],
+        labelnames=['builder', 'slave_class', 'slave_number', 'branch_type'],
         namespace='buildbot',
     )
 
     build_counts = Counter(
         'finished_builds_total',
         'Number of finished builds',
-        labelnames=['builder', 'slave_class', 'slave_number', 'result'],
+        labelnames=[
+            'builder', 'slave_class', 'slave_number', 'result', 'branch_type'],
         namespace='buildbot',
     )
 
     build_duration = Histogram(
         'build_duration_minutes',
         "Length of build.",
-        labelnames=['builder', 'slave_class', 'slave_number', 'result'],
+        labelnames=[
+            'builder', 'slave_class', 'slave_number', 'result', 'branch_type'],
         namespace="buildbot",
         buckets=[1, 2, 3, 4, 5, 10, 15, 20, 25, 30, 35, 40, 45, 60])
 
@@ -100,8 +105,9 @@ class Monitor(StatusReceiverMultiService):
         build.
         """
         slave_name, slave_number = build.getSlavename().rsplit('/', 1)
+        branch_type = getBranchType(getBranch(build)).name
         self.building_counts_gauge.labels(
-            builderName, slave_name, slave_number).inc()
+            builderName, slave_name, slave_number, branch_type).inc()
 
     def buildFinished(self, builderName, build, results):
         """
@@ -111,16 +117,19 @@ class Monitor(StatusReceiverMultiService):
         build.
         """
         slave_name, slave_number = build.getSlavename().rsplit('/', 1)
+        branch_type = getBranchType(getBranch(build)).name
         self.building_counts_gauge.labels(
-            builderName, slave_name, slave_number,
+            builderName, slave_name, slave_number, branch_type,
         ).dec()
         self.build_counts.labels(
             builderName, slave_name, slave_number, Results[build.getResults()],
+            branch_type,
         ).inc()
 
         (start, end) = build.getTimes()
         self.build_duration.labels(
             builderName, slave_name, slave_number, Results[build.getResults()],
+            branch_type,
         ).observe(
             (end-start)/60
         )

@@ -30,3 +30,20 @@ def timeoutDeferred(reactor, deferred, seconds):
     deferred.addBoth(cancelTimeout)
 
     return delayedTimeOutCall
+
+
+def getBranch(build):
+    """
+    Return the branch for a given build.
+
+    If the build has more than one branch, return the first branch found. If a
+    build has no branches, then raise a ValueError.
+
+    :param build: An ``IBuildStatus``.
+    :return: A branch as a string, e.g. 'master', 'some-feature-FLOC-1234'.
+    """
+    sourceStamps = build.getSourceStamps()
+    try:
+        return (stamp.branch for stamp in sourceStamps).next()
+    except StopIteration:
+        raise ValueError('{} has no source stamps'.format(build))

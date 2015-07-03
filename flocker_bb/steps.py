@@ -3,6 +3,7 @@ from collections import Counter
 
 from twisted.internet import defer
 from twisted.python import log
+from twisted.python.constants import NamedConstant, Names
 from twisted.python.filepath import FilePath
 
 from buildbot.process.properties import Interpolate
@@ -36,6 +37,34 @@ report_expected_failures_parameter = BooleanParameter(
     name="report-expected-failures",
     label="Report status for builders expected to fail.",
 )
+
+
+class BranchType(Names):
+    master = NamedConstant()
+    release = NamedConstant()
+    maintenance = NamedConstant()
+    development = NamedConstant()
+
+
+def getBranchType(branch):
+    """
+    Given a Buildbot branch parameter, return the kind of branch it is.
+
+    This decision is made based on Flocker branch naming conventions.
+
+    :param branch: A string describing a branch. e.g. 'master',
+        'some-feature-FLOC-1234'.
+    :return: ``BranchType`` constant.
+    """
+    # TODO: Have MergeForward use this, rather than the other way around.
+    if MergeForward._isMaster(branch):
+        return BranchType.master
+    if MergeForward._isRelease(branch):
+        return BranchType.release
+    match = MergeForward._MAINTENANCE_BRANCH_RE.match(branch)
+    if match:
+        return BranchType.maintenance
+    return BranchType.development
 
 
 @renderer

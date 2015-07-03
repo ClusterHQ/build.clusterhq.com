@@ -4,7 +4,10 @@ from buildbot.status.results import SUCCESS
 from buildbot.test.fake.remotecommand import ExpectShell
 
 from ..steps import (
-    MergeForward)
+    BranchType,
+    MergeForward,
+    getBranchType,
+)
 
 
 COMMIT_HASH = "deadbeef00000000000000000000000000000000"
@@ -160,6 +163,27 @@ class TestMergeForward(sourcesteps.SourceStepMixin, TestCase):
         self.expectOutcome(result=SUCCESS, status_text=['merge', 'forward'])
         self.expectProperty('lint_revision', COMMIT_HASH)
         return self.runStep()
+
+
+class TestBranchType(TestCase):
+
+    def test_master(self):
+        self.assertEqual(BranchType.master, getBranchType('master'))
+
+    def test_releaseBranch(self):
+        self.assertEqual(BranchType.release, getBranchType('release/foo'))
+
+    def test_releaseTag(self):
+        self.assertEqual(BranchType.release, getBranchType('1.0.0'))
+
+    def test_maintenance(self):
+        self.assertEqual(
+            BranchType.maintenance,
+            getBranchType('release-maintenance/1.0.0/fix-everything'))
+
+    def test_ordinary(self):
+        self.assertEqual(
+            BranchType.development, getBranchType('fix-a-thing-FLOC-1235'))
 
 
 class VersionTests(TestCase):
