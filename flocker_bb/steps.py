@@ -38,6 +38,34 @@ report_expected_failures_parameter = BooleanParameter(
 )
 
 
+MASTER_BRANCH = 'master'
+RELEASE_BRANCH = 'release'
+MAINTENANCE_BRANCH = 'maintenance'
+DEVELOPMENT_BRANCH = 'development'
+
+
+def getBranchType(branch):
+    """
+    Given a Buildbot branch parameter, return the kind of branch it is.
+
+    This decision is made based on Flocker branch naming conventions.
+
+    :param branch: A string describing a branch. e.g. 'master',
+        'some-feature-FLOC-1234'.
+    :return: One of MASTER_BRANCH, RELEASE_BRANCH, MAINTENANCE_BRANCH, or
+        DEVELOPMENT_BRANCH.
+    """
+    # TODO: Have MergeForward use this, rather than the other way around.
+    if MergeForward._isMaster(branch):
+        return MASTER_BRANCH
+    if MergeForward._isRelease(branch):
+        return RELEASE_BRANCH
+    match = MergeForward._MAINTENANCE_BRANCH_RE.match(branch)
+    if match:
+        return MAINTENANCE_BRANCH
+    return DEVELOPMENT_BRANCH
+
+
 @renderer
 def buildbotURL(build):
     return build.getBuild().build_status.master.status.getBuildbotURL()
