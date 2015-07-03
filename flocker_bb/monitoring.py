@@ -7,6 +7,9 @@ from buildbot.interfaces import IProperties
 from buildbot.status.base import StatusReceiverMultiService
 from buildbot.status.results import Results
 
+from flocker_bb.steps import getBranchType
+from flocker_bb.util import getBranch
+
 from prometheus_client import Gauge, Counter, Histogram
 
 
@@ -30,7 +33,7 @@ class Monitor(StatusReceiverMultiService):
         'finished_builds_total',
         'Number of finished builds',
         labelnames=[
-            'builder', 'slave_class', 'slave_number', 'result', 'branch'],
+            'builder', 'slave_class', 'slave_number', 'result', 'branch_type'],
         namespace='buildbot',
     )
 
@@ -38,7 +41,7 @@ class Monitor(StatusReceiverMultiService):
         'build_duration_minutes',
         "Length of build.",
         labelnames=[
-            'builder', 'slave_class', 'slave_number', 'result', 'branch'],
+            'builder', 'slave_class', 'slave_number', 'result', 'branch_type'],
         namespace="buildbot",
         buckets=[1, 2, 3, 4, 5, 10, 15, 20, 25, 30, 35, 40, 45, 60])
 
@@ -117,16 +120,16 @@ class Monitor(StatusReceiverMultiService):
         self.building_counts_gauge.labels(
             builderName, slave_name, slave_number,
         ).dec()
-        branch = IProperties(build).getProperty('branch')
+        branch_type = getBranchType(getBranch(build))
         self.build_counts.labels(
             builderName, slave_name, slave_number, Results[build.getResults()],
-            branch,
+            branch_type,
         ).inc()
 
         (start, end) = build.getTimes()
         self.build_duration.labels(
             builderName, slave_name, slave_number, Results[build.getResults()],
-            branch,
+            branch_type,
         ).observe(
             (end-start)/60
         )
