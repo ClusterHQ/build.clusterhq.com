@@ -3,6 +3,7 @@ from collections import Counter
 
 from twisted.internet import defer
 from twisted.python import log
+from twisted.python.constants import NamedConstant, Names
 from twisted.python.filepath import FilePath
 
 from buildbot.process.properties import Interpolate
@@ -38,10 +39,11 @@ report_expected_failures_parameter = BooleanParameter(
 )
 
 
-MASTER_BRANCH = 'master'
-RELEASE_BRANCH = 'release'
-MAINTENANCE_BRANCH = 'maintenance'
-DEVELOPMENT_BRANCH = 'development'
+class BranchType(Names):
+    MASTER = NamedConstant()
+    RELEASE = NamedConstant()
+    MAINTENANCE = NamedConstant()
+    DEVELOPMENT = NamedConstant()
 
 
 def getBranchType(branch):
@@ -57,13 +59,13 @@ def getBranchType(branch):
     """
     # TODO: Have MergeForward use this, rather than the other way around.
     if MergeForward._isMaster(branch):
-        return MASTER_BRANCH
+        return BranchType.MASTER
     if MergeForward._isRelease(branch):
-        return RELEASE_BRANCH
+        return BranchType.RELEASE
     match = MergeForward._MAINTENANCE_BRANCH_RE.match(branch)
     if match:
-        return MAINTENANCE_BRANCH
-    return DEVELOPMENT_BRANCH
+        return BranchType.MAINTENANCE
+    return BranchType.DEVELOPMENT
 
 
 @renderer

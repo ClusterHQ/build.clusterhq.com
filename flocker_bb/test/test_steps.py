@@ -4,11 +4,8 @@ from buildbot.status.results import SUCCESS
 from buildbot.test.fake.remotecommand import ExpectShell
 
 from ..steps import (
-    DEVELOPMENT_BRANCH,
-    MAINTENANCE_BRANCH,
-    MASTER_BRANCH,
+    BranchType,
     MergeForward,
-    RELEASE_BRANCH,
     getBranchType,
 )
 
@@ -171,19 +168,19 @@ class TestMergeForward(sourcesteps.SourceStepMixin, TestCase):
 class TestBranchType(TestCase):
 
     def test_master(self):
-        self.assertEqual(MASTER_BRANCH, getBranchType('master'))
+        self.assertEqual(BranchType.MASTER, getBranchType('master'))
 
     def test_releaseBranch(self):
-        self.assertEqual(RELEASE_BRANCH, getBranchType('release/foo'))
+        self.assertEqual(BranchType.RELEASE, getBranchType('release/foo'))
 
     def test_releaseTag(self):
-        self.assertEqual(RELEASE_BRANCH, getBranchType('1.0.0'))
+        self.assertEqual(BranchType.RELEASE, getBranchType('1.0.0'))
 
     def test_maintenance(self):
         self.assertEqual(
-            MAINTENANCE_BRANCH,
+            BranchType.MAINTENANCE,
             getBranchType('release-maintenance/1.0.0/fix-everything'))
 
     def test_ordinary(self):
         self.assertEqual(
-            DEVELOPMENT_BRANCH, getBranchType('fix-a-thing-FLOC-1235'))
+            BranchType.DEVELOPMENT, getBranchType('fix-a-thing-FLOC-1235'))
