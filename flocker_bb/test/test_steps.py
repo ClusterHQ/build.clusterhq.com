@@ -71,6 +71,7 @@ class TestMergeForward(sourcesteps.SourceStepMixin, TestCase):
             ExpectShell(workdir='wkdir',
                         command=['git', 'merge',
                                  '--no-ff', '--no-stat',
+                                 '-m', 'Merge forward.',
                                  'FETCH_HEAD'],
                         env=self.date_env)
             + 0,
@@ -103,6 +104,7 @@ class TestMergeForward(sourcesteps.SourceStepMixin, TestCase):
             ExpectShell(workdir='wkdir',
                         command=['git', 'merge',
                                  '--no-ff', '--no-stat',
+                                 '-m', 'Merge forward.',
                                  'merge-hash'],
                         env=self.date_env)
             + 0,
@@ -145,6 +147,7 @@ class TestMergeForward(sourcesteps.SourceStepMixin, TestCase):
             ExpectShell(workdir='wkdir',
                         command=['git', 'merge',
                                  '--no-ff', '--no-stat',
+                                 '-m', 'Merge forward.',
                                  'FETCH_HEAD'],
                         env=self.date_env)
             + 0,
