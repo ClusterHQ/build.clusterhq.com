@@ -1,9 +1,9 @@
 FROM fedora:22
 
 # dpkg-dev is required for dpkg-scanpackages
-# /usr/bin/find is required by dpkg-scanpackages (https://bugzilla.redhat.com/buglist.cgi?quicksearch=dpkg-dev XXX fileupstream)
+# /usr/bin/find /usr/bin/tar is required by dpkg-scanpackages (https://bugzilla.redhat.com/show_bug.cgi?id=1240352)
 RUN dnf upgrade -y && \
-    dnf install -y python-devel python-pip gcc libffi-devel openssl-devel gmp-devel git s3cmd dpkg-dev /usr/bin/find createrepo_c && \
+    dnf install -y python-devel python-pip gcc libffi-devel openssl-devel gmp-devel git s3cmd dpkg-dev /usr/bin/find /usr/bin/tar createrepo_c && \
     dnf clean all
 
 ADD requirements.txt /srv/buildmaster/
