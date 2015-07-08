@@ -1,0 +1,20 @@
+images:
+- name: acceptance-centos-7
+  provider: ec2
+  region: us-west-1
+  base-ami: ami-6bcfc42e
+  size: t2.medium
+  username: centos
+  deploy:
+    file: centos-7.sh
+  # Fedora 20 doesn't allow sudo without a terminal by default, so enable it.
+  userdata: "#!/bin/sh\nsed -i '/Defaults    requiretty/d' /etc/sudoers"
+
+- name: acceptance-ubuntu-14.04
+  provider: ec2
+  region: us-west-1
+  base-ami: ami-df6a8b9b
+  size: t2.medium
+  deploy:
+    file: ubuntu-14.04.sh
+  username: ubuntu
