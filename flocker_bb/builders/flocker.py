@@ -673,6 +673,11 @@ OMNIBUS_DISTRIBUTIONS = [
     'centos-7',
 ]
 
+WHEEL_DISTRIBUTIONS = [
+    'ubuntu-14.04',
+    'centos-7',
+]
+
 
 def getBuilders(slavenames):
     builders = [
@@ -757,6 +762,8 @@ def getBuilders(slavenames):
                 ),
                 nextSlave=idleSlave,
                 ))
+
+    for distribution in WHEEL_DISTRIBUTIONS:
         builders.append(
             BuilderConfig(
                 name='flocker/wheelhouse/%s' % (distribution,),
@@ -808,7 +815,7 @@ BUILDERS = [
 
 WHEEL_BUILDERS = [
     'flocker/wheelhouse/%s' % (dist,)
-    for dist in OMNIBUS_DISTRIBUTIONS
+    for dist in WHEEL_DISTRIBUTIONS
 ]
 
 
