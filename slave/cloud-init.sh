@@ -13,8 +13,6 @@ buildslave create-slave --umask 022 /srv/buildslave %(buildmaster_host)s:%(build
 export HOME=/srv/buildslave
 echo "https://%(github_token)s:@github.com" >/srv/buildslave/.git-credentials
 
-echo -e "repo_token: %(coveralls_token)s\nservice_name: buildbot" >/srv/buildslave/coveralls.yml
-
 cp -r ~root/.pip $HOME/.pip
 
 git config --global credential.helper "store"

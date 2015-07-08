@@ -163,11 +163,11 @@ Slaves
 Naming
 ------
 
-Slaves are named with a number of components, separated by ``\``.
+Slaves are named with a number of components, separated by ``/``.
 The primary component is the name of the operating system running on the slave (e.g. ``fedora-20``).
 There is usually a prefix indicating where the slave is hosted (e.g. ``aws`` or ``redhat-openstack``).
 If there is an unusual configuration to the slave, there is a tag describing it (e.g. ``zfs-head``).
-There is usually a numberical suffix indicating which instance of similarily configured slaves this is.
+There is usually a numerical suffix indicating which instance of similarly configured slaves this is.
 
 Slave AMIs
 ----------
@@ -239,9 +239,9 @@ Fedora hardware builders
 The following builders need to run on Fedora 20 on bare metal hardware:
 
 * flocker-vagrant-dev-box
-* flocker-vagrant-tutorial-box
-* flocker/acceptance/vagrant/fedora-20
-* flocker/installed-package/fedora-20
+* flocker/vagrant/build/tutorial
+* flocker/acceptance/vagrant/centos-7
+* flocker/installed-package/centos-7
 
 To create a Rackspace OnMetal slave to serve this purpose:
 

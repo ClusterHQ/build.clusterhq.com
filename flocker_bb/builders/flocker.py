@@ -73,8 +73,22 @@ class StorageConfiguration(object):
         # We use a shared dictionary here, since locks are compared via
         # identity, not by name.
         lock_name = '/'.join(['functional', 'api', self.provider])
+
+        # This should be in the config file (FLOC-2025)
+        # Allow up to 2 AWS functional storage driver tests to run in parallel.
+        # This is a temporary fix to get around test wait time being
+        # queued up to run.
+        # OpenStack tests have not experienced long queued wait times.
+        # So, leave the max count at 1.
+        if self.provider == 'aws':
+            maxCount = 2
+        elif self.provider in ('rackspace', 'redhat-openstack'):
+            maxCount = 1
+        else:
+            raise NotImplementedError("Unsupported provider %s" %
+                                      (self.provider,))
         lock = self._locks.setdefault(
-            self.provider, MasterLock(lock_name, maxCount=1))
+            self.provider, MasterLock(lock_name, maxCount=maxCount))
         return [lock.access("counting")]
 
 
@@ -209,15 +223,6 @@ def _flockerCoverage():
             url=resultURL('complete-coverage'),
             name="upload-coverage-html",
             ),
-        ShellCommand(
-            command=[
-                virtualenvBinary('coveralls'),
-                "--coveralls_yaml",
-                Interpolate("%(prop:workdir)s/../coveralls.yml")],
-            description=[b"uploading", b"to", b"coveralls"],
-            descriptionDone=[b"upload", b"to", b"coveralls"],
-            name="coveralls-upload",
-            ),
         ]
     return steps
 
@@ -308,7 +313,6 @@ def installCoverage():
     return pip("coverage", [
          "coverage==3.7.1",
          "http://data.hybridcluster.net/python/coverage_reporter-0.01_hl0-py27-none-any.whl",  # noqa
-         "python-coveralls==2.4.2",
     ])
 
 
@@ -351,14 +355,8 @@ def sphinxBuild(builder, workdir=b"build/docs", **kwargs):
 
 def makeInternalDocsFactory():
     factory = getFlockerFactory(python="python2.7")
-    factory.addStep(SetPropertyFromCommand(
-        command=["python", "setup.py", "--version"],
-        name='check-version',
-        description=['checking', 'version'],
-        descriptionDone=['checking', 'version'],
-        property='version'
-    ))
     factory.addSteps(installDependencies())
+    factory.addSteps(check_version())
     factory.addStep(sphinxBuild(
         "spelling", "build/docs",
         logfiles={'errors': '_build/spelling/output.txt'},
@@ -439,14 +437,8 @@ def createRepository(distribution, repository_path):
 
 def makeOmnibusFactory(distribution):
     factory = getFlockerFactory(python="python2.7")
-    factory.addStep(SetPropertyFromCommand(
-        command=["python", "setup.py", "--version"],
-        name='check-version',
-        description=['checking', 'version'],
-        descriptionDone=['checking', 'version'],
-        property='version'
-    ))
     factory.addSteps(installDependencies())
+    factory.addSteps(check_version())
     factory.addStep(ShellCommand(
         name='build-sdist',
         description=["building", "sdist"],
@@ -494,6 +486,27 @@ def makeOmnibusFactory(distribution):
     return factory
 
 
+def check_version():
+    """
+    Get the version of the package and store it in the ``version`` property.
+    """
+    return [
+        SetPropertyFromCommand(
+            command=[virtualenvBinary('python'), "setup.py", "--version"],
+            name='check-version',
+            description=['checking', 'version'],
+            descriptionDone=['check', 'version'],
+            property='version',
+            env={
+                # Ignore warnings
+                # In particular, setuptools warns about normalization.
+                # Normalizing '..' to '..' normalized_version, ..
+                'PYTHONWARNINGS': 'ignore',
+            },
+        ),
+    ]
+
+
 def makeHomebrewRecipeCreationFactory():
     """Create the Homebrew recipe from a source distribution.
 
@@ -501,14 +514,8 @@ def makeHomebrewRecipeCreationFactory():
     non-Mac platform.  Once complete, this triggers the Mac testing.
     """
     factory = getFlockerFactory(python="python2.7")
-    factory.addStep(SetPropertyFromCommand(
-        command=["python", "setup.py", "--version"],
-        name='check-version',
-        description=['checking', 'version'],
-        descriptionDone=['check', 'version'],
-        property='version'
-    ))
     factory.addSteps(installDependencies())
+    factory.addSteps(check_version())
 
     # Create suitable names for files hosted on Buildbot master.
 
@@ -661,21 +668,14 @@ from ..steps import MergeForward
 functionalLock = SlaveLock('functional-tests')
 
 OMNIBUS_DISTRIBUTIONS = [
-    'fedora-20',
     'ubuntu-14.04',
+    'ubuntu-15.04',
     'centos-7',
 ]
 
 
 def getBuilders(slavenames):
     builders = [
-        BuilderConfig(name='flocker-fedora-20',
-                      builddir='flocker',
-                      slavenames=slavenames['aws/fedora-20'],
-                      category='flocker',
-                      factory=makeFactory(b'python2.7'),
-                      locks=[functionalLock.access('counting')],
-                      nextSlave=idleSlave),
         BuilderConfig(name='flocker-ubuntu-14.04',
                       slavenames=slavenames['aws/ubuntu-14.04'],
                       category='flocker',
@@ -790,7 +790,6 @@ def getBuilders(slavenames):
     return builders
 
 BUILDERS = [
-    'flocker-fedora-20',
     'flocker-ubuntu-14.04',
     'flocker-centos-7',
     'flocker-osx-10.10',

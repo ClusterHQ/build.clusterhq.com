@@ -1,3 +1,7 @@
+from __future__ import absolute_import
+
+from eliot import Message, start_action, Action
+from eliot.twisted import DeferredContext
 from zope.interface import implementer, Interface
 from twisted.python.constants import Names, NamedConstant
 from twisted.internet.threads import deferToThread
@@ -8,6 +12,28 @@ from machinist import (
     trivialInput, constructFiniteStateMachine, Transition,
     IRichInput, stateful)
 from flocker_bb.ec2_buildslave import OnDemandBuildSlave
+from retry import retry
+
+
+class RetryLogger(object):
+    """
+    A stdlib-like logger that implements the method used by :module:`retry`.
+    """
+    @staticmethod
+    def warning(fmt, error, delay):
+        Message.new(
+            message_type="flocker_bb:ec2:retry",
+            error=str(error), delay=delay,
+        ).write()
+
+
+class RequestLimitExceeded(Exception):
+    pass
+
+retry_on_request_limit = retry(
+    RequestLimitExceeded, delay=10, backoff=2, max_delay=240, jitter=(0, 10),
+    logger=RetryLogger(),
+)
 
 
 # A metadata key name which can be found in image metadata.  This metadata
@@ -126,39 +152,54 @@ class InstanceBooter(object):
         """
         Create a node.
         """
-        def thread_start():
-            # Since loading the image metadata is done separately from booting
-            # the node, it's possible the metadata here won't actually match
-            # the metadata of the image the node ends up running (someone could
-            # replace the image with a different one between this call and the
-            # node being started).  Since generating images is currently a
-            # manual step, this probably won't happen very often and if it does
-            # there's a person there who can deal with it.  Also it will be
-            # resolved after the next node restart.  It would be better to
-            # extract the image metadata from the booted node, though.
-            # FLOC-1905
-            self.image_metadata = self.driver.get_image_metadata()
-            return self.driver.create()
-        d = deferToThread(thread_start)
+        action = start_action(
+            action_type="flocker_bb:ec2:start",
+            name=self.identifier())
+        with action.context():
 
-        def started(node):
-            self.node = node
-            instance_metadata = {
-                'instance_id': node.id,
-                'instance_name': node.name,
-            }
-            self._fsm.receive(InstanceStarted(
-                instance_id=node.id,
-                image_metadata=self.image_metadata,
-                instance_metadata=instance_metadata,
-            ))
-            self.instance_metadata = instance_metadata
+            def thread_start(task_id):
+                # Since loading the image metadata is done separately from
+                # booting the node, it's possible the metadata here won't
+                # actually match the metadata of the image the node ends up
+                # running (someone could replace the image with a different one
+                # between this call and the node being started).  Since
+                # generating images is currently a manual step, this probably
+                # won't happen very often and if it does there's a person there
+                # who can deal with it.  Also it will be resolved after the
+                # next node restart.  It would be better to extract the image
+                # metadata from the booted node, though.
+                # FLOC-1905
+                with Action.continue_task(task_id=task_id):
+                    self.image_metadata = self.driver.get_image_metadata()
+                    return self.driver.create()
 
-        def failed(f):
-            log.err(f, "while starting %s" % (self.identifier(),))
-            self._fsm.receive(StartFailed())
+            d = DeferredContext(
+                deferToThread(thread_start, action.serialize_task_id())
+            )
 
-        d.addCallbacks(started, failed)
+            def started(node):
+                self.node = node
+                instance_metadata = {
+                    'instance_id': node.id,
+                    'instance_name': node.name,
+                }
+                self._fsm.receive(InstanceStarted(
+                    instance_id=node.id,
+                    image_metadata=self.image_metadata,
+                    instance_metadata=instance_metadata,
+                ))
+                self.instance_metadata = instance_metadata
+
+            def failed(f):
+                # We log the exception twice.
+                # For Zulip
+                log.err(f, "while starting %s" % (self.identifier(),))
+                self._fsm.receive(StartFailed())
+                # For eliot
+                return f
+
+            d.addCallbacks(started, failed)
+            d.addActionFinish()
 
     def output_STOP(self, context):
         """
@@ -346,22 +387,28 @@ class EC2CloudDriver(object):
         image_metadata.update(image.extra['tags'])
         return image_metadata
 
+    @retry_on_request_limit
     def create(self):
         """
         Create and start a new EC2 instance.
 
         All parameters are fixed to the values used to initialize this driver.
         """
-        image = self.get_image()
-        return self.driver.create_node(
-            name=self.name,
-            size=get_size(self.driver, self.instance_type),
-            image=image,
-            ex_keyname=self.keypair_name,
-            ex_userdata=self.user_data,
-            ex_metadata=self.instance_tags,
-            ex_securitygroup=[self.security_name],
-        )
+        try:
+            image = self.get_image()
+            return self.driver.create_node(
+                name=self.name,
+                size=get_size(self.driver, self.instance_type),
+                image=image,
+                ex_keyname=self.keypair_name,
+                ex_userdata=self.user_data,
+                ex_metadata=self.instance_tags,
+                ex_securitygroup=[self.security_name],
+            )
+        except Exception as e:
+            if "RequestLimitExceeded" in e.message:
+                raise RequestLimitExceeded()
+            raise
 
 
 @attributes(
@@ -410,26 +457,32 @@ class RackspaceCloudDriver(object):
             get_tags=lambda image: image.extra['metadata'],
         )
 
+    @retry_on_request_limit
     def create(self):
         """
         Create and start a new Rackspace Cloud Server.
 
         All parameters are fixed to the values used to initialize this driver.
         """
-        image = self.get_image()
-        return self.driver.create_node(
-            name=self.name,
-            size=get_size(self.driver, self.flavor),
-            image=image,
+        try:
+            image = self.get_image()
+            return self.driver.create_node(
+                name=self.name,
+                size=get_size(self.driver, self.flavor),
+                image=image,
 
-            ex_keyname=self.keypair_name,
-            ex_metadata=self.instance_tags,
+                ex_keyname=self.keypair_name,
+                ex_metadata=self.instance_tags,
 
-            # If you don't turn on the config drive then your user data gets
-            # tossed in a black hole.
-            ex_config_drive=True,
-            ex_userdata=self.user_data,
-        )
+                # If you don't turn on the config drive then your user data
+                # gets tossed in a black hole.
+                ex_config_drive=True,
+                ex_userdata=self.user_data,
+            )
+        except Exception as e:
+            if "Request Entity Too Large OverLimit Retry" in e.message:
+                raise RequestLimitExceeded()
+            raise
 
     def get_image_metadata(self):
         image = self.get_image()
@@ -468,7 +521,7 @@ def get_image_tags(credentials):
 
 def rackspace_slave(
         name, password, config, credentials, user_data, buildmaster,
-        build_wait_timeout, keepalive_interval, properties,
+        build_wait_timeout, keepalive_interval, properties, max_builds,
 ):
     """
     :return: An ``OnDemandBuildSlave`` that uses a ``RackspaceCloudDriver`` for
@@ -500,13 +553,14 @@ def rackspace_slave(
         build_wait_timeout=build_wait_timeout,
         keepalive_interval=keepalive_interval,
         properties=properties,
+        max_builds=max_builds,
     )
 
 
 def ec2_slave(
         name, password, config, credentials, user_data, region, keypair_name,
         security_name, build_wait_timeout, keepalive_interval, buildmaster,
-        properties,
+        properties, max_builds,
 ):
     """
     :return: An ``OnDemandBuildSlave`` that uses an ``EC2CloudDriver`` for
@@ -542,4 +596,5 @@ def ec2_slave(
         build_wait_timeout=build_wait_timeout,
         keepalive_interval=keepalive_interval,
         properties=properties,
+        max_builds=max_builds,
     )
