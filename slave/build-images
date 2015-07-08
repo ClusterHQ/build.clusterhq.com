@@ -151,6 +151,13 @@ def process_image(args):
 DISTRO = sys.argv[1]
 base, manifest = load_manifest(DISTRO)
 
+if len(sys.argv) == 3:
+    images = [
+        image for image in manifest['images']
+        if image['name'] == sys.argv[2]
+    ]
+else:
+    images = manifest['images']
 amis = {}
-for image in manifest['images']:
+for image in images:
     process_image(image)
