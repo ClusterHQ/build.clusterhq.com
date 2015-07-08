@@ -72,6 +72,11 @@ yum install -y https://kojipkgs.fedoraproject.org//packages/kernel/${KV}/${SV}/$
         "s3cmd",
     ]
     run("yum install -y " + " ".join(packages))
+
+    sudo("curl -O https://bootstrap.pypa.io/get-pip.py")
+    sudo("python get-pip.py")
+    sudo("pip install --user buildbot-slave==0.8.10 virtualenv==12.1.1")
+
     run("useradd buildslave")
     sudo("buildslave create-slave /home/buildslave/fedora-vagrant %(master)s fedora-20/vagrant/%(index)s %(password)s"  # noqa
          % {'index': index, 'password': password, 'master': master},

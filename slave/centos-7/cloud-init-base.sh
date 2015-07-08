@@ -26,8 +26,6 @@ yum upgrade -y
 yum install -y \
 	git \
 	python-devel \
-	python-tox \
-	python-virtualenv \
 	rpmdevtools \
 	rpmlint \
 	rpm-build \
@@ -39,8 +37,9 @@ yum install -y \
 	curl \
 	enchant
 
-yum -y install python-pip
-pip install buildbot-slave
+curl https://bootstrap.pypa.io/get-pip.py | python -
+pip install virtualenv==12.1.1 tox==2.1.1
+pip install buildbot-slave==0.8.10
 
 # Despite being a packaging tool, fpm isn't yet packaged for Fedora.
 # See https://github.com/jordansissel/fpm/issues/611
@@ -54,11 +53,3 @@ systemctl start docker
 docker pull busybox
 docker pull openshift/busybox-http-app
 docker pull python:2.7-slim
-
-
-# Configure pip wheelhouse and cache
-mkdir ~root/.pip
-cat > ~root/.pip/pip.conf <<EOF
-[global]
-find-links = file:///var/cache/wheelhouse
-EOF

@@ -27,11 +27,8 @@ export DEBIAN_FRONTEND=noninteractive
 apt-get update
 apt-get -y upgrade
 apt-get install -y \
-	buildbot-slave \
 	git \
 	python-dev \
-	python-tox \
-	python-virtualenv \
 	docker.io \
 	libffi-dev \
 	build-essential \
@@ -42,7 +39,9 @@ apt-get install -y \
 	dpkg-dev \
 	enchant
 
-# Maybe also linux-source
+curl https://bootstrap.pypa.io/get-pip.py | python -
+pip install virtualenv==12.1.1 tox==2.1.1
+pip install buildbot-slave==0.8.10
 
 # Despite being a packaging tool, fpm isn't yet packaged for Fedora.
 # See https://github.com/jordansissel/fpm/issues/611
@@ -53,11 +52,3 @@ gem install fpm
 docker pull busybox:latest
 docker pull openshift/busybox-http-app:latest
 docker pull python:2.7-slim
-
-# Configure pip wheelhouse and cache
-mkdir ~root/.pip
-cat > ~root/.pip/pip.conf <<EOF
-[global]
-find-links = file:///var/cache/wheelhouse
-EOF
-mkdir /var/cache/wheelhouse
