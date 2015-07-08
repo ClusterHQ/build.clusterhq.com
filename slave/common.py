@@ -1,17 +1,20 @@
 import yaml
 import time
-from libcloud.compute.providers import get_driver, Provider
 from twisted.python.filepath import FilePath
 
-aws_config = yaml.safe_load(open("aws_config.yml"))
-
-driver = get_driver(Provider.EC2)(
-    key=aws_config['access_key'],
-    secret=aws_config['secret_access_token'],
-    region=aws_config['region'])
+cloud_config = yaml.safe_load(open("cloud_config.yml"))
 
 
-def wait_for_image(image):
+def get_driver(provider_slug, region_slug):
+    from libcloud.compute.providers import get_driver, Provider
+    provider = getattr(Provider, provider_slug.upper())
+    config = cloud_config[provider_slug].copy()
+    if region_slug is not None:
+        config['region'] = region_slug
+    return get_driver(provider)(**config)
+
+
+def wait_for_image(driver, image):
     """
     Wait for an image to be available.
     """

@@ -3,5 +3,5 @@ data
 private_html
 /config.yml
 /staging.yml
-/aws_config.yml
+/cloud_config.yml
 /.tox
