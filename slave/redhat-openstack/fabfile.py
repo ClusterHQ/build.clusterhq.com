@@ -200,7 +200,7 @@ def configure(index, password, master='build.staging.clusterhq.com'):
 
     sudo("curl -O https://bootstrap.pypa.io/get-pip.py")
     sudo("python get-pip.py")
-    sudo("pip install --user buildbot-slave==0.8.10 virtualenv==12.1.1")
+    sudo("pip install --user buildbot-slave==0.8.10 virtualenv==13.1.0")
 
     slashless_name = BUILDSLAVE_NAME.replace("/", "-") + '-' + str(index)
     builddir = 'builddir-' + str(index)

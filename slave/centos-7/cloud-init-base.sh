@@ -38,7 +38,7 @@ yum install -y \
 	enchant
 
 curl https://bootstrap.pypa.io/get-pip.py | python -
-pip install virtualenv==12.1.1 tox==2.1.1
+pip install virtualenv==13.1.0 tox==2.1.1
 pip install buildbot-slave==0.8.10
 
 # Despite being a packaging tool, fpm isn't yet packaged for Fedora.
