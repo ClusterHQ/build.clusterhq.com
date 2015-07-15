@@ -24,20 +24,22 @@ echo ZFS_DKMS_DISABLE_STRIP=y >> /etc/sysconfig/zfs
 
 yum upgrade -y
 yum install -y \
-	git \
-	python-devel \
-	python-tox \
-	python-virtualenv \
-	rpmdevtools \
-	rpmlint \
-	rpm-build \
-	docker-io \
-	libffi-devel \
-	@buildsys-build \
-	openssl-devel \
-	wget \
-	curl \
-	enchant
+        git \
+        python-devel \
+        python-tox \
+        python-virtualenv \
+        rpmdevtools \
+        rpmlint \
+        rpm-build \
+        docker-io \
+        libffi-devel \
+        @buildsys-build \
+        openssl-devel \
+        wget \
+        curl \
+        enchant
+# FLOC-2659 - And we'll need to reconfigure the same Docker config files on Centos-7 here.
+# But in this case we get to do it before docker deamon is started.
 
 yum -y install python-pip
 pip install buildbot-slave
