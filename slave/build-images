@@ -1,4 +1,5 @@
 #!/usr/bin/env python
+# FLOC-2659 - ...next we'll run this script to build new AWS buildslave AMIs
 
 import sys
 import time
