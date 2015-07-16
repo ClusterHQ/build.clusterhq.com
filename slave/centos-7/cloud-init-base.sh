@@ -38,8 +38,15 @@ yum install -y \
         wget \
         curl \
         enchant
-# FLOC-2659 - And we'll need to reconfigure the same Docker config files on Centos-7 here.
-# But in this case we get to do it before docker deamon is started.
+
+# Restrict the size of the Docker loopback data device
+cat <<EOF > /etc/sysconfig/docker-storage
+DOCKER_STORAGE_OPTIONS="--storage-opt dm.loopdatasize=2G"
+EOF
+
+systemctl stop docker
+rm -rf /var/lib/docker
+systemctl start docker
 
 yum -y install python-pip
 pip install buildbot-slave
