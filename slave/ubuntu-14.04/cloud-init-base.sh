@@ -45,70 +45,56 @@ apt-get install -y \
         dpkg-dev \
         enchant
 
-# FLOC-2659 After installing docker.io, I'll need to modify its configuration file.
+# Restrict the size of the Docker loopback data device
+# A 1G device allowed 723 stopped containers on Ubuntu 14.04 with Docker 1.3.3
 
-# The configuration file to modify is:
-# ```
-# root@acceptance-test-richardw-0:~# cat /etc/default/docker.io
-# # Docker Upstart and SysVinit configuration file
+# root@ip-172-31-10-80:~# docker version
+# Client version: 1.3.3
+# Client API version: 1.15
+# Go version (client): go1.2.1
+# Git commit (client): d344625
+# OS/Arch (client): linux/amd64
+# Server version: 1.3.3
+# Server API version: 1.15
+# Go version (server): go1.2.1
+# Git commit (server): d344625
 
-# # Customize location of Docker binary (especially for development testing).
-# #DOCKER="/usr/local/bin/docker"
+# i=0; while true; do echo "COUNT=$((i++))"; container_id=$(docker run --detach openshift/busybox-http-app);  docker stop $container_id; docker wait $container_id; ls -lsh /var/lib/docker/devicemapper/devicemapper/; done
+# ...
+# COUNT=721
+# ff49d920e7be0c5dd4fedc3014a7b8fe70a86e794bed9322dad285acdf940364
+# 143
+# total 1.1G
+# 1022M -rw------- 1 root root 1.0G Jul 16 16:54 data
+#   29M -rw------- 1 root root 2.0G Jul 16 16:54 metadata
+# COUNT=722
 
-# # Use DOCKER_OPTS to modify the daemon startup options.
-# #DOCKER_OPTS="--dns 8.8.8.8 --dns 8.8.4.4"
+# ^C^Ctotal 1.1G
+# 1023M -rw------- 1 root root 1.0G Jul 16 16:54 data
+#   30M -rw------- 1 root root 2.0G Jul 16 16:54 metadata
+# COUNT=723
 
-# # If you need Docker to use an HTTP proxy, it can also be specified here.
-# #export http_proxy="http://127.0.0.1:3128/"
+# dmesg
+# ...
+# [ 7463.263003] device-mapper: thin: 252:4: no free data space available.
 
-# # This is also a handy place to tweak where Docker's temporary files go.
-# #export TMPDIR="/mnt/bigdrive/docker-tmp"
-# ```
+# Then an attempt to stop the docker daemon hangs and leaves a zombie process
+# root@ip-172-31-10-80:~# ps ax | grep docker
+#  4640 pts/1    S+     0:00 grep --color=auto docker
+# 11243 ?        Zsl    0:25 [docker.io] <defunct>
 
-# And we need to add the following parameters to start docker with a smaller loop back filesystem:
-# https://clusterhq.atlassian.net/browse/FLOC-2628?focusedCommentId=18912&page=com.atlassian.jira.plugin.system.issuetabpanels:comment-tabpanel#comment-18912
-# ```
-#  --storage-opt dm.loopdatasize=1G --storage-opt dm.basesize=1G
-# ```
-# ... one which won't grow larger than the root filesystem
+# And the devicemapper files can't be removed.
+# root@ip-172-31-10-80:~# rm -rf /var/lib/docker/
+# rm: cannot remove ‘/var/lib/docker/devicemapper’: Device or resource busy
+cat <<EOF > /etc/default/docker.io
+DOCKER_OPTS="--storage-opt dm.loopdatasize=2G"
+EOF
 
-# The default configuration of Docker on our Ubuntu  build slave is
-# ```
-# root@ip-172-31-39-9:~# docker info
-# Containers: 1
-# Images: 87
-# Storage Driver: devicemapper
-#  Pool Name: docker-202:1-273582-pool
-#  Pool Blocksize: 65.54 kB
-#  Data file: /var/lib/docker/devicemapper/devicemapper/data
-#  Metadata file: /var/lib/docker/devicemapper/devicemapper/metadata
-#  Data Space Used: 5.016 GB
-#  Data Space Total: 107.4 GB
-#  Metadata Space Used: 5.915 MB
-#  Metadata Space Total: 2.147 GB
-#  Library Version: 1.02.77 (2012-10-15)
-# ```
-
-# And on acceptance nodes it's slightly different, but probably less important
-# since the nodes are only used for a single test run:
-
-# ```
-# root@acceptance-test-richardw-0:~# docker info
-# Containers: 0
-# Images: 6
-# Storage Driver: aufs
-#  Root Dir: /var/lib/docker/aufs
-#  Dirs: 6
-# Execution Driver: native-0.2
-# Kernel Version: 3.13.0-55-generic
-# Operating System: Ubuntu 14.04.2 LTS
-# ```
-
-# After reconfiguring docker, we'll need to:
-#  * stop it,
-#  * remove the existing /var/lib/docker directory
-#  * restart it
-
+# After reconfiguring Docker storage we need to remove the existing files and
+# restart the daemon.
+service docker.io stop
+rm -rf /var/lib/docker
+service docker.io start
 
 # Maybe also linux-source
 
