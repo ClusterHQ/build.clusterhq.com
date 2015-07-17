@@ -15,5 +15,6 @@ images:
     script: |-
       sudo yum install -y zfs
   username: centos
+  userdata: nil
   size: t2.medium
   disk_size: 128
