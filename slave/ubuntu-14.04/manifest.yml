@@ -3,7 +3,10 @@ images:
   base-ami: ami-818dd9b1
   deploy:
     file: cloud-init-base.sh
+  userdata: nil
   username: ubuntu
+  size: t1.micro
+  disk_size: 128
 
 - name: buildslave-ubuntu-14.04
   base-ami: buildslave-ubuntu-14.04-zfs-head
@@ -16,5 +19,7 @@ images:
       sudo env DEBIAN_FRONTEND=noninteractive
       apt-get -o Dpkg::Options::="--force-confdef"
       -o Dpkg::Options::="--force-confold" install -y zfsutils
+  userdata: nil
   username: ubuntu
   size: c3.large
+  disk_size: 128
