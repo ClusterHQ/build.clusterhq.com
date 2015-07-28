@@ -368,7 +368,20 @@ class CleanAcceptanceInstances(LoggingBuildStep):
             node for node
             in all_nodes
             if node.name.startswith(prefixes)
-            and (node.state == NodeState.RUNNING)
+            # Also, terminated nodes that still show up.  An OpenStack bug
+            # causes these to hang around sometimes.  They're not billed in
+            # this state but they do count towards RAM quotas.  Quoth Rackspace
+            # support:
+            #
+            # > The complete fix for this issue is expected in the next
+            # > Openstack iteration (mid August).  Until then what can be done
+            # > is just to issue another delete against the same instance.  The
+            # > servers are only billed when they are in Active (green) status,
+            # > so the deleted instances are not billed.
+            #
+            # So consider any nodes in that state as potential destruction
+            # targets.
+            and node.state in (NodeState.RUNNING, NodeState.TERMINATED)
         ]
 
         # Split the nodes into kept and destroyed nodes;
