@@ -157,7 +157,7 @@ Credentials [1]_ for ``s3cmd`` can be configured using ``s3cmd --configure``.
 It can be updated to include available wheels of packages which are in flocker's ``setup.py`` by running the following commands::
 
    python setup.py sdist
-   pip wheel -f dist "Flocker[doc,dev]==$(python setup.py --version)"
+   pip wheel -f dist "Flocker[dev]==$(python setup.py --version)"
    s3cmd put -P -m "Content-Type:application/python+wheel" wheelhouse/*.whl s3://clusterhq-wheelhouse/fedora20-x86_64
    s3cmd ls s3://clusterhq-wheelhouse/fedora20-x86_64/ | sed 's,^.*/\(.*\),<a href="\1">\1</a><br/>,' | s3cmd put -P -m "text/html" - s3://clusterhq-wheelhouse/fedora20-x86_64/index
 

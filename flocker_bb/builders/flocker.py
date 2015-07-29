@@ -113,7 +113,7 @@ def getFlockerFactory(python):
 def installDependencies():
     return [
         pip("dependencies", ["."]),
-        pip("extras", ["Flocker[doc,dev,release]"]),
+        pip("extras", ["Flocker[dev]"]),
         ]
 
 
