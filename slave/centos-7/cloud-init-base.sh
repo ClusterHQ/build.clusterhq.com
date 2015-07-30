@@ -1,5 +1,12 @@
 #!/bin/sh
 
+#
+# Initialize a cloud instance with the software required to use the instance as
+# a BuildBot slave.  This is invoked the build-images script.  If versions of
+# software are installed which eventually become outdated, they will continue
+# to be used until the script is re-run.
+#
+
 set -e
 
 # This script is run as a libcloud ScriptDeployment.
