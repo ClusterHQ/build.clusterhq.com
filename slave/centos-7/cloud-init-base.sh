@@ -45,23 +45,10 @@ yum install -y \
 	curl \
 	enchant
 
-# Get Docker packages from upstream
-DOCKER_REPO="main"
-LSB_DIST="centos"
-DIST_VERSION="7"
-
-cat >/etc/yum.repos.d/docker-${DOCKER_REPO}.repo <<-EOF
-[docker-${DOCKER_REPO}-repo]
-name=Docker ${DOCKER_REPO} Repository
-baseurl=https://yum.dockerproject.org/repo/${DOCKER_REPO}/${LSB_DIST}/${DIST_VERSION}
-enabled=1
-gpgcheck=1
-gpgkey=https://yum.dockerproject.org/gpg
-EOF
-
 # Install whatever version is newest in the Docker repository.  If you wanted a
 # different version, you should have run the script at a different time.
-yum install -y docker-engine
+curl https://get.docker.com/ > /tmp/install-docker.sh
+sh /tmp/install-docker.sh
 
 # Get the build slave dependencies.
 yum -y install python-pip
