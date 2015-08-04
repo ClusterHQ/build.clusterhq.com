@@ -1,4 +1,6 @@
-# Remove old Vagrant boxes
+"""
+Remove Vagrant boxes created more than 14 days ago.
+"""
 
 from subprocess import check_output, call
 import os.path
