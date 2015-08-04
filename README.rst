@@ -449,3 +449,15 @@ The following steps can be used to change a volume size:
 - Detach the old volume.
 - Attach the new volume
 - Start the instance.
+
+Removing Vagrant Boxes
+----------------------
+
+Vagrant builders sometimes fail with "error: No space left on device".
+To remove Vagrant boxes in order to free space, run the following:
+
+.. code:: shell
+
+   vagrant box list | python vagrant-box-versions.py | while read box_name box_version; do vagrant box remove --box-version="$box_version" "$box_name"; done
+
+See FLOC-2715 for a better solution.
