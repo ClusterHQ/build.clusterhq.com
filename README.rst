@@ -458,6 +458,17 @@ To remove Vagrant boxes in order to free space, run the following:
 
 .. code:: shell
 
+   cat > vagrant-box-versions.py <<EOF
+   import sys
+
+
+   if __name__ == '__main__':
+       for line in sys.stdin:
+           line = line.strip()
+           box_name, box_details = line.split(None, 1)
+           box_platform, box_version = box_details[1:-1].split(', ', 1)
+           print box_name, box_version
+   EOF
    vagrant box list | python vagrant-box-versions.py | while read box_name box_version; do vagrant box remove --box-version="$box_version" "$box_name"; done
 
 See FLOC-2715 for a better solution.
