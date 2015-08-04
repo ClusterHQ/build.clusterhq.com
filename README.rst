@@ -471,4 +471,15 @@ To remove Vagrant boxes in order to free space, run the following:
    EOF
    vagrant box list | python vagrant-box-versions.py | while read box_name box_version; do vagrant box remove --box-version="$box_version" "$box_name"; done
 
+This may have a problem with some boxes, e.g.:
+
+```
+Removing box 'clusterhq/fedora20-updated' (v2014.09.19) with provider 'virtualbox'...
+Vagrant is attempting to interface with the UI in a way that requires
+a TTY. Most actions in Vagrant that require a TTY have configuration
+switches to disable this requirement. Please do that or run Vagrant
+with TTY.
+```
+
+If this happens and you would like to remove those boxes then use `--force` after `vagrant box remove`.
 See FLOC-2715 for a better solution.
