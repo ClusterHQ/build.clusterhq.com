@@ -491,6 +491,8 @@ To remove old Vagrant boxes in order to free space, run the following:
                    now = time.time()
                    time_difference = now - m_time
                    if time_difference > 14 * 24 * 60 * 60:
+                       # /dev/null is used to select the default option (No) when Vagrant asks
+                       # whether a box in use by a VM should be removed.
                        with open('/dev/null', 'rw') as f:
                            call(
                                args=[
