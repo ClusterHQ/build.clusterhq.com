@@ -11,6 +11,7 @@ from ..steps import (
     GITHUB,
     buildbotURL,
     MasterWriteFile, asJSON,
+    pip,
     flockerBranch,
     resultPath, resultURL,
     slave_environ,
@@ -233,11 +234,8 @@ def run_client_installation_tests(configuration):
             virtualenvBinary('python'),
             Interpolate('%(prop:builddir)s/build/admin/run-client-tests'),
             '--distribution', configuration.distribution,
-            '--provider', configuration.provider,
             '--branch', flockerBranch,
             '--build-server', buildbotURL,
-            '--config-file', Interpolate("%(kw:home)s/acceptance.yml",
-                                         home=slave_environ("HOME")),
         ],
         haltOnFailure=True))
     return factory
@@ -390,34 +388,22 @@ from buildbot.locks import MasterLock
 
 # Configuration for client installation testing.
 @attributes([
-    Attribute('provider'),
     Attribute('distribution'),
 ])
 class ClientConfiguration(object):
     """
     Configuration for a client installation test run.
 
-    :ivar provider: The provider to use.
     :ivar distribution: The distribution to use.
     """
 
     @property
     def builder_name(self):
-        return '/'.join(
-            ['flocker', 'client',
-             self.provider,
-             self.distribution])
+        return '/'.join(['flocker', 'client', self.distribution])
 
     @property
     def builder_directory(self):
         return self.builder_name.replace('/', '-')
-
-    @property
-    def slave_class(self):
-        if self.provider == 'vagrant':
-            return 'fedora-20/vagrant'
-        else:
-            return 'aws/centos-7'
 
 
 # Dictionary mapping providers for acceptence testing to a list of
@@ -469,11 +455,9 @@ class AcceptanceConfiguration(object):
 TUTORIAL_DISTRIBUTION = "centos-7"
 
 CLIENT_INSTALLATION_CONFIGURATIONS = [
-    ClientConfiguration(provider=provider, distribution=distribution)
-    for provider in ('rackspace', 'aws')
+    ClientConfiguration(distribution=distribution)
     for distribution in ('ubuntu-14.04', 'ubuntu-15.04')
 ]
-
 
 ACCEPTANCE_CONFIGURATIONS = [
     # There is only one vagrant box.
@@ -537,7 +521,6 @@ def getBuilders(slavenames):
             slavenames=slavenames[configuration.slave_class],
             category='flocker',
             factory=run_client_installation_tests(configuration),
-            locks=ACCEPTANCE_LOCKS.get(configuration.provider, []),
             nextSlave=idleSlave))
     for configuration in ACCEPTANCE_CONFIGURATIONS:
         builders.append(BuilderConfig(
@@ -612,12 +595,13 @@ def getSchedulers():
     for distribution in OMNIBUS_DISTRIBUTIONS:
         builders = [
             configuration.builder_name
-            for configuration in (
-                ACCEPTANCE_CONFIGURATIONS +
-                CLIENT_INSTALLATION_CONFIGURATIONS)
+            for configuration in ACCEPTANCE_CONFIGURATIONS
             if configuration.provider != 'vagrant'
             and configuration.distribution == distribution
         ]
+        for configuration in CLIENT_INSTALLATION_CONFIGURATIONS:
+            if configuration.distribution == distribution:
+                builders.append(configuration.builder_name)
         if distribution == TUTORIAL_DISTRIBUTION:
             builders.append('flocker/vagrant/build/tutorial')
         schedulers.append(
