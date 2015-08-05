@@ -405,6 +405,10 @@ class ClientConfiguration(object):
     def builder_directory(self):
         return self.builder_name.replace('/', '-')
 
+    @property
+    def slave_class(self):
+        return 'aws/centos-7'
+
 
 # Dictionary mapping providers for acceptence testing to a list of
 # sets of variants to test on each provider.
