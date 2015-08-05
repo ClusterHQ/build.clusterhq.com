@@ -224,7 +224,7 @@ def run_client_installation_tests(configuration):
     """
     factory = getFlockerFactory('python2.7')
 
-    factory.addSteps(pip("dependencies", ["."]))
+    factory.addStep(pip("dependencies", ["."]))
 
     factory.addStep(ShellCommand(
         name='test-client-installation',
