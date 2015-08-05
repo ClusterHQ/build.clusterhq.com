@@ -17,7 +17,7 @@ from ..steps import (
     )
 
 # FIXME
-from flocker_bb.builders.flocker import installDependencies, _flockerTests
+from flocker_bb.builders.flocker import installDependencies, _flockerTests, getFlockerFactory
 
 
 from characteristic import attributes, Attribute
@@ -31,13 +31,6 @@ def dotted_version(version):
                                         .replace('_', '.')
                                         .replace('+', '.')))
     return render
-
-
-def getFlockerFactory():
-    factory = getFactory("flocker", useSubmodules=False, mergeForward=True)
-    factory.addSteps(buildVirtualEnv("python2.7", useSystem=True))
-    factory.addSteps(installDependencies())
-    return factory
 
 
 def destroy_box(path):
@@ -148,7 +141,9 @@ def buildDevBox():
     """
     Build a vagrant dev box.
     """
-    factory = getFlockerFactory()
+    factory = getFlockerFactory('python2.7')
+
+    factory.addSteps(installDependencies())
 
     # We have to insert this before the first step, so we don't
     # destroy the vagrant meta-data. Normally .addStep adapts
@@ -194,7 +189,9 @@ def buildDevBox():
 
 
 def buildTutorialBox():
-    factory = getFlockerFactory()
+    factory = getFlockerFactory('python2.7')
+
+    factory.addSteps(installDependencies())
 
     # We have to insert this before the first step, so we don't
     # destroy the vagrant meta-data. Normally .addStep adapts
@@ -224,15 +221,9 @@ def run_client_installation_tests(configuration):
     :param ClientConfiguration configuration: Configuration for a client
         installation test run.
     """
-    factory = getFlockerFactory()
+    factory = getFlockerFactory('python2.7')
 
-    if configuration.provider == 'vagrant':
-        # We have to insert this before the first step, so we don't
-        # destroy the vagrant meta-data. Normally .addStep adapts
-        # to IBuildStepFactory.
-        factory.steps.insert(0, IBuildStepFactory(
-            destroy_box(path='build/admin/vagrant-acceptance-targets/%s'
-                             % configuration.distribution)))
+    factory.addSteps(pip("dependencies", ["."]))
 
     factory.addStep(ShellCommand(
         name='test-client-installation',
@@ -253,7 +244,9 @@ def run_client_installation_tests(configuration):
 
 
 def run_acceptance_tests(configuration):
-    factory = getFlockerFactory()
+    factory = getFlockerFactory('python2.7')
+
+    factory.addSteps(installDependencies())
 
     if configuration.provider == 'vagrant':
         # We have to insert this before the first step, so we don't
@@ -317,7 +310,9 @@ end
 
 
 def test_installed_package(box):
-    factory = getFlockerFactory()
+    factory = getFlockerFactory('python2.7')
+
+    factory.addSteps(installDependencies())
 
     factory.addStep(
         destroy_box(path='test'))
