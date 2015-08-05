@@ -6,8 +6,7 @@ from buildbot.steps.transfer import StringDownload
 from buildbot.interfaces import IBuildStepFactory
 
 from ..steps import (
-    buildVirtualEnv, virtualenvBinary,
-    getFactory,
+    virtualenvBinary,
     GITHUB,
     buildbotURL,
     MasterWriteFile, asJSON,
@@ -18,7 +17,8 @@ from ..steps import (
     )
 
 # FIXME
-from flocker_bb.builders.flocker import installDependencies, _flockerTests, getFlockerFactory
+from flocker_bb.builders.flocker import (
+    installDependencies, _flockerTests, getFlockerFactory)
 
 
 from characteristic import attributes, Attribute
