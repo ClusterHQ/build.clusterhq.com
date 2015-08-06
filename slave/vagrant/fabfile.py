@@ -89,7 +89,7 @@ yum install -y https://kojipkgs.fedoraproject.org//packages/kernel/${KV}/${SV}/$
     put(FilePath(__file__).sibling('fedora-vagrant-slave.service').path,
         '/etc/systemd/system/fedora-vagrant-slave.service')
     put(FilePath(__file__).sibling('remove-old-boxes.py').path,
-        '/var/tmp/remove-old-boxes.py')
+        slave_home.child('remove-old-boxes.py').path)
 
     run('systemctl start fedora-vagrant-slave')
     run('systemctl enable fedora-vagrant-slave')

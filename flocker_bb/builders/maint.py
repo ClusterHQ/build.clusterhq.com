@@ -55,9 +55,10 @@ def makeCleanOldBuildsFactory():
     # (flocker/acceptance/vagrant/centos-7/zfs and
     # flocker/installed-package/vagrant/centos-7). This means there is
     # not an obvious place to remove the boxes.  So, we periodically
-    # cleanup old boxes here.
+    # cleanup old boxes here. "Old" is the number of days passed as
+    # parameter to script.
     factory.addStep(ShellCommand(
-        ['python', '/var/tmp/remove-old-boxes.py', '14'],
+        ['python', '/home/buildslave/remove-old-boxes.py', '14'],
         description=['Removing', 'old', 'boxes'],
         descriptionDone=['Remove', 'old', 'boxes'],
         name='remove-old-boxes'))
