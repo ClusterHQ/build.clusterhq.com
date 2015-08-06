@@ -16,7 +16,7 @@ if __name__ == '__main__':
     box_name_prefix = 'clusterhq/'
 
     vagrant_boxes = check_output(
-       ['vagrant', 'box', 'list']).strip().split('\n')
+        ['vagrant', 'box', 'list']).strip().split('\n')
     box_names = {}
     for line in vagrant_boxes:
         box_name, box_details = line.split(None, 1)
@@ -39,19 +39,19 @@ if __name__ == '__main__':
                 now = time.time()
                 time_difference = now - m_time
                 if time_difference > num_days * 24 * 60 * 60:
-                   # /dev/null is used to select the default option (No)
-                   # when Vagrant asks whether a box in use by a VM should be
-                   # removed.
+                    # /dev/null is used to select the default option (No)
+                    # when Vagrant asks whether a box in use by a VM should be
+                    # removed.
                     with open('/dev/null', 'rw') as f:
                         print 'Deleting {name} ({version})'.format(
-                           name=box_name, version=box_version,
+                            name=box_name, version=box_version,
                         )
                         call(
-                           args=[
-                               'vagrant', 'box', 'remove',
-                               '--box-version={}'.format(box_version),
+                            args=[
+                                'vagrant', 'box', 'remove',
+                                '--box-version={}'.format(box_version),
                                 box_name,
-                           ],
-                           stdin=f,
-                           stderr=f,
-                       )
+                            ],
+                            stdin=f,
+                            stderr=f,
+                        )
