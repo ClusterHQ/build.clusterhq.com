@@ -16,6 +16,7 @@ from twisted.python.log import err
 from twisted.internet.threads import deferToThread
 
 from buildbot.steps.master import MasterShellCommand
+from buildbot.steps.shell import ShellCommand
 from buildbot.config import BuilderConfig
 from buildbot.process.factory import BuildFactory
 from buildbot.schedulers.timed import Periodic
@@ -48,6 +49,9 @@ def makeCleanOldBuildsFactory():
         descriptionDone=['Remove', 'old', 'results'],
         name='remove-old-results'))
 
+    factory.addStep(ShellCommand(
+
+    ))
     return factory
 
 
