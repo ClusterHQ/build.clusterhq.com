@@ -44,7 +44,7 @@ def makeCleanOldBuildsFactory():
     factory.addStep(MasterShellCommand(
         ['find', path,
          '-type', 'f', '-mtime', '+14',
-         '-exec', 'unlink', '{}', ';'],
+         '-exec', 'unlink', '{}', ';', '-print'],
         description=['Removing', 'old', 'results'],
         descriptionDone=['Remove', 'old', 'results'],
         name='remove-old-results'))
