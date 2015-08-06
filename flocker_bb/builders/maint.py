@@ -49,6 +49,13 @@ def makeCleanOldBuildsFactory():
         descriptionDone=['Remove', 'old', 'results'],
         name='remove-old-results'))
 
+    # Vagrant tutorial boxes are created on the Vagrant slave, and
+    # uploaded to S3.  However, the boxes must be kept on the slave
+    # for running subsequent tests
+    # (flocker/acceptance/vagrant/centos-7/zfs and
+    # flocker/installed-package/vagrant/centos-7). This means there is
+    # not an obvious place to remove the boxes.  So, we periodically
+    # cleanup old boxes here.
     factory.addStep(ShellCommand(
         ['python', '/var/tmp/remove-old-boxes.py', '14'],
         description=['Removing', 'old', 'boxes'],
