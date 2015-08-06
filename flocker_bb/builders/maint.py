@@ -50,8 +50,11 @@ def makeCleanOldBuildsFactory():
         name='remove-old-results'))
 
     factory.addStep(ShellCommand(
+        ['python', '/var/tmp/remove-old-boxes.py', '14'],
+        description=['Removing', 'old', 'boxes'],
+        descriptionDone=['Remove', 'old', 'boxes'],
+        name='remove-old-boxes'))
 
-    ))
     return factory
 
 
