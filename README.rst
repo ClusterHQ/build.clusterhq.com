@@ -99,6 +99,7 @@ Start staging server
 
 Once the Docker image has built on the staging server, and the staging.yml file has been created, start the test Buildbot master from the local machine using::
 
+   # restart is used instead of update so as not to pull any images from the Docker Hub
    $ fab restart:staging.yml
 
 Connect to the IP address of the EC2 instance and log in to the Buildmaster portal with the credentials from the ``auth`` section of the config file.
