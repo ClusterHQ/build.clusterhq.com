@@ -58,7 +58,7 @@ def makeCleanOldBuildsFactory():
     # cleanup old boxes here. "Old" is the number of days passed as
     # parameter to script.
     factory.addStep(ShellCommand(
-        ['python', '/home/buildslave/remove-old-boxes.py', '14'],
+        ['python', '/home/buildslave/remove-old-boxes.py', '0.01'],
         description=['Removing', 'old', 'boxes'],
         descriptionDone=['Remove', 'old', 'boxes'],
         name='remove-old-boxes'))
