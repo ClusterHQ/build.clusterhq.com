@@ -110,7 +110,7 @@ To trigger a build, enter a branch name and click the ``Force`` button to start 
 
 The staging master will start latent slaves on AWS EC2 automatically when builds have been triggered.
 
-Tests that require Mac OS X or to start VM's cannot use AWS EC2 latent slaves.
+Tests that require Mac OS X or starting VM's cannot use AWS EC2 latent slaves.
 These tests will remain grey until a non-latent slave connects.
 To start a Mac OS X non-latent slave, see below.
 
