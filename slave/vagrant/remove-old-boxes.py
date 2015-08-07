@@ -43,9 +43,9 @@ if __name__ == '__main__':
                     # when Vagrant asks whether a box in use by a VM should be
                     # removed.
                     with open('/dev/null', 'rw') as f:
-                        print 'Deleting {name} ({version})'.format(
+                        sys.stdout.write('Deleting {name} ({version})'.format(
                             name=box_name, version=box_version,
-                        )
+                        ))
                         call(
                             args=[
                                 'vagrant', 'box', 'remove',
