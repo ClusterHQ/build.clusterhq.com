@@ -94,9 +94,6 @@ Make the following changes to the ``staging.yml`` file:
 
 #. To prevent reports being published to the Flocker Github repository, change the ``github.report_status`` config option to ``False``.
 
-#. To use the staging Docker image, add a ``buildmaster.docker_tag`` config option with the value ``staging``.
-
-
 Start staging server
 --------------------
 
