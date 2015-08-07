@@ -64,19 +64,22 @@ This command will display the external IP address of the EC2 instance.
 
 Run ``python start-aws.py --help`` to see the available options to this command.
 
+Install pre-requisites and start Docker::
+
+   [aws]$ sudo yum install -y docker-io fabric git
+   [aws]$ sudo setenforce 0
+   [aws]$ sudo systemctl start docker
+
 Create a staging Docker image
 -----------------------------
 
 On the staging server, run the following commands::
 
-   [aws]$ sudo yum install -y docker-io fabric git
-   [aws]$ sudo setenforce 0
-   [aws]$ sudo systemctl start docker
    [aws]$ git clone https://github.com/ClusterHQ/build.clusterhq.com.git
    [aws]$ cd build.clusterhq.com
    [aws]$ # Change <BRANCH> to the branch of build.clusterhq.com you want
    [aws]$ git checkout <BRANCH>
-   [aws]$ sudo docker build -t clusterhq/build.clusterhq.com:staging .
+   [aws]$ sudo docker build --tag clusterhq/build.clusterhq.com:staging .
    [aws]$ sudo docker run --name buildmaster-data -v /srv/buildmaster/data busybox /bin/true
 
 Create staging configuration
