@@ -1,8 +1,7 @@
 from buildbot.steps.shell import ShellCommand, SetPropertyFromCommand
 from buildbot.steps.python_twisted import Trial
 from buildbot.steps.python import Sphinx
-from buildbot.steps.transfer import (
-    DirectoryUpload, FileUpload, StringDownload)
+from buildbot.steps.transfer import DirectoryUpload, FileUpload
 from buildbot.steps.master import MasterShellCommand
 from buildbot.steps.source.git import Git
 from buildbot.process.properties import Interpolate, Property
@@ -145,88 +144,6 @@ def _flockerTests(kwargs, tests=None, env=None, trial=None):
         ]
 
 
-def _flockerCoverage():
-    steps = _flockerTests({
-        'python': [
-            # Buildbot flattens this for us.
-            # Unfortunately, Trial assumes that 'python' is a list of strings,
-            # and checks for spaces in them. Interpolate isn't iterable, so
-            # make it a list (which is, and doesn't have a " " in it.
-            [virtualenvBinary('coverage')],
-            b"run",
-            b"--branch",
-            b"--source", b"flocker",
-            b"--rcfile", b"../build/.coveragerc",
-            ]
-        })
-    # This needs to be before we delete the temporary directory.
-    steps.insert(len(steps)-1,
-        ShellCommand(  # noqa
-            name='move-coverage',
-            description=["moving", "coverage"],
-            descriptionDone=["move", "coverage"],
-            command=['cp', '.coverage', '../build/.coverage.original'],
-            workdir=TMPDIR,
-            haltOnFailure=True))
-    steps += [
-        StringDownload(
-            '\n'.join([
-                '[paths]',
-                'sources =',
-                '    flocker',
-                '    /*/site-packages/flocker',
-                '']),
-            '.coveragerc-combine',
-            name="download-coveragerc"),
-        ShellCommand(
-            command=[
-                virtualenvBinary('coverage'),
-                'combine',
-                '--rcfile=.coveragerc-combine',
-                ],
-            name='rewrite-coverage',
-            description=[b'Rewriting', b'coverage'],
-            descriptionDone=[b'Rewrite', 'coverage'],
-            ),
-        ShellCommand(
-            command=Interpolate(
-                b"git diff --no-prefix %(prop:lint_revision)s..HEAD | "
-                + path.join(VIRTUALENV_DIR, "bin/coverage-reporter")
-                + b" --patch=stdin "
-                + b"--coverage flocker"
-                + b" --patch-level=0 "
-                b"--coverage-file=.coverage --summarize "
-                b"--annotate --annotate-dir change-coverage-annotations"),
-            workdir=b"build",
-            description=[b"Computing", b"change", b"coverage"],
-            descriptionDone=[b"Compute", b"change", b"coverage"],
-            name="change-coverage",
-            ),
-        DirectoryUpload(
-            b"change-coverage-annotations",
-            resultPath('change-coverage'),
-            url=resultURL('change-coverage'),
-            name="upload-coverage-annotations",
-            ),
-        ShellCommand(
-            command=[
-                virtualenvBinary('coverage'),
-                b"html", b"-d", b"html-coverage",
-                ],
-            description=[b"generating", b"html", b"report"],
-            descriptionDone=[b"generate", b"html", b"report"],
-            name="coverage-report",
-            ),
-        DirectoryUpload(
-            b"html-coverage",
-            resultPath('complete-coverage'),
-            url=resultURL('complete-coverage'),
-            name="upload-coverage-html",
-            ),
-        ]
-    return steps
-
-
 def installTwistedTrunk():
     steps = []
     steps.append(Git(
@@ -306,24 +223,6 @@ def makeLintFactory():
         workdir='build',
         flunkOnFailure=True,
         ))
-    return factory
-
-
-def installCoverage():
-    return pip("coverage", [
-         "coverage==3.7.1",
-         "http://data.hybridcluster.net/python/coverage_reporter-0.01_hl0-py27-none-any.whl",  # noqa
-    ])
-
-
-def makeCoverageFactory():
-    """
-    Create and return a new build factory for checking test coverage.
-    """
-    factory = getFlockerFactory(python="python2.7")
-    factory.addSteps(installDependencies())
-    factory.addStep(installCoverage())
-    factory.addSteps(_flockerCoverage())
     return factory
 
 
@@ -680,12 +579,6 @@ def getBuilders(slavenames):
                       factory=makeFactory(b'python2.7', twistedTrunk=True),
                       locks=[functionalLock.access('counting')],
                       nextSlave=idleSlave),
-        BuilderConfig(name='flocker-coverage',
-                      slavenames=slavenames['aws/ubuntu-14.04'],
-                      category='flocker',
-                      factory=makeCoverageFactory(),
-                      locks=[functionalLock.access('counting')],
-                      nextSlave=idleSlave),
         BuilderConfig(name='flocker-lint',
                       slavenames=slavenames['aws/ubuntu-14.04'],
                       category='flocker',
@@ -754,7 +647,6 @@ BUILDERS = [
     'flocker-centos-7',
     'flocker-osx-10.10',
     'flocker-twisted-trunk',
-    'flocker-coverage',
     'flocker-lint',
     'flocker-docs',
     'flocker/unit-test/centos-7/zfs-head',
