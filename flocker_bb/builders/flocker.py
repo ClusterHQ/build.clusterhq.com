@@ -113,7 +113,7 @@ def getFlockerFactory(python):
 def installDependencies():
     return [
         pip("dependencies", ["."]),
-        pip("extras", ["Flocker[doc,dev,release]"]),
+        pip("extras", ["Flocker[dev]"]),
         ]
 
 
@@ -355,14 +355,8 @@ def sphinxBuild(builder, workdir=b"build/docs", **kwargs):
 
 def makeInternalDocsFactory():
     factory = getFlockerFactory(python="python2.7")
-    factory.addStep(SetPropertyFromCommand(
-        command=["python", "setup.py", "--version"],
-        name='check-version',
-        description=['checking', 'version'],
-        descriptionDone=['checking', 'version'],
-        property='version'
-    ))
     factory.addSteps(installDependencies())
+    factory.addSteps(check_version())
     factory.addStep(sphinxBuild(
         "spelling", "build/docs",
         logfiles={'errors': '_build/spelling/output.txt'},
@@ -443,14 +437,8 @@ def createRepository(distribution, repository_path):
 
 def makeOmnibusFactory(distribution):
     factory = getFlockerFactory(python="python2.7")
-    factory.addStep(SetPropertyFromCommand(
-        command=["python", "setup.py", "--version"],
-        name='check-version',
-        description=['checking', 'version'],
-        descriptionDone=['checking', 'version'],
-        property='version'
-    ))
     factory.addSteps(installDependencies())
+    factory.addSteps(check_version())
     factory.addStep(ShellCommand(
         name='build-sdist',
         description=["building", "sdist"],
@@ -498,6 +486,27 @@ def makeOmnibusFactory(distribution):
     return factory
 
 
+def check_version():
+    """
+    Get the version of the package and store it in the ``version`` property.
+    """
+    return [
+        SetPropertyFromCommand(
+            command=[virtualenvBinary('python'), "setup.py", "--version"],
+            name='check-version',
+            description=['checking', 'version'],
+            descriptionDone=['check', 'version'],
+            property='version',
+            env={
+                # Ignore warnings
+                # In particular, setuptools warns about normalization.
+                # Normalizing '..' to '..' normalized_version, ..
+                'PYTHONWARNINGS': 'ignore',
+            },
+        ),
+    ]
+
+
 def makeHomebrewRecipeCreationFactory():
     """Create the Homebrew recipe from a source distribution.
 
@@ -505,14 +514,8 @@ def makeHomebrewRecipeCreationFactory():
     non-Mac platform.  Once complete, this triggers the Mac testing.
     """
     factory = getFlockerFactory(python="python2.7")
-    factory.addStep(SetPropertyFromCommand(
-        command=["python", "setup.py", "--version"],
-        name='check-version',
-        description=['checking', 'version'],
-        descriptionDone=['check', 'version'],
-        property='version'
-    ))
     factory.addSteps(installDependencies())
+    factory.addSteps(check_version())
 
     # Create suitable names for files hosted on Buildbot master.
 
@@ -664,42 +667,43 @@ def getBuilders(slavenames):
                           ],
                       ),
                       nextSlave=idleSlave),
-        BuilderConfig(name='flocker-zfs-head',
-                      slavenames=slavenames['aws/fedora-20/zfs-head'],
+        BuilderConfig(name='flocker/unit-test/centos-7/zfs-head',
+                      builddir='flocker-unit-test-centos-7-zfs-head',
+                      slavenames=slavenames['aws/centos-7/zfs-head'],
                       category='flocker',
                       factory=makeFactory(b'python2.7'),
                       locks=[functionalLock.access('counting')],
                       nextSlave=idleSlave),
         BuilderConfig(name='flocker-twisted-trunk',
-                      slavenames=slavenames['aws/fedora-20'],
+                      slavenames=slavenames['aws/ubuntu-14.04'],
                       category='flocker',
                       factory=makeFactory(b'python2.7', twistedTrunk=True),
                       locks=[functionalLock.access('counting')],
                       nextSlave=idleSlave),
         BuilderConfig(name='flocker-coverage',
-                      slavenames=slavenames['aws/fedora-20'],
+                      slavenames=slavenames['aws/ubuntu-14.04'],
                       category='flocker',
                       factory=makeCoverageFactory(),
                       locks=[functionalLock.access('counting')],
                       nextSlave=idleSlave),
         BuilderConfig(name='flocker-lint',
-                      slavenames=slavenames['aws/fedora-20'],
+                      slavenames=slavenames['aws/ubuntu-14.04'],
                       category='flocker',
                       factory=makeLintFactory(),
                       nextSlave=idleSlave),
         BuilderConfig(name='flocker-docs',
-                      slavenames=slavenames['aws/fedora-20'],
+                      slavenames=slavenames['aws/ubuntu-14.04'],
                       category='flocker',
                       factory=makeInternalDocsFactory(),
                       nextSlave=idleSlave),
         BuilderConfig(name='flocker-admin',
-                      slavenames=slavenames['aws/fedora-20'],
+                      slavenames=slavenames['aws/ubuntu-14.04'],
                       category='flocker',
                       factory=makeAdminFactory(),
                       nextSlave=idleSlave),
         BuilderConfig(name='flocker/homebrew/create',
                       builddir='flocker-homebrew-create',
-                      slavenames=slavenames['aws/fedora-20'],
+                      slavenames=slavenames['aws/ubuntu-14.04'],
                       category='flocker',
                       factory=makeHomebrewRecipeCreationFactory(),
                       nextSlave=idleSlave),
@@ -714,7 +718,7 @@ def getBuilders(slavenames):
         builders.append(
             BuilderConfig(
                 name='flocker-omnibus-%s' % (distribution,),
-                slavenames=slavenames['aws/fedora-20'],
+                slavenames=slavenames['aws/ubuntu-14.04'],
                 category='flocker',
                 factory=makeOmnibusFactory(
                     distribution=distribution,
@@ -753,7 +757,7 @@ BUILDERS = [
     'flocker-coverage',
     'flocker-lint',
     'flocker-docs',
-    'flocker-zfs-head',
+    'flocker/unit-test/centos-7/zfs-head',
     'flocker-admin',
     'flocker/homebrew/create',
 ] + [

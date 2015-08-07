@@ -6,18 +6,19 @@ from buildbot.steps.transfer import StringDownload
 from buildbot.interfaces import IBuildStepFactory
 
 from ..steps import (
-    buildVirtualEnv, virtualenvBinary,
-    getFactory,
+    virtualenvBinary,
     GITHUB,
     buildbotURL,
     MasterWriteFile, asJSON,
+    pip,
     flockerBranch,
     resultPath, resultURL,
     slave_environ,
     )
 
 # FIXME
-from flocker_bb.builders.flocker import installDependencies, _flockerTests
+from flocker_bb.builders.flocker import (
+    installDependencies, _flockerTests, getFlockerFactory)
 
 
 from characteristic import attributes, Attribute
@@ -31,13 +32,6 @@ def dotted_version(version):
                                         .replace('_', '.')
                                         .replace('+', '.')))
     return render
-
-
-def getFlockerFactory():
-    factory = getFactory("flocker", useSubmodules=False, mergeForward=True)
-    factory.addSteps(buildVirtualEnv("python2.7", useSystem=True))
-    factory.addSteps(installDependencies())
-    return factory
 
 
 def destroy_box(path):
@@ -148,7 +142,9 @@ def buildDevBox():
     """
     Build a vagrant dev box.
     """
-    factory = getFlockerFactory()
+    factory = getFlockerFactory('python2.7')
+
+    factory.addSteps(installDependencies())
 
     # We have to insert this before the first step, so we don't
     # destroy the vagrant meta-data. Normally .addStep adapts
@@ -194,7 +190,9 @@ def buildDevBox():
 
 
 def buildTutorialBox():
-    factory = getFlockerFactory()
+    factory = getFlockerFactory('python2.7')
+
+    factory.addSteps(installDependencies())
 
     # We have to insert this before the first step, so we don't
     # destroy the vagrant meta-data. Normally .addStep adapts
@@ -224,15 +222,9 @@ def run_client_installation_tests(configuration):
     :param ClientConfiguration configuration: Configuration for a client
         installation test run.
     """
-    factory = getFlockerFactory()
+    factory = getFlockerFactory('python2.7')
 
-    if configuration.provider == 'vagrant':
-        # We have to insert this before the first step, so we don't
-        # destroy the vagrant meta-data. Normally .addStep adapts
-        # to IBuildStepFactory.
-        factory.steps.insert(0, IBuildStepFactory(
-            destroy_box(path='build/admin/vagrant-acceptance-targets/%s'
-                             % configuration.distribution)))
+    factory.addStep(pip("dependencies", ["."]))
 
     factory.addStep(ShellCommand(
         name='test-client-installation',
@@ -242,18 +234,17 @@ def run_client_installation_tests(configuration):
             virtualenvBinary('python'),
             Interpolate('%(prop:builddir)s/build/admin/run-client-tests'),
             '--distribution', configuration.distribution,
-            '--provider', configuration.provider,
             '--branch', flockerBranch,
             '--build-server', buildbotURL,
-            '--config-file', Interpolate("%(kw:home)s/acceptance.yml",
-                                         home=slave_environ("HOME")),
         ],
         haltOnFailure=True))
     return factory
 
 
 def run_acceptance_tests(configuration):
-    factory = getFlockerFactory()
+    factory = getFlockerFactory('python2.7')
+
+    factory.addSteps(installDependencies())
 
     if configuration.provider == 'vagrant':
         # We have to insert this before the first step, so we don't
@@ -317,7 +308,9 @@ end
 
 
 def test_installed_package(box):
-    factory = getFlockerFactory()
+    factory = getFlockerFactory('python2.7')
+
+    factory.addSteps(installDependencies())
 
     factory.addStep(
         destroy_box(path='test'))
@@ -395,23 +388,18 @@ from buildbot.locks import MasterLock
 
 # Configuration for client installation testing.
 @attributes([
-    Attribute('provider'),
     Attribute('distribution'),
 ])
 class ClientConfiguration(object):
     """
     Configuration for a client installation test run.
 
-    :ivar provider: The provider to use.
     :ivar distribution: The distribution to use.
     """
 
     @property
     def builder_name(self):
-        return '/'.join(
-            ['flocker', 'client',
-             self.provider,
-             self.distribution])
+        return '/'.join(['flocker', 'client', self.distribution])
 
     @property
     def builder_directory(self):
@@ -419,10 +407,7 @@ class ClientConfiguration(object):
 
     @property
     def slave_class(self):
-        if self.provider == 'vagrant':
-            return 'fedora-20/vagrant'
-        else:
-            return 'aws/centos-7'
+        return 'aws/centos-7'
 
 
 # Dictionary mapping providers for acceptence testing to a list of
@@ -474,11 +459,9 @@ class AcceptanceConfiguration(object):
 TUTORIAL_DISTRIBUTION = "centos-7"
 
 CLIENT_INSTALLATION_CONFIGURATIONS = [
-    ClientConfiguration(provider=provider, distribution=distribution)
-    for provider in ('rackspace', 'aws')
+    ClientConfiguration(distribution=distribution)
     for distribution in ('ubuntu-14.04', 'ubuntu-15.04')
 ]
-
 
 ACCEPTANCE_CONFIGURATIONS = [
     # There is only one vagrant box.
@@ -542,7 +525,6 @@ def getBuilders(slavenames):
             slavenames=slavenames[configuration.slave_class],
             category='flocker',
             factory=run_client_installation_tests(configuration),
-            locks=ACCEPTANCE_LOCKS.get(configuration.provider, []),
             nextSlave=idleSlave))
     for configuration in ACCEPTANCE_CONFIGURATIONS:
         builders.append(BuilderConfig(
@@ -613,16 +595,18 @@ def getSchedulers():
                 "flocker": {"repository": GITHUB + b"/flocker"},
             },
         ),
+
     ]
     for distribution in OMNIBUS_DISTRIBUTIONS:
         builders = [
             configuration.builder_name
-            for configuration in (
-                ACCEPTANCE_CONFIGURATIONS +
-                CLIENT_INSTALLATION_CONFIGURATIONS)
+            for configuration in ACCEPTANCE_CONFIGURATIONS
             if configuration.provider != 'vagrant'
             and configuration.distribution == distribution
         ]
+        for configuration in CLIENT_INSTALLATION_CONFIGURATIONS:
+            if configuration.distribution == distribution:
+                builders.append(configuration.builder_name)
         if distribution == TUTORIAL_DISTRIBUTION:
             builders.append('flocker/vagrant/build/tutorial')
         schedulers.append(

@@ -1,7 +1,6 @@
 
 from twisted.application.internet import TimerService
 from twisted.internet.defer import inlineCallbacks, returnValue
-from twisted.python import log
 
 from buildbot.status.base import StatusReceiverMultiService
 from buildbot.status.results import Results
@@ -46,9 +45,6 @@ class Monitor(StatusReceiverMultiService):
 
     def __init__(self):
         StatusReceiverMultiService.__init__(self)
-        timer = TimerService(60*60, self.report_pending_builds)
-        timer.setServiceParent(self)
-
         timer = TimerService(30, self.metrics)
         timer.setServiceParent(self)
 
@@ -73,21 +69,6 @@ class Monitor(StatusReceiverMultiService):
             self.pending_counts_gauge.labels(builder).set(
                 pending_counts[builder])
 
-    @inlineCallbacks
-    def report_pending_builds(self):
-        """
-        If there are many pending builds, report them to zulip.
-        """
-        pending_counts = yield self.count_pending_builds()
-        if pending_counts and max(pending_counts.values()) > 10:
-            message = [
-                "|Builder|Pending Builds",
-                "|:-|-:|",
-            ]
-            message += ['|%s|%d|' % item for item in pending_counts.items()]
-            log.msg('\n'.join(message),
-                    zulip_subject="Too Many Pending Builds")
-
     def builderAdded(self, builderName, builder):
         """
         Notify this receiver of a new builder.
@@ -105,7 +86,7 @@ class Monitor(StatusReceiverMultiService):
         build.
         """
         slave_name, slave_number = build.getSlavename().rsplit('/', 1)
-        branch_type = getBranchType(getBranch(build))
+        branch_type = getBranchType(getBranch(build)).name
         self.building_counts_gauge.labels(
             builderName, slave_name, slave_number, branch_type).inc()
 
@@ -117,7 +98,7 @@ class Monitor(StatusReceiverMultiService):
         build.
         """
         slave_name, slave_number = build.getSlavename().rsplit('/', 1)
-        branch_type = getBranchType(getBranch(build))
+        branch_type = getBranchType(getBranch(build)).name
         self.building_counts_gauge.labels(
             builderName, slave_name, slave_number, branch_type,
         ).dec()

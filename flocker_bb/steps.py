@@ -3,6 +3,7 @@ from collections import Counter
 
 from twisted.internet import defer
 from twisted.python import log
+from twisted.python.constants import NamedConstant, Names
 from twisted.python.filepath import FilePath
 
 from buildbot.process.properties import Interpolate
@@ -38,10 +39,11 @@ report_expected_failures_parameter = BooleanParameter(
 )
 
 
-MASTER_BRANCH = 'master'
-RELEASE_BRANCH = 'release'
-MAINTENANCE_BRANCH = 'maintenance'
-DEVELOPMENT_BRANCH = 'development'
+class BranchType(Names):
+    master = NamedConstant()
+    release = NamedConstant()
+    maintenance = NamedConstant()
+    development = NamedConstant()
 
 
 def getBranchType(branch):
@@ -52,18 +54,17 @@ def getBranchType(branch):
 
     :param branch: A string describing a branch. e.g. 'master',
         'some-feature-FLOC-1234'.
-    :return: One of MASTER_BRANCH, RELEASE_BRANCH, MAINTENANCE_BRANCH, or
-        DEVELOPMENT_BRANCH.
+    :return: ``BranchType`` constant.
     """
     # TODO: Have MergeForward use this, rather than the other way around.
     if MergeForward._isMaster(branch):
-        return MASTER_BRANCH
+        return BranchType.master
     if MergeForward._isRelease(branch):
-        return RELEASE_BRANCH
+        return BranchType.release
     match = MergeForward._MAINTENANCE_BRANCH_RE.match(branch)
     if match:
-        return MAINTENANCE_BRANCH
-    return DEVELOPMENT_BRANCH
+        return BranchType.maintenance
+    return BranchType.development
 
 
 @renderer
@@ -235,7 +236,17 @@ class MergeForward(Source):
         return branch == 'master'
 
     _RELEASE_TAG_RE = re.compile(
-        '^[0-9]+\.[0-9]+\.[0-9]+(?:dev[0-9]+|pre[0-9]+|\+doc[0-9]+)?$')
+        # <major>.<minor>.<micro>
+        r'^[0-9]+\.[0-9]+\.[0-9]+'
+        # plus (optionally) any of:
+        r'(?:'
+        # weekly release
+        '\.?dev[0-9]+'
+        # prerelease
+        r'|(?:pre|rc)[0-9]+'
+        # documentation release
+        r'|(?:\+doc|\.post)[0-9]+)?'
+        r'$')
 
     @classmethod
     def _isRelease(cls, branch):
