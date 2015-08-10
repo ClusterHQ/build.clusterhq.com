@@ -90,9 +90,10 @@ Create a file ``staging.yml`` from the ``config.yml``.
 
 Make the following changes to the ``staging.yml`` file:
 
-#. To use the new EC2 instance, change the ``buildmaster.host`` config option to the IP of the EC2 instance.
+#. To use the new EC2 instance and the Docker image tagged ``staging`` created above, change the ``buildmaster.host`` config option to the IP of the EC2 instance, and add a ``buildmaster.docker_tag`` config option with the value ``staging``.
 
 #. To prevent reports being published to the Flocker Github repository, change the ``github.report_status`` config option to ``False``.
+
 
 Start staging server
 --------------------
