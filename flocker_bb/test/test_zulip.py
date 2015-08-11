@@ -12,12 +12,13 @@ from twisted.python.failure import Failure
 from twisted.web.client import ResponseDone, FileBodyProducer
 from twisted.web.http_headers import Headers
 
-from ..zulip_status import _Zulip
+from ..zulip import _Zulip
 
 
 @implementer(IResponse)
 class MemoryResponse(object):
-    def __init__(self, version, code, phrase, headers, request, previousResponse, body):
+    def __init__(self, version, code, phrase, headers,
+                 request, previousResponse, body):
         self.version = version
         self.code = code
         self.phrase = phrase
@@ -27,10 +28,8 @@ class MemoryResponse(object):
         self.setPreviousResponse(previousResponse)
         self._body = body
 
-
     def setPreviousResponse(self, previousResponse):
         self.previousResponse = previousResponse
-
 
     def deliverBody(self, protocol):
         protocol.makeConnection(_StubProducer())
@@ -44,22 +43,18 @@ class _StubProducer(object):
     def pauseProducing(self):
         pass
 
-
     def resumeProducing(self):
         pass
-
 
     def stopProducing(self):
         pass
 verifyClass(IPushProducer, _StubProducer)
 
 
-
 def _consume(body):
     if not isinstance(body, FileBodyProducer):
         raise TypeError()
     return body._inputFile.read()
-
 
 
 @implementer(IAgent)
@@ -76,7 +71,6 @@ class SpyAgent(object):
         return succeed(response)
 
 verifyClass(IAgent, SpyAgent)
-
 
 
 @implementer(IAgent)
@@ -103,14 +97,15 @@ class ZulipTests(SynchronousTestCase):
         zulip.send(b"the type", b"the content", b"the to", b"the subject")
         self.assertEqual(
             [(b"POST", b"https://api.zulip.com/v1/messages",
-              Headers({b"content-type":
-                           [b"application/x-www-form-urlencoded"],
-                       b"authorization":
-                           [b"Basic " + b64encode(bot + b":" + key)]}),
-              b"type=the+type&content=the+content&to=the+to&subject=the+subject",
+              Headers({
+                  b"content-type":
+                      [b"application/x-www-form-urlencoded"],
+                  b"authorization":
+                      [b"Basic " + b64encode(bot + b":" + key)]}),
+              b"type=the+type&content=the+content"
+              b"&to=the+to&subject=the+subject",
               )],
             requestLog)
-
 
     def test_sendEncodes(self):
         """
@@ -130,18 +125,17 @@ class ZulipTests(SynchronousTestCase):
         zulip.send(type, content, to, subject)
         self.assertEqual(
             [(b"POST", b"https://api.zulip.com/v1/messages",
-              Headers({b"content-type":
-                           [b"application/x-www-form-urlencoded"],
-                       b"authorization":
-                           [b"Basic " + b64encode(bot + b":" + key)]}),
+              Headers({
+                  b"content-type":
+                      [b"application/x-www-form-urlencoded"],
+                  b"authorization":
+                      [b"Basic " + b64encode(bot + b":" + key)]}),
               urlencode([(b"type", type.encode("utf-8")),
                          (b"content", content.encode("utf-8")),
                          (b"to", to.encode("utf-8")),
                          (b"subject", subject.encode("utf-8"))]),
               )],
             requestLog)
-
-
 
     def test_sendResultBefore(self):
         """
@@ -150,9 +144,9 @@ class ZulipTests(SynchronousTestCase):
         """
         agent = SlowAgent()
         zulip = _Zulip(b"some test", b"abcdef1234", agent)
-        sending = zulip.send(b"the type", b"the content", b"the to", b"the subject")
+        sending = zulip.send(
+            b"the type", b"the content", b"the to", b"the subject")
         self.assertNoResult(sending)
-
 
     def test_sendResultAfter(self):
         """
@@ -161,6 +155,7 @@ class ZulipTests(SynchronousTestCase):
         """
         agent = SpyAgent([])
         zulip = _Zulip(b"some test", b"abcdef1234", agent)
-        sending = zulip.send(b"the type", b"the content", b"the to", b"the subject")
+        sending = zulip.send(
+            b"the type", b"the content", b"the to", b"the subject")
         # SpyAgent always returns an empty response body
         self.assertEqual(b"", self.successResultOf(sending))

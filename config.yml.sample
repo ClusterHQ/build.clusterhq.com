@@ -11,6 +11,16 @@ zulip:
     stream: "BuildBot"
     # This can be null, to have the go to /dev/null
     critical_stream: "Engineering"
+manhole:
+    port: 22
+    authorized_keys:
+      - "ssh-rsa AAAA... comment"
+      - "..."
+##
+## These are the "credentials" sections.  They supply the configuration that
+## config.py and other areas of the implementation call "credentials" and they
+## are generally for supplying per-cloud secrets and configuration.
+##
 aws:
     identifier: "<aws access key id>"
     secret_identifier: "<aws secret access key>"
@@ -19,33 +29,50 @@ aws:
     # timestamp.
     image_tags:
     #    production: "true"
+
+rackspace:
+     username: "<rackspace username>"
+     key: "<rackspace api key>"
+     keyname: "<ssh keypair name granting access to slave vm>"
+     region: "<region slug>"
+     # Same as aws section.
+     image_tags:
+     #    production: "true"
+
+
+##
+## Thus ends the credentials section.
+##
+
+
 github:
     token: "<github api token>"
     report_status: True
 buildmaster:
     host: "build.clusterhq.com"
-coveralls:
-    token: "<coveralls repo token>"
 slaves:
-    fedora:
-        ami: "buildslave-fedora-20"
+    aws/centos-7/zfs-head:
+        ami: "buildslave-centos-7-zfs-head"
+        slaves: 1
+        instance_type: "c3.large"
+        max_builds: 2
+    aws/ubuntu-14.04:
+        ami: "buildslave-ubuntu-14.04"
         slaves: 3
         instance_type: "c3.large"
-    fedora-zfs-head:
-        ami: "buildslave-fedora-20-zfs-head"
-        slaves: 1
-        instance_type: "c3.large"
-    ubuntu-14.04:
-        ami: "buildslave-ubuntu-14.04"
-        slaves: 1
-        instance_type: "c3.large"
-    centos-7:
+        max_builds: 2
+    aws/centos-7:
         ami: "buildslave-centos-7"
-        slaves: 1
+        slaves: 3
         instance_type: "c3.large"
-    fedora-vagrant:
+        max_builds: 2
+    fedora-20/vagrant:
         passwords: ['<password>']
     osx:
+        passwords: ['<password>']
+    rackspace/centos-7:
+        openstack-image: "buildslave-centos-7-zfs-head"
+    redhat-openstack/centos-7:
         passwords: ['<password>']
 # List of builders whose failures should not be reported.  Tests listed here
 # will be reported in a separate section of the Buildbot web page, to indicate

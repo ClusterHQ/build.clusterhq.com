@@ -1,7 +1,7 @@
 #!/bin/bash
 setenforce 0
 
-if [[ "%(base)s" =~ (fedora|centos)-zfs-head ]]; then
+if [[ "%(base)s" =~ (fedora-20|centos-7)/zfs-head ]]; then
    yum install -y --enablerepo=zfs-testing zfs
    systemctl restart zfs.target
 fi
@@ -13,8 +13,6 @@ buildslave create-slave --umask 022 /srv/buildslave %(buildmaster_host)s:%(build
 export HOME=/srv/buildslave
 echo "https://%(github_token)s:@github.com" >/srv/buildslave/.git-credentials
 
-echo -e "repo_token: %(coveralls_token)s\nservice_name: buildbot" >/srv/buildslave/coveralls.yml
-
 cp -r ~root/.pip $HOME/.pip
 
 git config --global credential.helper "store"
@@ -23,10 +21,17 @@ cat <<"EOF" > $HOME/acceptance.yml
 %(acceptance.yml)s
 EOF
 export FLOCKER_FUNCTIONAL_TEST_CLOUD_CONFIG_FILE=$HOME/acceptance.yml
+export FLOCKER_FUNCTIONAL_TEST_CLOUD_PROVIDER=%(FLOCKER_FUNCTIONAL_TEST_CLOUD_PROVIDER)s
 
-# This will need to change if we ever have latent slaves on non-AWS.
-export FLOCKER_FUNCTIONAL_TEST_CLOUD_PROVIDER=aws
-export FLOCKER_FUNCTIONAL_TEST_AWS_AVAILABILITY_ZONE=$(curl -s http://169.254.169.254/latest/meta-data/placement/availability-zone)
+case "${FLOCKER_FUNCTIONAL_TEST_CLOUD_PROVIDER}" in
+    aws)
+        export FLOCKER_FUNCTIONAL_TEST_AWS_AVAILABILITY_ZONE="$(curl -s http://169.254.169.254/latest/meta-data/placement/availability-zone)"
+        ;;
+
+    openstack)
+        export FLOCKER_FUNCTIONAL_TEST_OPENSTACK_REGION="$(xenstore-read vm-data/provider_data/region)"
+        ;;
+esac
 
 touch /root/.ssh/known_hosts
 cat <<"EOF"  > /root/.ssh/id_rsa

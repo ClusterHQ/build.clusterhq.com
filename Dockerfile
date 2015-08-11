@@ -1,9 +1,13 @@
-FROM fedora:20
-#ADD https://copr.fedoraproject.org/coprs/tomprince/hybridlogic/repo/fedora-20-x86_64/tomprince-hybridlogic-fedora-20-x86_64.repo /etc/yum.repos.d/
-ADD tomprince-hybridlogic-fedora-20-x86_64.repo /etc/yum.repos.d/
-#RUN yum upgrade -y
-RUN yum install -y python-devel python-pip gcc libffi-devel openssl-devel git s3cmd dpkg-dev createrepo_c
-RUN ["pip", "install", "buildbot==0.8.10", "txgithub==15.0.0", "eliot", "apache-libcloud", "service_identity", "machinist", "prometheus_client"]
+FROM fedora:22
+
+# dpkg-dev is required for dpkg-scanpackages
+# /usr/bin/find /usr/bin/tar is required by dpkg-scanpackages (https://bugzilla.redhat.com/show_bug.cgi?id=1240352)
+RUN dnf upgrade -y && \
+    dnf install -y python-devel python-pip gcc libffi-devel openssl-devel gmp-devel git s3cmd dpkg-dev /usr/bin/find /usr/bin/tar createrepo_c && \
+    dnf clean all
+
+ADD requirements.txt /srv/buildmaster/
+RUN ["pip", "install", "-r", "/srv/buildmaster/requirements.txt"]
 
 ADD buildbot.tac /srv/buildmaster/
 ADD public_html /srv/buildmaster/public_html

@@ -27,8 +27,8 @@ def get_size(driver, size_name):
         raise ValueError("Unknown EC2 size.", size_name)
 
 
-def deploy_node_aws(driver, name, base_ami, deploy, username, userdata=None,
-                    size="t1.micro", disk_size=8,
+def deploy_node_aws(driver, name, base_ami, deploy, username, userdata,
+                    size, disk_size,
                     private_key_file=None,
                     keyname=None):
     """
@@ -130,7 +130,7 @@ def create_image(driver, node, name):
 
 
 def build_image_aws(name, base_ami, deploy, username,
-                    userdata=None, size="t1.micro", disk_size=8):
+                    userdata, size, disk_size):
     """
     Build an image by deploying a node, and then snapshoting the image.
 

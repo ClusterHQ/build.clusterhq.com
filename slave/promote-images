@@ -8,7 +8,7 @@ def get_images(name):
     return [
         image for
         image in driver.list_images(ex_owner="self")
-        if image.extra['tags'].get('base-name') == image_name
+        if image.extra['tags'].get('base_name') == image_name
     ]
 
 
@@ -16,7 +16,7 @@ def tag_latest_image(name, tags):
     images = get_images(name)
 
     def timestamp(image):
-        return image.extra.get('timestamp')
+        return image.extra['tags'].get('timestamp')
     latest_image = max(images, key=timestamp)
 
     driver.ex_create_tags(latest_image, tags=tags)
