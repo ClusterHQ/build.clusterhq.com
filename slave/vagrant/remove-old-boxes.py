@@ -52,16 +52,14 @@ if __name__ == '__main__':
                     # removed.
                     sys.stdout.write('Deleting.\n')
                     with open('/dev/null', 'rw') as f:
-                        pass
-
-                        # call(
-                        #     args=[
-                        #         'vagrant', 'box', 'remove',
-                        #         '--box-version={}'.format(box_version),
-                        #         box_name,
-                        #     ],
-                        #     stdin=f,
-                        #     stderr=f,
-                        # )
+                        call(
+                            args=[
+                                'vagrant', 'box', 'remove',
+                                '--box-version={}'.format(box_version),
+                                box_name,
+                            ],
+                            stdin=f,
+                            stderr=f,
+                        )
                 else:
                     sys.stdout.write('Not Deleting.\n')
