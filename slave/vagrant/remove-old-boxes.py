@@ -50,7 +50,7 @@ if __name__ == '__main__':
                     # /dev/null is used to select the default option (No)
                     # when Vagrant asks whether a box in use by a VM should be
                     # removed.
-                    sys.stdout.write('Deleting (if not in use).\n')
+                    sys.stdout.write('Deleting.\n')
                     with open('/dev/null', 'rw') as f:
                         call(
                             args=[
