@@ -11,7 +11,7 @@ import sys
 import time
 
 if __name__ == '__main__':
-    num_days = sys.argv[1]
+    num_days = float(sys.argv[1])
 
     box_name_prefix = 'clusterhq/'
 
