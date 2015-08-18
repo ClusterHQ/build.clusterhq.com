@@ -54,7 +54,7 @@ if __name__ == '__main__':
                     with open('/dev/null', 'rw') as f:
                         call(
                             args=[
-                                'vagrant', 'box', 'remove',
+                                'vagrant', 'box', 'remove', '--force',
                                 '--box-version={}'.format(box_version),
                                 box_name,
                             ],
