@@ -58,7 +58,7 @@ def makeCleanOldBuildsFactory():
     # cleanup old boxes here. "Old" is the number of days passed as
     # parameter to script.
     factory.addStep(ShellCommand(
-        ['python', '/home/buildslave/remove-old-boxes.py', '0.01'],
+        ['python', '/home/buildslave/remove-old-boxes.py', '0.1'],
         description=['Removing', 'old', 'boxes'],
         descriptionDone=['Remove', 'old', 'boxes'],
         name='remove-old-boxes'))
@@ -477,7 +477,7 @@ def getBuilders(slavenames):
 def getSchedulers():
     daily = Periodic(name='daily',
                      builderNames=['clean-old-builds'],
-                     periodicBuildTimer=24)
+                     periodicBuildTimer=60)
     # This is so the zulip reporter gives better message.
     daily.codebases = {'maint': {'branch': 'daily'}}
 
