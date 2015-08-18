@@ -59,7 +59,6 @@ if __name__ == '__main__':
                                 box_name,
                             ],
                             stdin=f,
-                            stderr=f,
                         )
                 else:
                     sys.stdout.write('Not Deleting.\n')
