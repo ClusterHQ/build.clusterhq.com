@@ -595,7 +595,6 @@ def getSchedulers():
                 "flocker": {"repository": GITHUB + b"/flocker"},
             },
         ),
-
     ]
     for distribution in OMNIBUS_DISTRIBUTIONS:
         builders = [
