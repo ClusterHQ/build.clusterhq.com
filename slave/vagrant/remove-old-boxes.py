@@ -40,7 +40,8 @@ if __name__ == '__main__':
                 now = time.time()
                 time_difference = now - m_time
                 sys.stdout.write(
-                    '{name} {version} is {time_difference} seconds old: '.format(
+                    '{name} {version} is {time_difference} '
+                    'seconds old: '.format(
                         name=box_name,
                         version=version,
                         time_difference=time_difference,
