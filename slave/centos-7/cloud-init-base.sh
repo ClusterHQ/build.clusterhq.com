@@ -45,6 +45,20 @@ yum install -y \
 	curl \
 	enchant
 
+# Raise the startup timeout for the Docker service.  On the first start, it
+# does some initialization work that can be quite time consuming.  The default
+# timeout tends to be too short, startup fails, and the service is marked as
+# failed.  This larger timeout was selected based on observation of how long
+# the initialization seems to take on some arbitrarily selected systems.
+#
+# This comes before installation of Docker because the installation includes
+# a step to enable and start Docker.
+mkdir -p /etc/systemd/system/docker.service.d
+cat >/etc/systemd/system/docker.service.d/01-TimeoutStartSec.conf <<EOF
+[Service]
+TimeoutStartSec=10min
+EOF
+
 # Install whatever version is newest in the Docker repository.  If you wanted a
 # different version, you should have run the script at a different time.
 curl https://get.docker.com/ > /tmp/install-docker.sh
