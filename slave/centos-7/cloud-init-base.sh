@@ -60,7 +60,15 @@ TimeoutStartSec=10min
 EOF
 
 # Install whatever version is newest in the Docker repository.  If you wanted a
-# different version, you should have run the script at a different time.
+# different version, you should have run the script at a different time.  This
+# happens to more or less match a suggestion we give our users for when they
+# install Flocker.  See the install-node document for that.  Users could
+# install Docker in other ways, though, for which we presently have no test
+# coverage.
+#
+# XXX This is duplicated in the ubuntu-14.04 script.  It's hard to share this code
+# because this individual file gets uploaded to the node being initialized so
+# it's not clear where shared "library" code might belong.
 curl https://get.docker.com/ > /tmp/install-docker.sh
 sh /tmp/install-docker.sh
 
