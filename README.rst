@@ -183,24 +183,24 @@ There is usually a numerical suffix indicating which instance of similarly confi
 Slave AMIs
 ----------
 
-There are two slave AMIs.
+There are two slave AMIs per platform.
 The images are built by running ``slave/build-images``.
 This will generate images with ``staging-`` prefixes.
 These can be promoted by running ``slave/promote-images``.
 
-The images are based on the offical fedora 20 image (``ami-cc8de6fc``) with ``slave/cloud-init-base.sh``.
-Each image uses `slave/cloud-init.sh` with some substitutions as user-data, to start the buildbot.
+The images are based on various base OS images available on Amazon.
+The specific image used is defined by the per-platform manifest file.
 
-``fedora-buildslave``
+``<platform>-buildslave``
   is used for most builds, and has all the dependencies installed,
   including the latest release of zfs (or a fixed prerelease, when there are relevant bug fixes).
-  The image is built by running :file:`slave/cloud-init-base.sh` and then installing zfs.
-``fedora-buildslave-zfs-head``
+  The image is built by running :file:`slave/<platform>/cloud-init-base.sh` and then installing zfs.
+``<platform>-buildslave-zfs-head``
   is used to test against the lastest version of zfs.
   It has all the dependencies except zfs installed, and has the latest version of zfs installed when an
-  instance is created.  The image is built by running :file:`slave/cloud-init-base.sh`.
+  instance is created.  The image is built by running :file:`slave/<platform>/cloud-init-base.sh`.
 
-Both images have :file:`salve/cloud-init.sh` run on them at instance creation time.
+Both images have :file:`slave/cloud-init.sh` run on them at instance creation time.
 
 Vagrant Builders
 ----------------
