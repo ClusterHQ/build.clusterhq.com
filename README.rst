@@ -452,3 +452,9 @@ The following steps can be used to change a volume size:
 - Detach the old volume.
 - Attach the new volume
 - Start the instance.
+
+Building Pull Requests
+======================
+
+To force a build on a Pull Request, perhaps from a fork, use the "Force" button with "refs/pull/≤pull request number>/head" as the branch name.
+Be careful when doing this because the code in the Pull Request will be run on the Buildslaves, and this could be dangerous code.
