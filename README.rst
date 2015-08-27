@@ -116,7 +116,7 @@ These tests will remain grey until a non-latent slave connects.
 To start a Mac OS X non-latent slave, see below.
 
 Latent slaves will shut-down automatically.
-The Buildmaster and non-latent slaves must be shutdown manually. 
+The Buildmaster and non-latent slaves must be shutdown manually.
 
 Deploy changes to production server
 ===================================
@@ -143,11 +143,15 @@ Update the live Buildbot to the latest Docker image (this may take some time)::
 
    $ fab update
 
+
+Other operations on production server
+=====================================
+
 To view the logs::
 
    $ fab logs
 
-To restart the live Buildbot with the current image::
+To restart the live Buildbot without changing the image::
 
    $ fab restart
 
@@ -196,7 +200,7 @@ The specific image used is defined by the per-platform manifest file.
   including the latest release of zfs (or a fixed prerelease, when there are relevant bug fixes).
   The image is built by running :file:`slave/<platform>/cloud-init-base.sh` and then installing zfs.
 ``<platform>-buildslave-zfs-head``
-  is used to test against the lastest version of zfs.
+  is used to test against the latest version of zfs.
   It has all the dependencies except zfs installed, and has the latest version of zfs installed when an
   instance is created.  The image is built by running :file:`slave/<platform>/cloud-init-base.sh`.
 
