@@ -20,8 +20,8 @@ def get_size(size_name):
         raise ValueError("Unknown EC2 size.", size_name)
 
 
-def deploy_node(name, base_ami, deploy, username, userdata=None,
-                size="t1.micro", disk_size=8,
+def deploy_node(name, base_ami, deploy, username, userdata,
+                size, disk_size,
                 private_key_file=aws_config['private_key_file'],
                 keyname=aws_config['keyname']):
     """
@@ -79,7 +79,7 @@ def create_image(node, name):
 
 
 def build_image(name, base_ami, deploy, username,
-                userdata=None, size="t1.micro", disk_size=8):
+                userdata, size, disk_size):
     """
     Build an image by deploying a node, and then snapshoting the image.
 

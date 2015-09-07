@@ -10,14 +10,7 @@ then
       exit $?
 fi
 
-
 add-apt-repository -y ppa:zfs-native/stable
-
-# Updated docker version. See
-# - https://bugs.launchpad.net/ubuntu/+source/docker.io/+bug/1396572
-# - https://launchpad.net/~james-page/+archive/ubuntu/docker
-add-apt-repository -y ppa:james-page/docker
-
 
 # Enable debugging for ZFS modules
 echo SPL_DKMS_DISABLE_STRIP=y >> /etc/default/spl
@@ -29,7 +22,6 @@ apt-get -y upgrade
 apt-get install -y \
 	git \
 	python-dev \
-	docker.io \
 	libffi-dev \
 	build-essential \
 	wget \
@@ -40,8 +32,26 @@ apt-get install -y \
 	enchant
 
 curl https://bootstrap.pypa.io/get-pip.py | python -
+# The version of virtualenv here should correspond to the version of 
+# pip used by flocker. (See https://virtualenv.pypa.io/en/latest/changes.html to
+# find which version of virtualenv corresponds to which version of pip).
 pip install virtualenv==13.1.0 tox==2.1.1
 pip install buildbot-slave==0.8.10
+
+# Install whatever version is newest in the Docker repository.  If you wanted a
+# different version, you should have run the script at a different time.  This
+# happens to more or less match a suggestion we give our users for when they
+# install Flocker.  See the install-node document for that.  Users could
+# install Docker in other ways, though, for which we presently have no test
+# coverage.
+#
+# XXX This is duplicated in the centos-7 script.  It's hard to share this code
+# because this individual file gets uploaded to the node being initialized so
+# it's not clear where shared "library" code might belong.
+curl https://get.docker.com/ > /tmp/install-docker.sh
+sh /tmp/install-docker.sh
+
+# XXX Maybe also linux-source
 
 # Despite being a packaging tool, fpm isn't yet packaged for Fedora.
 # See https://github.com/jordansissel/fpm/issues/611

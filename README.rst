@@ -43,24 +43,6 @@ Test changes on staging server
 
 Changes to the Buildbot master can be tested on a staging machine.
 
-Create a staging Docker image
------------------------------
-
-To create a new staging image in the Docker registry, update the ``staging`` branch and push to Github.
-The Docker registry will automatically build an image based on the ``staging`` branch of https://github.com/ClusterHQ/build.clusterhq.com whenever it is updated.
-To make the ``staging`` branch the same as a development branch, run the following commands::
-
-   git checkout staging
-   git pull
-   git reset --hard <other-branch>
-   git reset --soft HEAD@{1}
-   git commit
-   git push
-
-After pushing a change to ``staging``, it takes about 10 minutes for the Docker image build to finish.
-The status is available `here <https://registry.hub.docker.com/u/clusterhq/build.clusterhq.com/builds_history/46090/>`_.
-You will need to a member of the ``clusterhq`` group on Docker Hub in order to click on build id's to see detailed information about build progress or errors.
-
 Create a staging server
 -----------------------
 
@@ -82,6 +64,25 @@ This command will display the external IP address of the EC2 instance.
 
 Run ``python start-aws.py --help`` to see the available options to this command.
 
+Install pre-requisites and start Docker::
+
+   [aws]$ sudo yum install -y docker-io fabric git
+   [aws]$ sudo setenforce 0
+   [aws]$ sudo systemctl start docker
+
+Create a staging Docker image
+-----------------------------
+
+On the staging server, run the following commands::
+
+   [aws]$ git clone https://github.com/ClusterHQ/build.clusterhq.com.git
+   [aws]$ cd build.clusterhq.com
+   [aws]$ # Change <BRANCH> to the branch of build.clusterhq.com you want
+   [aws]$ git checkout <BRANCH>
+   [aws]$ sudo docker build --tag clusterhq/build.clusterhq.com:staging .
+   # Remove data from any existing builders
+   [aws]$ sudo docker run --name buildmaster-data -v /srv/buildmaster/data busybox /bin/true
+
 Create staging configuration
 ----------------------------
 
@@ -89,31 +90,33 @@ Create a file ``staging.yml`` from the ``config.yml``.
 
 Make the following changes to the ``staging.yml`` file:
 
-#. To use the new EC2 instance, change the ``buildmaster.host`` config option to the IP of the EC2 instance.
+#. To use the new EC2 instance and the Docker image tagged ``staging`` created above, change the ``buildmaster.host`` config option to the IP of the EC2 instance, and add a ``buildmaster.docker_tag`` config option with the value ``staging``.
 
 #. To prevent reports being published to the Flocker Github repository, change the ``github.report_status`` config option to ``False``.
-
-#. To use the staging Docker image, add a ``buildmaster.docker_tag`` config option with the value ``staging``.
 
 
 Start staging server
 --------------------
 
-To start a Buildbot master on this machine run::
+Once the Docker image has built on the staging server, and the staging.yml file has been created, start the test Buildbot master from the local machine using::
 
-   $ fab start:staging.yml
+   # restart is used instead of update so as not to pull any images from the Docker Hub
+   $ fab restart:staging.yml
 
-To update a slave on this machine, run::
-
-   $ fab update:staging.yml
-
-Log in to the EC2 instance with the credentials from the ``auth`` section of the config file.
+Connect to the IP address of the EC2 instance and log in to the Buildmaster portal with the credentials from the ``auth`` section of the config file.
+Click on the ``flocker`` link to access the web form.
 
 The staging setup is missing the ability to trigger builds in response to Github pushes.
+To trigger a build, enter a branch name and click the ``Force`` button to start testing a Flocker branch.
 
-The staging master will start Linux slaves on AWS EC2 automatically.
-To start a Mac OS X slave, see below.
+The staging master will start latent slaves on AWS EC2 automatically when builds have been triggered.
 
+Tests that require Mac OS X or starting VM's cannot use AWS EC2 latent slaves.
+These tests will remain grey until a non-latent slave connects.
+To start a Mac OS X non-latent slave, see below.
+
+Latent slaves will shut-down automatically.
+The Buildmaster and non-latent slaves must be shutdown manually. 
 
 Deploy changes to production server
 ===================================
@@ -157,7 +160,7 @@ Credentials [1]_ for ``s3cmd`` can be configured using ``s3cmd --configure``.
 It can be updated to include available wheels of packages which are in flocker's ``setup.py`` by running the following commands::
 
    python setup.py sdist
-   pip wheel -f dist "Flocker[doc,dev]==$(python setup.py --version)"
+   pip wheel -f dist "Flocker[dev]==$(python setup.py --version)"
    s3cmd put -P -m "Content-Type:application/python+wheel" wheelhouse/*.whl s3://clusterhq-wheelhouse/fedora20-x86_64
    s3cmd ls s3://clusterhq-wheelhouse/fedora20-x86_64/ | sed 's,^.*/\(.*\),<a href="\1">\1</a><br/>,' | s3cmd put -P -m "text/html" - s3://clusterhq-wheelhouse/fedora20-x86_64/index
 
@@ -180,24 +183,24 @@ There is usually a numerical suffix indicating which instance of similarly confi
 Slave AMIs
 ----------
 
-There are two slave AMIs.
+There are two slave AMIs per platform.
 The images are built by running ``slave/build-images``.
 This will generate images with ``staging-`` prefixes.
 These can be promoted by running ``slave/promote-images``.
 
-The images are based on the offical fedora 20 image (``ami-cc8de6fc``) with ``slave/cloud-init-base.sh``.
-Each image uses `slave/cloud-init.sh` with some substitutions as user-data, to start the buildbot.
+The images are based on various base OS images available on Amazon.
+The specific image used is defined by the per-platform manifest file.
 
-``fedora-buildslave``
+``<platform>-buildslave``
   is used for most builds, and has all the dependencies installed,
   including the latest release of zfs (or a fixed prerelease, when there are relevant bug fixes).
-  The image is built by running :file:`slave/cloud-init-base.sh` and then installing zfs.
-``fedora-buildslave-zfs-head``
+  The image is built by running :file:`slave/<platform>/cloud-init-base.sh` and then installing zfs.
+``<platform>-buildslave-zfs-head``
   is used to test against the lastest version of zfs.
   It has all the dependencies except zfs installed, and has the latest version of zfs installed when an
-  instance is created.  The image is built by running :file:`slave/cloud-init-base.sh`.
+  instance is created.  The image is built by running :file:`slave/<platform>/cloud-init-base.sh`.
 
-Both images have :file:`salve/cloud-init.sh` run on them at instance creation time.
+Both images have :file:`slave/cloud-init.sh` run on them at instance creation time.
 
 Vagrant Builders
 ----------------
@@ -449,3 +452,9 @@ The following steps can be used to change a volume size:
 - Detach the old volume.
 - Attach the new volume
 - Start the instance.
+
+Building Pull Requests
+======================
+
+To force a build on a Pull Request, perhaps from a fork, use the "Force" button with "refs/pull/≤pull request number>/head" as the branch name.
+Be careful when doing this because the code in the Pull Request will be run on the Buildslaves, and this could be dangerous code.
