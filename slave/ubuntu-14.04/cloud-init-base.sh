@@ -66,3 +66,4 @@ cat > ~root/.pip/pip.conf <<EOF
 find-links = file:///var/cache/wheelhouse
 EOF
 mkdir /var/cache/wheelhouse
+pip install --upgrade pip
