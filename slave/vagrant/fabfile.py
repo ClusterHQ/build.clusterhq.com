@@ -76,7 +76,7 @@ yum install -y https://kojipkgs.fedoraproject.org//packages/kernel/${KV}/${SV}/$
 
     sudo("curl -O https://bootstrap.pypa.io/get-pip.py")
     sudo("python get-pip.py")
-    sudo("pip install --user buildbot-slave==0.8.10 virtualenv==13.1.0")
+    sudo("pip install buildbot-slave==0.8.10 virtualenv==13.1.0")
 
     run("useradd buildslave")
     sudo("buildslave create-slave /home/buildslave/fedora-vagrant %(master)s fedora-20/vagrant/%(index)s %(password)s"  # noqa
