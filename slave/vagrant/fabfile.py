@@ -70,7 +70,6 @@ yum install -y https://kojipkgs.fedoraproject.org//packages/kernel/${KV}/${SV}/$
         "python-virtualenv",
         "openssl-devel",
         "s3cmd",
-        "https://clusterhq.s3.amazonaws.com/phantomjs-fedora-20/phantomjs-1.9.8-1.x86_64.rpm",  # noqa
     ]
     run("yum install -y " + " ".join(packages))
     run("useradd buildslave")
