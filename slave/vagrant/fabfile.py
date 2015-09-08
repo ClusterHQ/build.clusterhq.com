@@ -61,13 +61,11 @@ yum install -y https://kojipkgs.fedoraproject.org//packages/kernel/${KV}/${SV}/$
     packages = [
         "https://dl.bintray.com/mitchellh/vagrant/vagrant_1.6.5_x86_64.rpm",
         "VirtualBox-4.3.x86_64",
-        "https://kojipkgs.fedoraproject.org//packages/buildbot/0.8.10/1.fc22/noarch/buildbot-slave-0.8.10-1.fc22.noarch.rpm",  # noqa
         "mongodb",
         "git",
         "libffi-devel",
         "python",
         "python-devel",
-        "python-virtualenv",
         "openssl-devel",
         "s3cmd",
     ]
@@ -75,7 +73,7 @@ yum install -y https://kojipkgs.fedoraproject.org//packages/kernel/${KV}/${SV}/$
 
     sudo("curl -O https://bootstrap.pypa.io/get-pip.py")
     sudo("python get-pip.py")
-    sudo("pip install --user buildbot-slave==0.8.10 virtualenv==13.1.0")
+    sudo("pip install buildbot-slave==0.8.10 virtualenv==13.1.0")
 
     run("useradd buildslave")
     sudo("buildslave create-slave /home/buildslave/fedora-vagrant %(master)s fedora-20/vagrant/%(index)s %(password)s"  # noqa
