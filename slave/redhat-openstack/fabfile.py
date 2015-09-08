@@ -185,12 +185,9 @@ def configure(index, password, master='build.staging.clusterhq.com'):
     sudo("yum install -y epel-release")
 
     packages = [
-        "https://kojipkgs.fedoraproject.org/packages/buildbot/0.8.10/1.fc22/noarch/buildbot-slave-0.8.10-1.fc22.noarch.rpm",  # noqa
         "git",
         "python",
         "python-devel",
-        "python-tox",
-        "python-virtualenv",
         "libffi-devel",
         "@buildsys-build",
         "openssl-devel",
@@ -200,6 +197,10 @@ def configure(index, password, master='build.staging.clusterhq.com'):
     ]
 
     sudo("yum install -y " + " ".join(packages))
+
+    sudo("curl -O https://bootstrap.pypa.io/get-pip.py")
+    sudo("python get-pip.py")
+    sudo("pip install --user buildbot-slave==0.8.10 virtualenv==13.1.0")
 
     slashless_name = BUILDSLAVE_NAME.replace("/", "-") + '-' + str(index)
     builddir = 'builddir-' + str(index)

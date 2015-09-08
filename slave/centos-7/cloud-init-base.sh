@@ -33,8 +33,6 @@ yum upgrade -y
 yum install -y \
 	git \
 	python-devel \
-	python-tox \
-	python-virtualenv \
 	rpmdevtools \
 	rpmlint \
 	rpm-build \
@@ -44,6 +42,13 @@ yum install -y \
 	wget \
 	curl \
 	enchant
+
+curl https://bootstrap.pypa.io/get-pip.py | python -
+# The version of virtualenv here should correspond to the version of 
+# pip used by flocker. (See https://virtualenv.pypa.io/en/latest/changes.html to
+# find which version of virtualenv corresponds to which version of pip).
+pip install virtualenv==13.1.0 tox==2.1.1
+pip install buildbot-slave==0.8.10
 
 # Raise the startup timeout for the Docker service.  On the first start, it
 # does some initialization work that can be quite time consuming.  The default
@@ -88,11 +93,3 @@ systemctl start docker
 docker pull busybox
 docker pull openshift/busybox-http-app
 docker pull python:2.7-slim
-
-
-# Configure pip wheelhouse and cache
-mkdir ~root/.pip
-cat > ~root/.pip/pip.conf <<EOF
-[global]
-find-links = file:///var/cache/wheelhouse
-EOF

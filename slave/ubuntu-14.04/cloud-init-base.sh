@@ -20,11 +20,8 @@ export DEBIAN_FRONTEND=noninteractive
 apt-get update
 apt-get -y upgrade
 apt-get install -y \
-	buildbot-slave \
 	git \
 	python-dev \
-	python-tox \
-	python-virtualenv \
 	libffi-dev \
 	build-essential \
 	wget \
@@ -33,6 +30,13 @@ apt-get install -y \
 	libssl-dev \
 	dpkg-dev \
 	enchant
+
+curl https://bootstrap.pypa.io/get-pip.py | python -
+# The version of virtualenv here should correspond to the version of 
+# pip used by flocker. (See https://virtualenv.pypa.io/en/latest/changes.html to
+# find which version of virtualenv corresponds to which version of pip).
+pip install virtualenv==13.1.0 tox==2.1.1
+pip install buildbot-slave==0.8.10
 
 # Install whatever version is newest in the Docker repository.  If you wanted a
 # different version, you should have run the script at a different time.  This
@@ -58,11 +62,3 @@ gem install fpm
 docker pull busybox:latest
 docker pull openshift/busybox-http-app:latest
 docker pull python:2.7-slim
-
-# Configure pip wheelhouse and cache
-mkdir ~root/.pip
-cat > ~root/.pip/pip.conf <<EOF
-[global]
-find-links = file:///var/cache/wheelhouse
-EOF
-mkdir /var/cache/wheelhouse

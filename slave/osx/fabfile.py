@@ -34,7 +34,7 @@ def install(index, password, master='build.staging.clusterhq.com'):
     with settings(sudo_user='buildslave', shell_env={'HOME': slave_home.path}), cd(slave_home.path):  # noqa
         sudo("curl -O https://bootstrap.pypa.io/get-pip.py")
         sudo("python get-pip.py --user")
-        sudo("~/Library/Python/2.7/bin/pip install --user buildbot-slave==0.8.10 virtualenv==12.1.1")  # noqa
+        sudo("~/Library/Python/2.7/bin/pip install --user buildbot-slave==0.8.10 virtualenv==13.1.0")  # noqa
 
         sudo("~/Library/Python/2.7/bin/buildslave create-slave ~/flocker-osx %(master)s osx/%(index)s %(password)s"  # noqa
              % {'index': index, 'password': password, 'master': master})
