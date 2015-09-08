@@ -1,6 +1,6 @@
 images:
 - name: buildslave-centos-7-zfs-head
-  base-ami: ami-edffe8dd
+  base-ami: ami-c7d092f7
   deploy:
     file: cloud-init-base.sh
   # Fedora 20 doesn't allow sudo without a terminal by default, so enable it.

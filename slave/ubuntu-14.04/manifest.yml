@@ -1,6 +1,6 @@
 images:
 - name: buildslave-ubuntu-14.04-zfs-head
-  base-ami: ami-8b697ebb
+  base-ami: ami-818dd9b1
   deploy:
     file: cloud-init-base.sh
   userdata: nil
