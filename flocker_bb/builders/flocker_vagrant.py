@@ -18,7 +18,7 @@ from ..steps import (
 
 # FIXME
 from flocker_bb.builders.flocker import (
-    installDependencies, _flockerTests, getFlockerFactory)
+    check_version, installDependencies, _flockerTests, getFlockerFactory)
 
 
 from characteristic import attributes, Attribute
@@ -226,6 +226,8 @@ def run_client_installation_tests(configuration):
 
     factory.addStep(pip("dependencies", ["."]))
 
+    factory.addSteps(check_version())
+
     factory.addStep(ShellCommand(
         name='test-client-installation',
         description=["testing", "client"],
@@ -235,6 +237,7 @@ def run_client_installation_tests(configuration):
             Interpolate('%(prop:builddir)s/build/admin/run-client-tests'),
             '--distribution', configuration.distribution,
             '--branch', flockerBranch,
+            '--flocker-version', Property('version'),
             '--build-server', buildbotURL,
         ],
         haltOnFailure=True))
