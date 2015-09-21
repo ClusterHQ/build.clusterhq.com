@@ -61,44 +61,44 @@ def buildVagrantBox(box, add=True):
     @param box: Name of box to build.
     @param add: L{bool} indicating whether the box should be added locally.
     """
-    steps = [
-        SetPropertyFromCommand(
-            command=["python", "setup.py", "--version"],
-            name='check-version',
-            description=['checking', 'version'],
-            descriptionDone=['checking', 'version'],
-            property='version'
-        ),
-        ShellCommand(
-            name='build-base-box',
-            description=['building', 'base', box, 'box'],
-            descriptionDone=['build', 'base', box, 'box'],
-            command=[
-                virtualenvBinary('python'),
-                'admin/build-vagrant-box',
-                '--box', box,
-                '--branch', flockerBranch,
-                '--build-server', buildbotURL,
-            ],
-            haltOnFailure=True,
-        ),
-    ]
-
-    steps.append(ShellCommand(
-        name='upload-base-box',
-        description=['uploading', 'base', box, 'box'],
-        descriptionDone=['upload', 'base', box, 'box'],
-        command=[
-            '/bin/s3cmd',
-            'put',
-            Interpolate(
-                'vagrant/%(kw:box)s/flocker-%(kw:box)s-%(prop:version)s.box',
-                box=box),
-            Interpolate(
-                's3://clusterhq-dev-archive/vagrant/%(kw:box)s/',
-                box=box),
-        ],
-    ))
+    # steps = [
+    #     SetPropertyFromCommand(
+    #         command=["python", "setup.py", "--version"],
+    #         name='check-version',
+    #         description=['checking', 'version'],
+    #         descriptionDone=['checking', 'version'],
+    #         property='version'
+    #     ),
+    #     ShellCommand(
+    #         name='build-base-box',
+    #         description=['building', 'base', box, 'box'],
+    #         descriptionDone=['build', 'base', box, 'box'],
+    #         command=[
+    #             virtualenvBinary('python'),
+    #             'admin/build-vagrant-box',
+    #             '--box', box,
+    #             '--branch', flockerBranch,
+    #             '--build-server', buildbotURL,
+    #         ],
+    #         haltOnFailure=True,
+    #     ),
+    # ]
+    #
+    # steps.append(ShellCommand(
+    #     name='upload-base-box',
+    #     description=['uploading', 'base', box, 'box'],
+    #     descriptionDone=['upload', 'base', box, 'box'],
+    #     command=[
+    #         '/bin/s3cmd',
+    #         'put',
+    #         Interpolate(
+    #             'vagrant/%(kw:box)s/flocker-%(kw:box)s-%(prop:version)s.box',
+    #             box=box),
+    #         Interpolate(
+    #             's3://clusterhq-dev-archive/vagrant/%(kw:box)s/',
+    #             box=box),
+    #     ],
+    # ))
     url = Interpolate(
             'https://s3.amazonaws.com/clusterhq-dev-archive/vagrant/'  # noqa
             '%(kw:box)s/flocker-%(kw:box)s-%(prop:version)s.box',
@@ -116,7 +116,7 @@ def buildVagrantBox(box, add=True):
                 "version": dotted_version(Property('version')),
                 "providers": [{
                     "name": "virtualbox",
-                    "url": quote(url, safe=":/"),
+                    "url": 'example',
                 }]
             }]
         }),
@@ -126,18 +126,18 @@ def buildVagrantBox(box, add=True):
         }
     ))
 
-    if add:
-        steps.append(ShellCommand(
-            name='add-base-box',
-            description=['adding', 'base', box, 'box'],
-            descriptionDone=['add', 'base', box, 'box'],
-            command=['vagrant', 'box', 'add',
-                     '--force',
-                     Interpolate('vagrant/%(kw:box)s/flocker-%(kw:box)s.json',
-                                 box=box)
-                     ],
-            haltOnFailure=True,
-        ))
+    # if add:
+    #     steps.append(ShellCommand(
+    #         name='add-base-box',
+    #         description=['adding', 'base', box, 'box'],
+    #         descriptionDone=['add', 'base', box, 'box'],
+    #         command=['vagrant', 'box', 'add',
+    #                  '--force',
+    #                  Interpolate('vagrant/%(kw:box)s/flocker-%(kw:box)s.json',
+    #                              box=box)
+    #                  ],
+    #         haltOnFailure=True,
+    #     ))
 
     return steps
 
