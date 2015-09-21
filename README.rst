@@ -81,6 +81,8 @@ On the staging server, run the following commands::
    [aws]$ git checkout <BRANCH>
    [aws]$ sudo docker build --tag clusterhq/build.clusterhq.com:staging .
    # Remove data from any existing builders
+   # If this has been run before:
+   [aws]$ sudo docker rm buildmaster-data
    [aws]$ sudo docker run --name buildmaster-data -v /srv/buildmaster/data busybox /bin/true
 
 Create staging configuration
