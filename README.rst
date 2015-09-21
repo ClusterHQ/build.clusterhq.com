@@ -253,7 +253,7 @@ and the buildslave user has a password-less ssh-key that can log in to it.
 Fedora hardware builders
 ------------------------
 
-The following builders need to run on Fedora 20 on bare metal hardware:
+The following builders need to run on Fedora 20 or Fedora 21 on bare metal hardware:
 
 * flocker-vagrant-dev-box
 * flocker/vagrant/build/tutorial
@@ -265,11 +265,11 @@ To create a Rackspace OnMetal slave to serve this purpose:
 * Log into https://mycloud.rackspace.com,
 * Create Server > OnMetal Server,
 * Give the server an appropriate name,
-* Choose the following options: Image: OnMetal - Fedora 20 (Heisenbug), Flavor: OnMetal Compute, An SSH key you have access to
+* Choose the following options: Image: OnMetal - Fedora 21, Flavor: Compute, An SSH key you have access to
 * Create Server,
 * When this is complete there will be a command to log into the server, e.g. ``ssh root@${ONMETAL_IP_ADDRESS}``.
 
-To configure any Fedora 20 bare metal machine (e.g. on OnMetal as above)::
+To configure any Fedora 20 or Fedora 21 bare metal machine (e.g. on OnMetal as above)::
 
    fab -f slave/vagrant/fabfile.py --hosts=root@${ONMETAL_IP_ADDRESS} install:0,${PASSWORD},${MASTER}
 
