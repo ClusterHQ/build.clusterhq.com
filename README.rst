@@ -191,6 +191,8 @@ The images are built by running ``slave/build-images``.
 This will generate images with ``staging-`` prefixes.
 These can be promoted by running ``slave/promote-images``.
 
+Building and promoting images requires a configures ``aws.config.yml`` which can be created from ``aws_config.yml.sample`` at the root of this project.
+
 The images are based on various base OS images available on Amazon.
 The specific image used is defined by the per-platform manifest file.
 
