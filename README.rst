@@ -198,7 +198,7 @@ or after slaves are automatically terminated after a period of inactivity.
 
 Building and promoting images requires a configures ``aws.config.yml`` which can be created from ``aws_config.yml.sample`` at the root of this project.
 
-To test a non-promoted image, create a new Buildbot with ``image_tags: false`` added to the ``aws`` stanza.
+To test a non-promoted image, create a new Buildbot with ``image_tags: {}`` added to the ``aws`` stanza.
 This will use the latest image rather than the one tagged ``production: True``.
 
 The images are based on various base OS images available on Amazon.
