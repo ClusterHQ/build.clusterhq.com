@@ -187,7 +187,7 @@ Slave AMIs
 ----------
 
 There are two slave `Amazon Machine Images <http://docs.aws.amazon.com/AWSEC2/latest/UserGuide/AMIs.html>`_ per platform.
-The images are built by running ``slave/build-images``.
+The images are built by running ``slave/build-images <platform>`` where ``<platform>`` is a directory in ``build/slave``.
 This will generate images with ``staging-`` prefixes.
 These can be promoted by running ``slave/promote-images``.
 
