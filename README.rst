@@ -189,7 +189,7 @@ Slave AMIs
 There are two slave `Amazon Machine Images <http://docs.aws.amazon.com/AWSEC2/latest/UserGuide/AMIs.html>`_ per platform.
 The images are built by running ``slave/build-images <platform>`` where ``<platform>`` is a directory in ``build/slave``.
 This will generate images with ``/<TIMESTAMP>`` suffixes.
-These can be promoted by running ``slave/promote-images``.
+These can be promoted by running ``slave/promote-images <platform>`` where ``<platform>`` is a directory in ``build/slave``.
 Promoting an image means that this image will be used by default when new slaves are created for the Buildbot master.
 
 New ephemeral slaves are created when existing slaves are explicitly terminated in EC2,
