@@ -22,6 +22,7 @@ apt-get -y upgrade
 apt-get install -y \
 	git \
 	python-dev \
+	pypy-dev \
 	libffi-dev \
 	build-essential \
 	wget \
@@ -32,7 +33,7 @@ apt-get install -y \
 	enchant
 
 curl https://bootstrap.pypa.io/get-pip.py | python -
-# The version of virtualenv here should correspond to the version of 
+# The version of virtualenv here should correspond to the version of
 # pip used by flocker. (See https://virtualenv.pypa.io/en/latest/changes.html to
 # find which version of virtualenv corresponds to which version of pip).
 pip install virtualenv==13.1.0 tox==2.1.1
