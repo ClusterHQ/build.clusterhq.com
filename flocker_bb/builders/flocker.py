@@ -194,7 +194,7 @@ def makeAdminFactory():
     """
     Make a new build factory which can do an admin build.
     """
-    factory = getFlockerFactory(python=b"python2.7")
+    factory = getFlockerFactory(python=b"pypy")
     factory.addSteps(installDependencies())
 
     factory.addStep(Trial(
@@ -253,7 +253,7 @@ def sphinxBuild(builder, workdir=b"build/docs", **kwargs):
 
 
 def makeInternalDocsFactory():
-    factory = getFlockerFactory(python="python2.7")
+    factory = getFlockerFactory(python="pypy")
     factory.addSteps(installDependencies())
     factory.addSteps(check_version())
     factory.addStep(sphinxBuild(
@@ -335,7 +335,7 @@ def createRepository(distribution, repository_path):
 
 
 def makeOmnibusFactory(distribution):
-    factory = getFlockerFactory(python="python2.7")
+    factory = getFlockerFactory(python="pypy")
     factory.addSteps(installDependencies())
     factory.addSteps(check_version())
     factory.addStep(ShellCommand(
@@ -412,7 +412,7 @@ def makeHomebrewRecipeCreationFactory():
     This is separate to the recipe testing, to allow it to be done on a
     non-Mac platform.  Once complete, this triggers the Mac testing.
     """
-    factory = getFlockerFactory(python="python2.7")
+    factory = getFlockerFactory(python="pypy")
     factory.addSteps(installDependencies())
     factory.addSteps(check_version())
 
@@ -494,7 +494,7 @@ def makeHomebrewRecipeCreationFactory():
 def makeHomebrewRecipeTestFactory():
     """Test the Homebrew recipe on an OS X system."""
 
-    factory = getFlockerFactory(python="python2.7")
+    factory = getFlockerFactory(python="pypy")
     factory.addSteps(installDependencies())
 
     # Run testbrew script
@@ -546,20 +546,20 @@ def getBuilders(slavenames):
         BuilderConfig(name='flocker-ubuntu-14.04',
                       slavenames=slavenames['aws/ubuntu-14.04'],
                       category='flocker',
-                      factory=makeFactory(b'python2.7'),
+                      factory=makeFactory(b'pypy'),
                       locks=[functionalLock.access('counting')],
                       nextSlave=idleSlave),
         BuilderConfig(name='flocker-centos-7',
                       slavenames=slavenames['aws/centos-7'],
                       category='flocker',
-                      factory=makeFactory(b'python2.7'),
+                      factory=makeFactory(b'pypy'),
                       locks=[functionalLock.access('counting')],
                       nextSlave=idleSlave),
         BuilderConfig(name='flocker-osx-10.10',
                       slavenames=slavenames['osx'],
                       category='flocker',
                       factory=makeFactory(
-                          b'python2.7', tests=[
+                          b'pypy', tests=[
                               b'flocker.cli',
                               b'flocker.common',
                               b'flocker.ca',
@@ -570,13 +570,13 @@ def getBuilders(slavenames):
                       builddir='flocker-unit-test-centos-7-zfs-head',
                       slavenames=slavenames['aws/centos-7/zfs-head'],
                       category='flocker',
-                      factory=makeFactory(b'python2.7'),
+                      factory=makeFactory(b'pypy'),
                       locks=[functionalLock.access('counting')],
                       nextSlave=idleSlave),
         BuilderConfig(name='flocker-twisted-trunk',
                       slavenames=slavenames['aws/ubuntu-14.04'],
                       category='flocker',
-                      factory=makeFactory(b'python2.7', twistedTrunk=True),
+                      factory=makeFactory(b'pypy', twistedTrunk=True),
                       locks=[functionalLock.access('counting')],
                       nextSlave=idleSlave),
         BuilderConfig(name='flocker-lint',
@@ -628,7 +628,7 @@ def getBuilders(slavenames):
                 slavenames=slavenames[configuration.slave_class],
                 category='flocker',
                 factory=makeFactory(
-                    b'python2.7',
+                    b'pypy',
                     tests=[
                         "--testmodule",
                         Interpolate("%(prop:builddir)s/build/" +
