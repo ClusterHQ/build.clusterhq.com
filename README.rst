@@ -18,9 +18,7 @@ The code uses Fabric to start and manage the Buildbot master.
 
 To install dependencies::
 
-   $ pip install pyyaml
-   $ pip install fabric
-
+   $ pip install pyyaml fabric libcloud
 
 Create the configuration
 ========================
