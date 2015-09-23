@@ -187,7 +187,7 @@ There is usually a numerical suffix indicating which instance of similarly confi
 Slave AMIs
 ----------
 
-There are two slave AMIs per platform.
+There are two slave `Amazon Machine Images <http://docs.aws.amazon.com/AWSEC2/latest/UserGuide/AMIs.html>`_ per platform.
 The images are built by running ``slave/build-images``.
 This will generate images with ``staging-`` prefixes.
 These can be promoted by running ``slave/promote-images``.
