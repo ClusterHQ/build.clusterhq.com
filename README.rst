@@ -80,7 +80,8 @@ On the staging server, run the following commands::
    [aws]$ # Change <BRANCH> to the branch of build.clusterhq.com you want
    [aws]$ git checkout <BRANCH>
    [aws]$ sudo docker build --tag clusterhq/build.clusterhq.com:staging .
-   # Remove data from any existing builders
+   [aws]$ EXISTS=$(docker inspect --format="{}" buildmaster-data 2> /dev/null)
+   [aws]$ if [ "$EXISTS" == "{}" ]; then sudo docker rm buildmaster-data; fi
    [aws]$ sudo docker run --name buildmaster-data -v /srv/buildmaster/data busybox /bin/true
 
 Create staging configuration
