@@ -196,11 +196,11 @@ These can be promoted by running ``slave/promote-images``.
 The images are based on various base OS images available on Amazon.
 The specific image used is defined by the per-platform manifest file.
 
-``<platform>-buildslave``
+``buildslave-<platform>``
   is used for most builds, and has all the dependencies installed,
   including the latest release of zfs (or a fixed prerelease, when there are relevant bug fixes).
   The image is built by running :file:`slave/<platform>/cloud-init-base.sh` and then installing zfs.
-``<platform>-buildslave-zfs-head``
+``buildslave-<platform>-zfs-head``
   is used to test against the latest version of zfs.
   It has all the dependencies except zfs installed, and has the latest version of zfs installed when an
   instance is created.  The image is built by running :file:`slave/<platform>/cloud-init-base.sh`.
