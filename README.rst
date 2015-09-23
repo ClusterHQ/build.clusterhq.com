@@ -190,6 +190,11 @@ There are two slave `Amazon Machine Images <http://docs.aws.amazon.com/AWSEC2/la
 The images are built by running ``slave/build-images <platform>`` where ``<platform>`` is a directory in ``build/slave``.
 This will generate images with ``/<TIMESTAMP>`` suffixes.
 These can be promoted by running ``slave/promote-images``.
+Promoting an image means that this image will be used by default when new slaves are created for the Buildbot master.
+
+New ephemeral slaves are created when existing slaves are explicitly terminated in EC2,
+or when the Buildbot master is restarted,
+or after slaves are automatically terminated after a period of inactivity.
 
 Building and promoting images requires a configures ``aws.config.yml`` which can be created from ``aws_config.yml.sample`` at the root of this project.
 
