@@ -43,6 +43,7 @@ yum install -y \
 	curl \
 	enchant
 
+# Download and install PyPy, then symlink it so that "pypy" is available
 wget https://bitbucket.org/squeaky/portable-pypy/downloads/pypy-2.6.1-linux_x86_64-portable.tar.bz2
 tar xf pypy-2.6.1-linux_x86_64-portable.tar.bz2
 ln ${PWD}/pypy-2.6.1-linux_x86_64-portable/bin/pypy -s /usr/local/bin/pypy
