@@ -45,6 +45,7 @@ yum install -y \
 
 wget https://bitbucket.org/squeaky/portable-pypy/downloads/pypy-2.6.1-linux_x86_64-portable.tar.bz2
 tar xf pypy-2.6.1-linux_x86_64-portable.tar.bz2
+sudo ln ${PWD}/pypy-2.6.1-linux_x86_64-portable/bin/pypy -s /usr/local/bin/pypy
 
 curl https://bootstrap.pypa.io/get-pip.py | python -
 # The version of virtualenv here should correspond to the version of 
