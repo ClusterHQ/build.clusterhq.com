@@ -142,7 +142,7 @@ def buildDevBox():
     """
     Build a vagrant dev box.
     """
-    factory = getFlockerFactory('python2.7')
+    factory = getFlockerFactory('pypy')
 
     factory.addSteps(installDependencies())
 
@@ -190,7 +190,7 @@ def buildDevBox():
 
 
 def buildTutorialBox():
-    factory = getFlockerFactory('python2.7')
+    factory = getFlockerFactory('pypy')
 
     factory.addSteps(installDependencies())
 
@@ -222,7 +222,7 @@ def run_client_installation_tests(configuration):
     :param ClientConfiguration configuration: Configuration for a client
         installation test run.
     """
-    factory = getFlockerFactory('python2.7')
+    factory = getFlockerFactory('pypy')
 
     factory.addStep(pip("dependencies", ["."]))
 
@@ -245,7 +245,7 @@ def run_client_installation_tests(configuration):
 
 
 def run_acceptance_tests(configuration):
-    factory = getFlockerFactory('python2.7')
+    factory = getFlockerFactory('pypy')
 
     factory.addSteps(installDependencies())
 
@@ -311,7 +311,7 @@ end
 
 
 def test_installed_package(box):
-    factory = getFlockerFactory('python2.7')
+    factory = getFlockerFactory('pypy')
 
     factory.addSteps(installDependencies())
 
