@@ -43,6 +43,9 @@ yum install -y \
 	curl \
 	enchant
 
+wget https://bitbucket.org/squeaky/portable-pypy/downloads/pypy-2.6.1-linux_x86_64-portable.tar.bz2
+tar xf pypy-2.6.1-linux_x86_64-portable.tar.bz2
+
 curl https://bootstrap.pypa.io/get-pip.py | python -
 # The version of virtualenv here should correspond to the version of 
 # pip used by flocker. (See https://virtualenv.pypa.io/en/latest/changes.html to
