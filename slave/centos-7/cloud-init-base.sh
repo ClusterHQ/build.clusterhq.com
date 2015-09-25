@@ -43,8 +43,13 @@ yum install -y \
 	curl \
 	enchant
 
+# Download and install PyPy, then symlink it so that "pypy" is available
+wget https://bitbucket.org/squeaky/portable-pypy/downloads/pypy-2.6.1-linux_x86_64-portable.tar.bz2
+tar xf pypy-2.6.1-linux_x86_64-portable.tar.bz2
+ln -s ${PWD}/pypy-2.6.1-linux_x86_64-portable/bin/pypy /usr/local/bin/pypy
+
 curl https://bootstrap.pypa.io/get-pip.py | python -
-# The version of virtualenv here should correspond to the version of 
+# The version of virtualenv here should correspond to the version of
 # pip used by flocker. (See https://virtualenv.pypa.io/en/latest/changes.html to
 # find which version of virtualenv corresponds to which version of pip).
 pip install virtualenv==13.1.0 tox==2.1.1
