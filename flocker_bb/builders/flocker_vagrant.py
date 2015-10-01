@@ -39,7 +39,7 @@ def quoted_version(version):
     @renderer
     def render(props):
         return (props.render(version)
-                .addCallback(lambda v: quote(version)))
+                .addCallback(lambda v: quote(v)))
     return render
 
 def destroy_box(path):
