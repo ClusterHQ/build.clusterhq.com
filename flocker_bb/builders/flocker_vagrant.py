@@ -35,12 +35,14 @@ def dotted_version(version):
                                         .replace('+', '.')))
     return render
 
+
 def quoted_version(version):
     @renderer
     def render(props):
         return (props.render(version)
                 .addCallback(lambda v: quote(v)))
     return render
+
 
 def destroy_box(path):
     """
