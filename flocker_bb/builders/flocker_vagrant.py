@@ -109,7 +109,7 @@ def buildVagrantBox(box, add=True):
     url = Interpolate(
             'https://s3.amazonaws.com/clusterhq-dev-archive/vagrant/'  # noqa
             '%(kw:box)s/flocker-%(kw:box)s-%(kw:quoted_version)s.box',
-            box=box, quoted_version=dotted_version(Property('version')))
+            box=box, quoted_version=quoted_version(Property('version')))
 
     steps.append(MasterWriteFile(
         name='write-base-box-metadata',
