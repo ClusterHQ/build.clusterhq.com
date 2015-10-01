@@ -18,9 +18,7 @@ The code uses Fabric to start and manage the Buildbot master.
 
 To install dependencies::
 
-   $ pip install pyyaml
-   $ pip install fabric
-
+   $ pip install pyyaml fabric libcloud
 
 Create the configuration
 ========================
@@ -80,9 +78,8 @@ On the staging server, run the following commands::
    [aws]$ # Change <BRANCH> to the branch of build.clusterhq.com you want
    [aws]$ git checkout <BRANCH>
    [aws]$ sudo docker build --tag clusterhq/build.clusterhq.com:staging .
-   # Remove data from any existing builders
-   # If this has been run before:
-   [aws]$ sudo docker rm buildmaster-data
+   [aws]$ EXISTS=$(docker inspect --format="{}" buildmaster-data 2> /dev/null)
+   [aws]$ if [ "$EXISTS" == "{}" ]; then sudo docker rm buildmaster-data; fi
    [aws]$ sudo docker run --name buildmaster-data -v /srv/buildmaster/data busybox /bin/true
 
 Create staging configuration
@@ -189,19 +186,29 @@ There is usually a numerical suffix indicating which instance of similarly confi
 Slave AMIs
 ----------
 
-There are two slave AMIs per platform.
-The images are built by running ``slave/build-images``.
-This will generate images with ``staging-`` prefixes.
-These can be promoted by running ``slave/promote-images``.
+There are two slave `Amazon Machine Images <http://docs.aws.amazon.com/AWSEC2/latest/UserGuide/AMIs.html>`_ per platform.
+The images are built by running ``slave/build-images <platform>`` where ``<platform>`` is a directory in ``build/slave``.
+This will generate images with ``/<TIMESTAMP>`` suffixes.
+These can be promoted by running ``slave/promote-images <platform>`` where ``<platform>`` is a directory in ``build/slave``.
+Promoting an image means that this image will be used by default when new slaves are created for the Buildbot master.
+
+New ephemeral slaves are created when existing slaves are explicitly terminated in EC2,
+or when the Buildbot master is restarted,
+or after slaves are automatically terminated after a period of inactivity.
+
+Building and promoting images requires a configures ``aws.config.yml`` which can be created from ``aws_config.yml.sample`` at the root of this project.
+
+To test a non-promoted image, create a new Buildbot with ``image_tags: {}`` added to the ``aws`` stanza.
+This will use the latest image rather than the one tagged ``production: True``.
 
 The images are based on various base OS images available on Amazon.
 The specific image used is defined by the per-platform manifest file.
 
-``<platform>-buildslave``
+``buildslave-<platform>``
   is used for most builds, and has all the dependencies installed,
   including the latest release of zfs (or a fixed prerelease, when there are relevant bug fixes).
   The image is built by running :file:`slave/<platform>/cloud-init-base.sh` and then installing zfs.
-``<platform>-buildslave-zfs-head``
+``buildslave-<platform>-zfs-head``
   is used to test against the latest version of zfs.
   It has all the dependencies except zfs installed, and has the latest version of zfs installed when an
   instance is created.  The image is built by running :file:`slave/<platform>/cloud-init-base.sh`.
