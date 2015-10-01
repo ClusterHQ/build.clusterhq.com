@@ -35,6 +35,12 @@ def dotted_version(version):
                                         .replace('+', '.')))
     return render
 
+def quoted_version(version):
+    @renderer
+    def render(props):
+        return (props.render(version)
+                .addCallback(lambda v: quote(version)))
+    return render
 
 def destroy_box(path):
     """
@@ -102,8 +108,8 @@ def buildVagrantBox(box, add=True):
 
     url = Interpolate(
             'https://s3.amazonaws.com/clusterhq-dev-archive/vagrant/'  # noqa
-            '%(kw:box)s/flocker-%(kw:box)s-%(prop:version)s.box',
-            box=box)
+            '%(kw:box)s/flocker-%(kw:box)s-%(kw:quoted_version)s.box',
+            box=box, quoted_version=quoted_version(Property('version')))
 
     steps.append(MasterWriteFile(
         name='write-base-box-metadata',
