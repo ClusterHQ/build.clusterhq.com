@@ -39,8 +39,7 @@ def dotted_version(version):
 def quoted_version(version):
     @renderer
     def render(props):
-        return (props.render(version)
-                .addCallback(lambda v: quote(v)))
+        return props.render(version).addCallback(quote)
     return render
 
 
