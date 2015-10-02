@@ -1,3 +1,5 @@
+from urllib import quote
+
 from buildbot.steps.shell import ShellCommand, SetPropertyFromCommand
 from buildbot.process.properties import Interpolate, Property, renderer
 from buildbot.steps.python_twisted import Trial
@@ -31,6 +33,13 @@ def dotted_version(version):
                 .addCallback(lambda v: v.replace('-', '.')
                                         .replace('_', '.')
                                         .replace('+', '.')))
+    return render
+
+
+def quoted_version(version):
+    @renderer
+    def render(props):
+        return props.render(version).addCallback(quote)
     return render
 
 
@@ -97,6 +106,12 @@ def buildVagrantBox(box, add=True):
                 box=box),
         ],
     ))
+
+    url = Interpolate(
+            'https://s3.amazonaws.com/clusterhq-dev-archive/vagrant/'  # noqa
+            '%(kw:box)s/flocker-%(kw:box)s-%(kw:quoted_version)s.box',
+            box=box, quoted_version=quoted_version(Property('version')))
+
     steps.append(MasterWriteFile(
         name='write-base-box-metadata',
         description=['writing', 'base', box, 'box', 'metadata'],
@@ -109,10 +124,7 @@ def buildVagrantBox(box, add=True):
                 "version": dotted_version(Property('version')),
                 "providers": [{
                     "name": "virtualbox",
-                    "url": Interpolate(
-                        'https://s3.amazonaws.com/clusterhq-dev-archive/vagrant/'  # noqa
-                        '%(kw:box)s/flocker-%(kw:box)s-%(prop:version)s.box',
-                        box=box),
+                    "url": url,
                 }]
             }]
         }),
