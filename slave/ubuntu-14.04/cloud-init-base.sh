@@ -22,7 +22,6 @@ apt-get -y upgrade
 apt-get install -y \
 	git \
 	python-dev \
-	pypy-dev \
 	libffi-dev \
 	build-essential \
 	wget \
@@ -31,6 +30,11 @@ apt-get install -y \
 	libssl-dev \
 	dpkg-dev \
 	enchant
+
+# Download and install PyPy, then symlink it so that "pypy" is available
+wget https://bitbucket.org/squeaky/portable-pypy/downloads/pypy-2.6.1-linux_x86_64-portable.tar.bz2
+tar xf pypy-2.6.1-linux_x86_64-portable.tar.bz2
+ln -s ${PWD}/pypy-2.6.1-linux_x86_64-portable/bin/pypy /usr/local/bin/pypy
 
 curl https://bootstrap.pypa.io/get-pip.py | python -
 # The version of virtualenv here should correspond to the version of
