@@ -8,7 +8,7 @@ from buildbot.process.properties import Interpolate, Property
 from buildbot.steps.trigger import Trigger
 from buildbot.config import error
 from buildbot.locks import MasterLock
-from buildbot.plugins.util import ChangeFilter
+from buildbot.changes.filter import ChangeFilter
 
 from os import path
 
