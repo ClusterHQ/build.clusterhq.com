@@ -669,6 +669,7 @@ def build_automatically(branch):
     """
     return branch == 'master' or branch.startswith('release/')
 
+
 def getSchedulers():
     return [
         AnyBranchScheduler(
