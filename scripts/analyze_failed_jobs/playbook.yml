@@ -7,7 +7,7 @@
     - name: Create local work directories
       local_action: file dest={{ item }} state=directory
       with_items:
-        - work
+        - /tmp/jobs-work
         - out
       become: false
   
@@ -18,7 +18,7 @@
       fetch: src=/tmp/jobs.tar.gz dest=/tmp/jobs.tar.gz flat=true
 
     - name: Untar jobs on the local node
-      local_action: unarchive copy=no src=/tmp/jobs.tar.gz dest={{ lookup('env', 'PWD') }}/work/
+      local_action: unarchive copy=no src=/tmp/jobs.tar.gz dest=/tmp/jobs-work/
       become: false
     
     - name: Find failed jobs
@@ -31,19 +31,20 @@
         content: "{{ jobs.jobs }}"
       
     - name: Tar failed job output
-      shell: tar cvfz /tmp/failed-stdout.tar.gz --files-from=/tmp/stdout-files chdir="{{ buildbot_dir }}"
-      ignore_errors: true
+      shell: tar cfz /tmp/failed-stdout.tar.gz --files-from=/tmp/stdout-files || true 2> /dev/null
+      args: 
+        chdir: "{{ buildbot_dir }}"
       
     - name: Download failed job output
       fetch: src=/tmp/failed-stdout.tar.gz dest=/tmp/failed-stdout.tar.gz flat=true
       
     - name: Uncompress failed job output
-      local_action: unarchive copy=no src=/tmp/failed-stdout.tar.gz dest={{ lookup('env', 'PWD') }}/work/
+      local_action: unarchive copy=no src=/tmp/failed-stdout.tar.gz dest=/tmp/jobs-work/
       become: false
     
     - name: Parse failed job stdout
       action: parsestdouts
       
     - name: Cleanup
-      local_action: file dest=work state=absent
+      local_action: file dest=/tmp/jobs-work state=absent
       become: false

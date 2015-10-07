@@ -1,27 +1,28 @@
-import re, glob, bz2
-from ansible.utils import template
+import glob
+import bz2
 from ansible.runner.return_data import ReturnData
 
 IGNORED_BUILDERS = [
     'flocker',
-    'flocker-twisted-trunk', 
+    'flocker-twisted-trunk',
     'flocker-acceptance-vagrant-centos-7-zfs',
     'flocker-installed-package-vagrant-centos-7'
 ]
 
+
 class ActionModule:
     def __init__(self, runner):
         self.runner = runner
-        
-        
-    def run(self, conn, tmp, module_name, module_args, inject, complex_args=None, **kwargs):
-        stdouts = glob.glob('work/*/*-*')
+
+    def run(self, conn, tmp, module_name, module_args,
+            inject, complex_args=None, **kwargs):
+        stdouts = glob.glob('/tmp/jobs-work/*/*-*')
 
         stats = {}
 
         for filename in stdouts:
-            builder = filename.split('/')[1]
-            
+            builder = filename.split('/')[3]
+
             if builder in IGNORED_BUILDERS:
                 continue
 
@@ -33,12 +34,12 @@ class ActionModule:
             for line in data:
                 if '... [ERROR]' in line:
                     test = builder + ':' + line.split(' ')[0]
-                    if not test in stats:
+                    if test not in stats:
                         stats[test] = 0
                     stats[test] += 1
 
         stats = stats.items()
-        stats.sort(key = lambda x: x[1])
+        stats.sort(key=lambda x: x[1])
 
         out = file('out/test-count.csv', 'w')
         for stat in stats:

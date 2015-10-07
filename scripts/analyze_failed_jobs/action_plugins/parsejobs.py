@@ -1,14 +1,17 @@
-import glob, pickle, buildbot, re, sys, cStringIO as StringIO
-from ansible.utils import template
+import glob
+import pickle
+import sys
+import cStringIO as StringIO
 from ansible.runner.return_data import ReturnData
+
 
 class ActionModule:
     def __init__(self, runner):
         self.runner = runner
-        
-        
-    def run(self, conn, tmp, module_name, module_args, inject, complex_args=None, **kwargs):
-        jobs = glob.glob('work/*/*')
+
+    def run(self, conn, tmp, module_name, module_args,
+            inject, complex_args=None, **kwargs):
+        jobs = glob.glob('/tmp/jobs-work/*/*')
 
         out = StringIO.StringIO()
 
@@ -16,7 +19,7 @@ class ActionModule:
         count_failed = 0
 
         for job in jobs:
-            foo, builder, job_num = job.split('/')
+            builder, job_num = job.split('/')[-2:]
 
             job_obj = pickle.load(file(job))
 
@@ -30,10 +33,11 @@ class ActionModule:
                             break
                     break
 
-            sys.stdout.write('Jobs: %d, failed jobs: %d\r' % (count, count_failed))
+            sys.stdout.write('Jobs: %d, failed jobs: %d\r'
+                             % (count, count_failed))
             sys.stdout.flush()
-            count +=1
-        
+            count += 1
+
         return ReturnData(conn=conn, result=dict(
             changed=True,
             jobs=out.getvalue()
