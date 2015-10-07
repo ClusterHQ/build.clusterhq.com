@@ -660,14 +660,14 @@ BUILDERS = [
 ]
 
 
-def build_automatically(branch):
+def build_automatically(codebase):
     """
-    :param branch: The name of a branch.
+    See http://docs.buildbot.net/current/manual/cfg-schedulers.html#id11
 
     Return a bool, whether the branch should be built after a push without
     being forced.
     """
-    return branch == 'master' or branch.startswith('release/')
+    return isMasterBranch(codebase) or isReleaseBranch(codebase)
 
 
 def getSchedulers():
@@ -678,7 +678,7 @@ def getSchedulers():
             builderNames=BUILDERS,
             # Only build certain branches because problems arise when we build
             # many branches such as queues and request limits.
-            change_filter=ChangeFilter(branch_fn=build_automatically),
+            change_filter=ChangeFilter(codebase_fn=build_automatically),
             codebases={
                 "flocker": {"repository": GITHUB + b"/flocker"},
             },
