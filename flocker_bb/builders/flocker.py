@@ -8,6 +8,7 @@ from buildbot.process.properties import Interpolate, Property
 from buildbot.steps.trigger import Trigger
 from buildbot.config import error
 from buildbot.locks import MasterLock
+from buildbot.plugins.util import ChangeFilter
 
 from os import path
 
@@ -659,12 +660,24 @@ BUILDERS = [
 ]
 
 
+def build_automatically(branch):
+    """
+    :param branch: The name of a branch.
+
+    Return a bool, whether the branch should be built after a push without
+    being forced.
+    """
+    return branch == 'master' or branch.startswith('release/')
+
 def getSchedulers():
     return [
         AnyBranchScheduler(
             name="flocker",
             treeStableTimer=5,
             builderNames=BUILDERS,
+            # Only build certain branches because problems arise when we build
+            # many branches such as queues and request limits.
+            change_filter=ChangeFilter(branch_fn=build_automatically),
             codebases={
                 "flocker": {"repository": GITHUB + b"/flocker"},
             },
