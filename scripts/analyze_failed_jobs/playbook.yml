@@ -1,0 +1,49 @@
+- hosts: build.clusterhq.com
+  become: true
+  vars: 
+    buildbot_dir: /var/lib/docker/vfs/dir/91ca9fb14be23372a04b364447224e6d8058dbac4ea51905c7c6e42fbb06f1bd
+
+  tasks:
+    - name: Create local work directories
+      local_action: file dest={{ item }} state=directory
+      with_items:
+        - work
+        - out
+      become: false
+  
+    - name: Tar jobs
+      shell: tar cvfz /tmp/jobs.tar.gz flocker*/???? flocker*/????? chdir="{{ buildbot_dir }}"
+    
+    - name: Download jobs
+      fetch: src=/tmp/jobs.tar.gz dest=/tmp/jobs.tar.gz flat=true
+
+    - name: Untar jobs on the local node
+      local_action: unarchive copy=no src=/tmp/jobs.tar.gz dest={{ lookup('env', 'PWD') }}/work/
+      become: false
+    
+    - name: Find failed jobs
+      action: parsejobs
+      register: jobs
+    
+    - name: Store file list
+      copy: 
+        dest: /tmp/stdout-files 
+        content: "{{ jobs.jobs }}"
+      
+    - name: Tar failed job output
+      shell: tar cvfz /tmp/failed-stdout.tar.gz --files-from=/tmp/stdout-files chdir="{{ buildbot_dir }}"
+      ignore_errors: true
+      
+    - name: Download failed job output
+      fetch: src=/tmp/failed-stdout.tar.gz dest=/tmp/failed-stdout.tar.gz flat=true
+      
+    - name: Uncompress failed job output
+      local_action: unarchive copy=no src=/tmp/failed-stdout.tar.gz dest={{ lookup('env', 'PWD') }}/work/
+      become: false
+    
+    - name: Parse failed job stdout
+      action: parsestdouts
+      
+    - name: Cleanup
+      local_action: file dest=work state=absent
+      become: false
