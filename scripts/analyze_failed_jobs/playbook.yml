@@ -1,7 +1,5 @@
 - hosts: build.clusterhq.com
   become: true
-  vars: 
-    buildbot_dir: /var/lib/docker/vfs/dir/91ca9fb14be23372a04b364447224e6d8058dbac4ea51905c7c6e42fbb06f1bd
 
   tasks:
     - name: Create local work directories
@@ -10,9 +8,9 @@
         - /tmp/jobs-work
         - out
       become: false
-  
+
     - name: Tar jobs
-      shell: tar cvfz /tmp/jobs.tar.gz flocker*/???? flocker*/????? chdir="{{ buildbot_dir }}"
+      shell: docker run --rm --volumes-from=buildmaster python python -c "import glob,subprocess,os;os.chdir('/srv/buildmaster/data');subprocess.check_call(['/bin/tar', 'c'] + glob.glob('flocker*/????'))" > /tmp/jobs.tar.gz
     
     - name: Download jobs
       fetch: src=/tmp/jobs.tar.gz dest=/tmp/jobs.tar.gz flat=true
