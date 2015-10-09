@@ -23,6 +23,8 @@ from ..steps import (
     isMasterBranch, isReleaseBranch,
     resultPath, resultURL,
     flockerRevision,
+    getBranchType,
+    BranchType,
     )
 
 # This is where temporary files associated with a build will be dumped.
@@ -660,14 +662,14 @@ BUILDERS = [
 ]
 
 
-def build_automatically(codebase):
+def build_automatically(branch):
     """
     See http://docs.buildbot.net/current/manual/cfg-schedulers.html#id11
 
     Return a bool, whether the branch should be built after a push without
     being forced.
     """
-    return isMasterBranch(codebase) or isReleaseBranch(codebase)
+    return getBranchType(branch) in (BranchType.master, BranchType.release)
 
 
 def getSchedulers():
@@ -678,7 +680,7 @@ def getSchedulers():
             builderNames=BUILDERS,
             # Only build certain branches because problems arise when we build
             # many branches such as queues and request limits.
-            change_filter=ChangeFilter(codebase_fn=build_automatically),
+            change_filter=ChangeFilter(branch_fn=build_automatically),
             codebases={
                 "flocker": {"repository": GITHUB + b"/flocker"},
             },
