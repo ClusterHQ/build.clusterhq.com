@@ -1,3 +1,11 @@
+"""
+This Ansible module reads Buildbot jobs, identifies failed ones, and outputs 
+the logfile name of the failed jobs.
+
+Results are returned as a string, one by line in the jobs variable.
+"""
+
+
 import glob
 import pickle
 import sys
@@ -28,8 +36,7 @@ class ActionModule:
                     count_failed += 1
                     for log in step.getLogs():
                         if 'stdio' in log.filename:
-                            out.write(builder + '/' + log.filename + '\n')
-                            out.write(builder + '/' + log.filename + '.bz2\n')
+                            out.write(builder + '/' + log.filename + '*\n')
                             break
                     break
 

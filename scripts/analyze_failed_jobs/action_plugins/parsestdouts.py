@@ -1,3 +1,9 @@
+"""
+Ansible module for finding failed buildbot jobs.
+
+Stores results in ``out/test-count.csv``, which has columns for builder, test and failure count.
+"""
+
 import glob
 import bz2
 from ansible.runner.return_data import ReturnData

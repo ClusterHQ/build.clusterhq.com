@@ -8,15 +8,33 @@
         - /tmp/jobs-work
         - out
       become: false
-
+      
+    - name: Store patterns for globber.py
+      copy:
+        dest: /tmp/globber-files
+        content: |
+          flocker*/?
+          flocker*/??
+          flocker*/???
+          flocker*/????
+          flocker*/?????
+      
+    - name: Upload globber.py
+      copy: src=files/globber.py dest=/tmp/ mode=0755
+      
+    - name: Disable SELinux temporarily
+      command: setenforce 0
+      
     - name: Tar jobs
-      shell: docker run --rm --volumes-from=buildmaster python python -c "import glob,subprocess,os;os.chdir('/srv/buildmaster/data');subprocess.check_call(['/bin/tar', 'c'] + glob.glob('flocker*/????'))" > /tmp/jobs.tar.gz
-    
+      shell: docker run --rm --volume $PWD:/data:z --volumes-from=buildmaster python:2.7 python data/globber.py /srv/buildmaster/data/ > jobs.tar.bz2
+      args:
+        chdir: /tmp
+
     - name: Download jobs
-      fetch: src=/tmp/jobs.tar.gz dest=/tmp/jobs.tar.gz flat=true
+      fetch: src=/tmp/jobs.tar.bz2 dest=/tmp/jobs.tar.bz2 flat=true
 
     - name: Untar jobs on the local node
-      local_action: unarchive copy=no src=/tmp/jobs.tar.gz dest=/tmp/jobs-work/
+      local_action: unarchive copy=no src=/tmp/jobs.tar.bz2 dest=/tmp/jobs-work/
       become: false
     
     - name: Find failed jobs
@@ -25,24 +43,27 @@
     
     - name: Store file list
       copy: 
-        dest: /tmp/stdout-files 
+        dest: /tmp/globber-files 
         content: "{{ jobs.jobs }}"
       
     - name: Tar failed job output
-      shell: tar cfz /tmp/failed-stdout.tar.gz --files-from=/tmp/stdout-files || true 2> /dev/null
-      args: 
-        chdir: "{{ buildbot_dir }}"
+      shell:  docker run --rm --volume $PWD:/data:z --volumes-from=buildmaster python:2.7 python data/globber.py /srv/buildmaster/data/ > failed-stdout.tar.bz2
+      args:
+        chdir: /tmp
+
+    - name: Re-enable SELinux
+      command: setenforce 1
       
     - name: Download failed job output
-      fetch: src=/tmp/failed-stdout.tar.gz dest=/tmp/failed-stdout.tar.gz flat=true
+      fetch: src=/tmp/failed-stdout.tar.bz2 dest=/tmp/failed-stdout.tar.bz2 flat=true
       
     - name: Uncompress failed job output
-      local_action: unarchive copy=no src=/tmp/failed-stdout.tar.gz dest=/tmp/jobs-work/
+      local_action: unarchive copy=no src=/tmp/failed-stdout.tar.bz2 dest=/tmp/jobs-work/
       become: false
     
     - name: Parse failed job stdout
       action: parsestdouts
-      
+
     - name: Cleanup
       local_action: file dest=/tmp/jobs-work state=absent
       become: false
