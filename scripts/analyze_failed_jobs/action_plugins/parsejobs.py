@@ -1,5 +1,5 @@
 """
-This Ansible module reads Buildbot jobs, identifies failed ones, and outputs 
+This Ansible module reads Buildbot jobs, identifies failed ones, and outputs
 the logfile name of the failed jobs.
 
 Results are returned as a string, one by line in the jobs variable.
