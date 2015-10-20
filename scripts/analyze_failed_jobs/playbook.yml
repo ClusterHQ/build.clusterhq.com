@@ -1,0 +1,69 @@
+- hosts: build.clusterhq.com
+  become: true
+
+  tasks:
+    - name: Create local work directories
+      local_action: file dest={{ item }} state=directory
+      with_items:
+        - /tmp/jobs-work
+        - out
+      become: false
+      
+    - name: Store patterns for globber.py
+      copy:
+        dest: /tmp/globber-files
+        content: |
+          flocker*/?
+          flocker*/??
+          flocker*/???
+          flocker*/????
+          flocker*/?????
+      
+    - name: Upload globber.py
+      copy: src=files/globber.py dest=/tmp/ mode=0755
+      
+    - name: Disable SELinux temporarily
+      command: setenforce 0
+      
+    - name: Tar jobs
+      shell: docker run --rm --volume $PWD:/data:z --volumes-from=buildmaster python:2.7 python data/globber.py /srv/buildmaster/data/ > jobs.tar.bz2
+      args:
+        chdir: /tmp
+
+    - name: Download jobs
+      fetch: src=/tmp/jobs.tar.bz2 dest=/tmp/jobs.tar.bz2 flat=true
+
+    - name: Untar jobs on the local node
+      local_action: unarchive copy=no src=/tmp/jobs.tar.bz2 dest=/tmp/jobs-work/
+      become: false
+    
+    - name: Find failed jobs
+      action: parsejobs
+      register: jobs
+    
+    - name: Store file list
+      copy: 
+        dest: /tmp/globber-files 
+        content: "{{ jobs.jobs }}"
+      
+    - name: Tar failed job output
+      shell:  docker run --rm --volume $PWD:/data:z --volumes-from=buildmaster python:2.7 python data/globber.py /srv/buildmaster/data/ > failed-stdout.tar.bz2
+      args:
+        chdir: /tmp
+
+    - name: Re-enable SELinux
+      command: setenforce 1
+      
+    - name: Download failed job output
+      fetch: src=/tmp/failed-stdout.tar.bz2 dest=/tmp/failed-stdout.tar.bz2 flat=true
+      
+    - name: Uncompress failed job output
+      local_action: unarchive copy=no src=/tmp/failed-stdout.tar.bz2 dest=/tmp/jobs-work/
+      become: false
+    
+    - name: Parse failed job stdout
+      action: parsestdouts
+
+    - name: Cleanup
+      local_action: file dest=/tmp/jobs-work state=absent
+      become: false
