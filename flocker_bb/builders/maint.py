@@ -232,7 +232,10 @@ class CleanVolumes(LoggingBuildStep):
         Unconditionally and irrevocably destroy all of the given cloud volumes.
         """
         for volume in volumes:
-            volume.destroy()
+            try:
+                volume.destroy()
+            except:
+                pass
 
     def _blocking_clean_volumes(self, config):
         """
@@ -406,7 +409,10 @@ class CleanAcceptanceInstances(LoggingBuildStep):
         for node in test_nodes:
             creation_time = get_creation_time(node)
             if creation_time is not None and creation_time < cutoff:
-                node.destroy()
+                try:
+                    node.destroy()
+                except:
+                    pass
                 destroyed_nodes.append(node)
             else:
                 kept_nodes.append(node)
