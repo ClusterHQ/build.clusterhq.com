@@ -235,7 +235,7 @@ class CleanVolumes(LoggingBuildStep):
             try:
                 volume.destroy()
             except:
-                pass
+                err(None, "Destroying volume.")
 
     def _blocking_clean_volumes(self, config):
         """
@@ -412,7 +412,7 @@ class CleanAcceptanceInstances(LoggingBuildStep):
                 try:
                     node.destroy()
                 except:
-                    pass
+                    err(None, "Destroying node.")
                 destroyed_nodes.append(node)
             else:
                 kept_nodes.append(node)
