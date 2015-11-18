@@ -457,9 +457,8 @@ def makeCleanOldResources():
     more than two hours old.
     """
     factory = BuildFactory()
-    age = timedelta(hours=2)
-    factory.addStep(CleanAcceptanceInstances(lag=age))
-    factory.addStep(CleanVolumes(lag=age))
+    factory.addStep(CleanAcceptanceInstances(lag=timedelta(hours=2)))
+    factory.addStep(CleanVolumes(lag=timedelta(minutes=30)))
     return factory
 
 
