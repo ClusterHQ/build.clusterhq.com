@@ -486,15 +486,19 @@ def getSchedulers():
     # This is so the zulip reporter gives better message.
     daily.codebases = {'maint': {'branch': 'daily'}}
 
-    hourly = Periodic(name='hourly',
-                      builderNames=[RESOURCE_CLEANUP_BUILDER],
-                      periodicBuildTimer=3600)
+    resource_cleanup = Periodic(
+        name='resource-cleanup',
+        builderNames=[RESOURCE_CLEANUP_BUILDER],
+        periodicBuildTimer=60 * 30,
+    )
     # This is so the zulip reporter gives better message.
-    hourly.codebases = {'maint': {'branch': 'hourly'}}
+    resource_cleanup_builder.codebases = {
+        'maint': {'branch': 'resource-cleanup'}
+    }
 
     force = ForceScheduler(
         name="force-maintenance",
         builderNames=["clean-old-builds", RESOURCE_CLEANUP_BUILDER],
     )
 
-    return [daily, hourly, force]
+    return [daily, resource_cleanup, force]
