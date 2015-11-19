@@ -502,9 +502,10 @@ ACCEPTANCE_CONFIGURATIONS = [
 # 256000M available ram, 8192M per node, 2 nodes per test
 # We allocate slightly less to avoid using all the RAM.
 rackspace_lock = MasterLock("rackspace-lock", maxCount=8)
-# AWS tests are (probably) doing too many requests for us to run them in
-# parallel. See FLOC-3246.
-aws_lock = MasterLock('aws-lock', maxCount=1)
+# Too many simultaneous builds will hit AWS limits, but
+# too few will make tests painfully slow. We need to find
+# a compromise between these two variables. See FLOC-3263.
+aws_lock = MasterLock('aws-lock', maxCount=2)
 ACCEPTANCE_LOCKS = {
     'rackspace': [rackspace_lock.access("counting")],
     'aws': [aws_lock.access("counting")],
