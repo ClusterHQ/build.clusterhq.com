@@ -202,7 +202,7 @@ def makeAdminFactory():
 
     factory.addStep(Trial(
         trial=[Interpolate(path.join(VIRTUALENV_DIR, "bin/trial"))],
-        tests=[b'admin'],
+        tests=[b'admin', b'benchmark'],
         testpath=None,
         env={
             b"PATH": [Interpolate(path.join(VIRTUALENV_DIR, "bin")),
