@@ -475,7 +475,7 @@ TUTORIAL_DISTRIBUTION = "centos-7"
 
 CLIENT_INSTALLATION_CONFIGURATIONS = [
     ClientConfiguration(distribution=distribution)
-    for distribution in ('ubuntu-14.04', 'ubuntu-15.04')
+    for distribution in ('ubuntu-14.04', 'ubuntu-15.10')
 ]
 
 ACCEPTANCE_CONFIGURATIONS = [

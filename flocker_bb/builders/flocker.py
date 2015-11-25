@@ -539,7 +539,7 @@ functionalLock = SlaveLock('functional-tests')
 
 OMNIBUS_DISTRIBUTIONS = [
     'ubuntu-14.04',
-    'ubuntu-15.04',
+    'ubuntu-15.10',
     'centos-7',
 ]
 
