@@ -492,7 +492,7 @@ def getSchedulers():
         periodicBuildTimer=60 * 30,
     )
     # This is so the zulip reporter gives better message.
-    resource_cleanup_builder.codebases = {
+    resource_cleanup.codebases = {
         'maint': {'branch': 'resource-cleanup'}
     }
 
