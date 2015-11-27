@@ -505,7 +505,7 @@ rackspace_lock = MasterLock("rackspace-lock", maxCount=8)
 # Too many simultaneous builds will hit AWS limits, but
 # too few will make tests painfully slow. We need to find
 # a compromise between these two variables. See FLOC-3263.
-aws_lock = MasterLock('aws-lock', maxCount=2)
+aws_lock = MasterLock('aws-lock', maxCount=3)
 ACCEPTANCE_LOCKS = {
     'rackspace': [rackspace_lock.access("counting")],
     'aws': [aws_lock.access("counting")],
