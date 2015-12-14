@@ -173,7 +173,7 @@ c['codebaseGenerator'] = lambda change: CODEBASES[change["repository"]]
 
 c['change_source'] = []
 
-from flocker_bb.builders import flocker, maint, flocker_vagrant
+from flocker_bb.builders import flocker, maint
 
 c['builders'] = []
 c['schedulers'] = []
@@ -184,7 +184,6 @@ def addBuilderModule(module):
     c['schedulers'].extend(module.getSchedulers())
 
 addBuilderModule(flocker)
-addBuilderModule(flocker_vagrant)
 addBuilderModule(maint)
 
 

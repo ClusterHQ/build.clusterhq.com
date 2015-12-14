@@ -94,18 +94,6 @@ class StorageConfiguration(object):
         return [lock.access("counting")]
 
 
-STORAGE_CONFIGURATIONS = [
-    StorageConfiguration(
-        provider='aws', distribution='ubuntu-14.04'),
-    StorageConfiguration(
-        provider='aws', distribution='centos-7'),
-    StorageConfiguration(
-        provider='rackspace', distribution='centos-7'),
-    StorageConfiguration(
-        provider='redhat-openstack', distribution='centos-7'),
-]
-
-
 def getFlockerFactory(python):
     factory = getFactory("flocker", useSubmodules=False, mergeForward=True)
     factory.addSteps(buildVirtualEnv(python, useSystem=True))
@@ -372,18 +360,6 @@ def makeOmnibusFactory(distribution):
         name="upload-repo",
     ))
     factory.addSteps(createRepository(distribution, repository_path))
-    factory.addStep(Trigger(
-        name='trigger/built-packages',
-        schedulerNames=['trigger/built-packages/%s' % (distribution,)],
-        set_properties={
-            # lint_revision is the commit that was merged against,
-            # if we merged forward, so have the triggered build
-            # merge against it as well.
-            'merge_target': Property('lint_revision')
-        },
-        updateSourceStamp=True,
-        waitForFinish=False,
-        ))
 
     return factory
 
@@ -528,7 +504,6 @@ from buildbot.config import BuilderConfig
 from buildbot.schedulers.basic import AnyBranchScheduler
 from buildbot.schedulers.forcesched import (
     CodebaseParameter, StringParameter, ForceScheduler, FixedParameter)
-from buildbot.schedulers.triggerable import Triggerable
 from buildbot.locks import SlaveLock
 
 from ..steps import report_expected_failures_parameter
@@ -539,77 +514,13 @@ functionalLock = SlaveLock('functional-tests')
 
 OMNIBUS_DISTRIBUTIONS = [
     'ubuntu-14.04',
-    'ubuntu-15.04',
+    'ubuntu-15.10',
     'centos-7',
 ]
 
 
 def getBuilders(slavenames):
-    builders = [
-        BuilderConfig(name='flocker-ubuntu-14.04',
-                      slavenames=slavenames['aws/ubuntu-14.04'],
-                      category='flocker',
-                      factory=makeFactory(b'python2.7'),
-                      locks=[functionalLock.access('counting')],
-                      nextSlave=idleSlave),
-        BuilderConfig(name='flocker-centos-7',
-                      slavenames=slavenames['aws/centos-7'],
-                      category='flocker',
-                      factory=makeFactory(b'python2.7'),
-                      locks=[functionalLock.access('counting')],
-                      nextSlave=idleSlave),
-        BuilderConfig(name='flocker-osx-10.10',
-                      slavenames=slavenames['osx'],
-                      category='flocker',
-                      factory=makeFactory(
-                          b'python2.7', tests=[
-                              b'flocker.cli',
-                              b'flocker.common',
-                              b'flocker.ca',
-                          ],
-                      ),
-                      nextSlave=idleSlave),
-        BuilderConfig(name='flocker/unit-test/centos-7/zfs-head',
-                      builddir='flocker-unit-test-centos-7-zfs-head',
-                      slavenames=slavenames['aws/centos-7/zfs-head'],
-                      category='flocker',
-                      factory=makeFactory(b'python2.7'),
-                      locks=[functionalLock.access('counting')],
-                      nextSlave=idleSlave),
-        BuilderConfig(name='flocker-twisted-trunk',
-                      slavenames=slavenames['aws/ubuntu-14.04'],
-                      category='flocker',
-                      factory=makeFactory(b'python2.7', twistedTrunk=True),
-                      locks=[functionalLock.access('counting')],
-                      nextSlave=idleSlave),
-        BuilderConfig(name='flocker-lint',
-                      slavenames=slavenames['aws/ubuntu-14.04'],
-                      category='flocker',
-                      factory=makeLintFactory(),
-                      nextSlave=idleSlave),
-        BuilderConfig(name='flocker-docs',
-                      slavenames=slavenames['aws/ubuntu-14.04'],
-                      category='flocker',
-                      factory=makeInternalDocsFactory(),
-                      nextSlave=idleSlave),
-        BuilderConfig(name='flocker-admin',
-                      slavenames=slavenames['aws/ubuntu-14.04'],
-                      category='flocker',
-                      factory=makeAdminFactory(),
-                      nextSlave=idleSlave),
-        BuilderConfig(name='flocker/homebrew/create',
-                      builddir='flocker-homebrew-create',
-                      slavenames=slavenames['aws/ubuntu-14.04'],
-                      category='flocker',
-                      factory=makeHomebrewRecipeCreationFactory(),
-                      nextSlave=idleSlave),
-        BuilderConfig(name='flocker/homebrew/test',
-                      builddir='flocker-homebrew-test',
-                      slavenames=slavenames['osx'],
-                      category='flocker',
-                      factory=makeHomebrewRecipeTestFactory(),
-                      nextSlave=idleSlave),
-        ]
+    builders = []
     for distribution in OMNIBUS_DISTRIBUTIONS:
         builders.append(
             BuilderConfig(
@@ -622,43 +533,10 @@ def getBuilders(slavenames):
                 nextSlave=idleSlave,
                 ))
 
-    # Storage backend builders
-    for configuration in STORAGE_CONFIGURATIONS:
-        builders.extend([
-            BuilderConfig(
-                name=configuration.builder_name,
-                builddir=configuration.builder_directory,
-                slavenames=slavenames[configuration.slave_class],
-                category='flocker',
-                factory=makeFactory(
-                    b'python2.7',
-                    tests=[
-                        "--testmodule",
-                        Interpolate("%(prop:builddir)s/build/" +
-                                    configuration.driver),
-                    ],
-                    env={'FLOCKER_FUNCTIONAL_TEST': 'TRUE'},
-                ),
-                locks=configuration.locks,
-            )
-        ])
-
     return builders
 
 BUILDERS = [
-    'flocker-ubuntu-14.04',
-    'flocker-centos-7',
-    'flocker-osx-10.10',
-    'flocker-twisted-trunk',
-    'flocker-lint',
-    'flocker-docs',
-    'flocker/unit-test/centos-7/zfs-head',
-    'flocker-admin',
-    'flocker/homebrew/create',
-] + [
     'flocker-omnibus-%s' % (dist,) for dist in OMNIBUS_DISTRIBUTIONS
-] + [
-    configuration.builder_name for configuration in STORAGE_CONFIGURATIONS
 ]
 
 
@@ -701,11 +579,4 @@ def getSchedulers():
             ],
             builderNames=BUILDERS,
             ),
-        Triggerable(
-            name='trigger/created-homebrew',
-            builderNames=['flocker/homebrew/test'],
-            codebases={
-                "flocker": {"repository": GITHUB + b"/flocker"},
-            },
-        ),
     ]
