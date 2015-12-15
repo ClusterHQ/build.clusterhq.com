@@ -520,7 +520,13 @@ OMNIBUS_DISTRIBUTIONS = [
 
 
 def getBuilders(slavenames):
-    builders = []
+    builders = [
+        BuilderConfig(name='flocker-docs',
+                      slavenames=slavenames['aws/ubuntu-14.04'],
+                      category='flocker',
+                      factory=makeInternalDocsFactory(),
+                      nextSlave=idleSlave),
+        ]
     for distribution in OMNIBUS_DISTRIBUTIONS:
         builders.append(
             BuilderConfig(
@@ -533,9 +539,32 @@ def getBuilders(slavenames):
                 nextSlave=idleSlave,
                 ))
 
+    # Storage backend builders
+    for configuration in STORAGE_CONFIGURATIONS:
+        builders.extend([
+            BuilderConfig(
+                name=configuration.builder_name,
+                builddir=configuration.builder_directory,
+                slavenames=slavenames[configuration.slave_class],
+                category='flocker',
+                factory=makeFactory(
+                    b'python2.7',
+                    tests=[
+                        "--testmodule",
+                        Interpolate("%(prop:builddir)s/build/" +
+                                    configuration.driver),
+                    ],
+                    env={'FLOCKER_FUNCTIONAL_TEST': 'TRUE'},
+                ),
+                locks=configuration.locks,
+            )
+        ])
+
     return builders
 
 BUILDERS = [
+    'flocker-docs',
+] + [
     'flocker-omnibus-%s' % (dist,) for dist in OMNIBUS_DISTRIBUTIONS
 ]
 
