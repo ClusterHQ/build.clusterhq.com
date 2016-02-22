@@ -8,7 +8,7 @@ import boto.ec2
 
 # Usual images used for Buildbot infrastructure
 ec2_image = {
-    'centos': 'ami-c7d092f7',  # CentOS 7 x86_64 (2014_09_29)
+    'centos': 'ami-f77fbeb3',  # CentOS 7 x86_64 (2014_09_29)
     'fedora': 'ami-cc8de6fc',  # Fedora-x86_64-20-20140407-sda
     'ubuntu': 'ami-29ebb519',  # ubuntu-trusty-14.04-amd64-server-20150123
 }
