@@ -10,3 +10,4 @@ machinist
 prometheus_client
 retry
 PyYAML
+characteristic
