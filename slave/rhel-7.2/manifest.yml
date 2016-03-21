@@ -1,0 +1,20 @@
+images:
+- name: buildslave-rhel-7.2-zfs-head
+  base-ami: ami-775e4f16
+  deploy:
+    file: cloud-init-base.sh
+  # Fedora 20 doesn't allow sudo without a terminal by default, so enable it.
+  userdata: "#!/bin/sh\nsed -i '/Defaults    requiretty/d' /etc/sudoers"
+  username: ec2-user
+  disk_size: 128
+  size: t2.medium
+
+- name: buildslave-rhel-7.2
+  base-ami: buildslave-rhel-7.2-zfs-head
+  deploy:
+    script: |-
+      sudo yum install -y zfs
+  username: ec2-user
+  userdata: nil
+  size: t2.medium
+  disk_size: 128
