@@ -66,12 +66,19 @@ slaves:
         slaves: 3
         instance_type: "c3.large"
         max_builds: 2
+    aws/rhel-7.2:
+        ami: "buildslave-rhel-7.2"
+        slaves: 3
+        instance_type: "c3.large"
+        max_builds: 2
     fedora-20/vagrant:
         passwords: ['<password>']
     osx:
         passwords: ['<password>']
     rackspace/centos-7:
         openstack-image: "buildslave-centos-7-zfs-head"
+    rackspace/rhel-7.2:
+        openstack-image: "buildslave-rhel-7.2-zfs-head"
     redhat-openstack/centos-7:
         passwords: ['<password>']
 # List of builders whose failures should not be reported.  Tests listed here
