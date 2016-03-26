@@ -67,10 +67,7 @@ slaves:
         instance_type: "c3.large"
         max_builds: 2
     aws/rhel-7.2:
-        ami: "buildslave-rhel-7.2"
-        slaves: 3
-        instance_type: "c3.large"
-        max_builds: 2
+        passwords: ['welcome']
     fedora-20/vagrant:
         passwords: ['<password>']
     osx:

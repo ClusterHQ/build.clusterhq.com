@@ -2,7 +2,7 @@ images:
 - name: buildslave-rhel-7.2-zfs-head
   base-ami: ami-775e4f16
   deploy:
-    file: cloud-init-base.sh
+    file: ../centos-7/cloud-init-base.sh
   # Fedora 20 doesn't allow sudo without a terminal by default, so enable it.
   userdata: "#!/bin/sh\nsed -i '/Defaults    requiretty/d' /etc/sudoers"
   username: ec2-user
