@@ -301,7 +301,7 @@ def makeInternalDocsFactory():
 def createRepository(distribution, repository_path):
     steps = []
     flavour, version = distribution.split('-', 1)
-    if flavour in ("fedora", "centos", "rhel"):
+    if flavour in ("fedora", "centos"):
         steps.append(MasterShellCommand(
             name='build-repo-metadata',
             description=["building", "repo", "metadata"],
@@ -516,7 +516,6 @@ OMNIBUS_DISTRIBUTIONS = [
     'ubuntu-14.04',
     'ubuntu-15.10',
     'centos-7',
-    'rhel-7.2',
 ]
 
 
