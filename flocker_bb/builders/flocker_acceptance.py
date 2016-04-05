@@ -210,11 +210,6 @@ from ..steps import idleSlave
 from buildbot.locks import MasterLock
 
 
-# Configuration for client installation testing.
-@attributes([
-    Attribute('distribution'),
-])
-
 # Dictionary mapping providers for acceptence testing to a list of
 # sets of variants to test on each provider.
 @attributes([
@@ -259,17 +254,9 @@ class AcceptanceConfiguration(object):
 
 
 ACCEPTANCE_CONFIGURATIONS = [
-    AcceptanceConfiguration(
-        provider=provider, distribution=distribution,
-        dataset_backend=dataset_backend)
-    for provider in ['rackspace', 'aws']
-    for distribution in ['centos-7', 'ubuntu-14.04']
-    for dataset_backend in [
-        # 'loopback',
-        'native'
-    ]
-    # Rebooting doesn't work, which is necesary on AWS for zfs.
-    if not (provider == 'aws' and dataset_backend == 'zfs')
+    AcceptanceConfiguration(provider='aws',
+                            distribution='centos-7',
+                            dataset_backend='native')
 ]
 
 
