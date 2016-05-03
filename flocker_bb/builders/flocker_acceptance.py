@@ -255,7 +255,7 @@ class AcceptanceConfiguration(object):
 
 ACCEPTANCE_CONFIGURATIONS = [
     AcceptanceConfiguration(provider='aws',
-                            distribution='centos-7',
+                            distribution='rhel-7.2',
                             dataset_backend='native')
 ]
 

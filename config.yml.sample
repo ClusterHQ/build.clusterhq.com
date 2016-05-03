@@ -66,8 +66,9 @@ slaves:
         slaves: 3
         instance_type: "c3.large"
         max_builds: 2
-    aws/rhel-7.2:
-        passwords: ['welcome']
+    aws/rhel-7.2/0:
+        distribution: "rhel-7.2"
+        passwords: ['<password>']
     fedora-20/vagrant:
         passwords: ['<password>']
     osx:
