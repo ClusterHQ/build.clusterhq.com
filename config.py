@@ -121,7 +121,7 @@ for base, slaveConfig in privateData['slaves'].items():
         )
         c['slaves'].append(slave)
     elif 'ami' in slaveConfig:
-        if base not in SLAVENAMES.keys():
+        if base not in SLAVENAMES:
             SLAVENAMES[base] = []
         for index in range(slaveConfig['slaves']):
             name = '%s/%d' % (base, index)
@@ -153,12 +153,12 @@ for base, slaveConfig in privateData['slaves'].items():
             name = '%s/%d' % (base, index)
             if 'aws/rhel-7.2' in base:
               # Use AWS RHEL buildslave as AWS CentOS buildslave.
-              if 'aws/centos-7' not in SLAVENAMES.keys():
-                  SLAVENAMES['aws/centos-7'] = []
-              SLAVENAMES['aws/centos-7'].append(name)
+              if 'aws/centos-7' not in SLAVENAMES:
+                  SLAVENAMES['aws/centos-7'] = [name]
+              else:
+                  SLAVENAMES['aws/centos-7'].append(name)
             else:
-                SLAVENAMES[base] = []
-                SLAVENAMES[base].append(name)
+                SLAVENAMES[base] = [name]
             c['slaves'].append(BuildSlave(
                 name, password=password,
                 max_builds=slaveConfig.get('max_builds'),
