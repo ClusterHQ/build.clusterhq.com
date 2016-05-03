@@ -43,125 +43,10 @@ def quoted_version(version):
     return render
 
 
-def destroy_box(path):
-    """
-    Step that destroys the vagrant boxes at the given path.
-
-    :return BuildStep:
-    """
-    return ShellCommand(
-        name='destroy-boxes',
-        description=['destroy', 'boxes'],
-        descriptionDone=['destroy', 'boxes'],
-        command=['vagrant', 'destroy', '-f'],
-        workdir=path,
-        alwaysRun=True,
-        haltOnFailure=False,
-        flunkOnFailure=False,
-    )
-
-
-def buildVagrantBox(box, add=True):
-    """
-    Build a flocker base box.
-
-    @param box: Name of box to build.
-    @param add: L{bool} indicating whether the box should be added locally.
-    """
-    steps = [
-        SetPropertyFromCommand(
-            command=["python", "setup.py", "--version"],
-            name='check-version',
-            description=['checking', 'version'],
-            descriptionDone=['checking', 'version'],
-            property='version'
-        ),
-        ShellCommand(
-            name='build-base-box',
-            description=['building', 'base', box, 'box'],
-            descriptionDone=['build', 'base', box, 'box'],
-            command=[
-                virtualenvBinary('python'),
-                'admin/build-vagrant-box',
-                '--box', box,
-                '--branch', flockerBranch,
-                '--build-server', buildbotURL,
-            ],
-            haltOnFailure=True,
-        ),
-    ]
-
-    steps.append(ShellCommand(
-        name='upload-base-box',
-        description=['uploading', 'base', box, 'box'],
-        descriptionDone=['upload', 'base', box, 'box'],
-        command=[
-            '/bin/s3cmd',
-            'put',
-            Interpolate(
-                'vagrant/%(kw:box)s/flocker-%(kw:box)s-%(prop:version)s.box',
-                box=box),
-            Interpolate(
-                's3://clusterhq-dev-archive/vagrant/%(kw:box)s/',
-                box=box),
-        ],
-    ))
-
-    url = Interpolate(
-            'https://s3.amazonaws.com/clusterhq-dev-archive/vagrant/'  # noqa
-            '%(kw:box)s/flocker-%(kw:box)s-%(kw:quoted_version)s.box',
-            box=box, quoted_version=quoted_version(Property('version')))
-
-    steps.append(MasterWriteFile(
-        name='write-base-box-metadata',
-        description=['writing', 'base', box, 'box', 'metadata'],
-        descriptionDone=['write', 'base', box, 'box', 'metadata'],
-        path=resultPath('vagrant', discriminator="flocker-%s.json" % box),
-        content=asJSON({
-            "name": "clusterhq/flocker-%s" % (box,),
-            "description": "Test clusterhq/flocker-%s box." % (box,),
-            'versions': [{
-                "version": dotted_version(Property('version')),
-                "providers": [{
-                    "name": "virtualbox",
-                    "url": url,
-                }]
-            }]
-        }),
-        urls={
-            Interpolate('%(kw:box)s box', box=box):
-            resultURL('vagrant', discriminator="flocker-%s.json" % box),
-        }
-    ))
-
-    if add:
-        steps.append(ShellCommand(
-            name='add-base-box',
-            description=['adding', 'base', box, 'box'],
-            descriptionDone=['add', 'base', box, 'box'],
-            command=['vagrant', 'box', 'add',
-                     '--force',
-                     Interpolate('vagrant/%(kw:box)s/flocker-%(kw:box)s.json',
-                                 box=box)
-                     ],
-            haltOnFailure=True,
-        ))
-
-    return steps
-
-
 def run_acceptance_tests(configuration):
     factory = getFlockerFactory('python2.7')
 
     factory.addSteps(installDependencies())
-
-    if configuration.provider == 'vagrant':
-        # We have to insert this before the first step, so we don't
-        # destroy the vagrant meta-data. Normally .addStep adapts
-        # to IBuildStepFactory.
-        factory.steps.insert(0, IBuildStepFactory(
-            destroy_box(path='build/admin/vagrant-acceptance-targets/%s'
-                             % configuration.distribution)))
 
     factory.addSteps(_flockerTests(
         kwargs={
@@ -295,7 +180,7 @@ from .flocker import OMNIBUS_DISTRIBUTIONS
 def getSchedulers():
     schedulers = [
         ForceScheduler(
-            name="force-flocker-vagrant",
+            name="force-flocker-acceptance",
             codebases=[
                 CodebaseParameter(
                     "flocker",
@@ -315,8 +200,7 @@ def getSchedulers():
         builders = [
             configuration.builder_name
             for configuration in ACCEPTANCE_CONFIGURATIONS
-            if configuration.provider != 'vagrant'
-            and configuration.distribution == distribution
+            if configuration.distribution == distribution
         ]
         schedulers.append(
             Triggerable(
