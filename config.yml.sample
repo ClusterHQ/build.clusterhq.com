@@ -75,8 +75,6 @@ slaves:
         passwords: ['<password>']
     rackspace/centos-7:
         openstack-image: "buildslave-centos-7-zfs-head"
-    rackspace/rhel-7.2:
-        openstack-image: "buildslave-rhel-7.2-zfs-head"
     redhat-openstack/centos-7:
         passwords: ['<password>']
 # List of builders whose failures should not be reported.  Tests listed here
