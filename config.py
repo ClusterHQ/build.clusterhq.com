@@ -93,12 +93,12 @@ def get_cloud_init(name, base, password, provider, privateData, slavePortnum):
 
 
 for base, slaveConfig in privateData['slaves'].items():
-    SLAVENAMES[base] = []
     if "openstack-image" in slaveConfig:
         # Give this multi-slave support like the EC2 implementation below.
         # FLOC-1907
         password = generate_password(32)
 
+        SLAVENAMES[base] = []
         SLAVENAMES[base].append(base)
         # Factor the repetition out of this section and the ec2_slave call
         # below.  Maybe something like ondemand_slave(rackspace_driver, ...)
@@ -121,6 +121,8 @@ for base, slaveConfig in privateData['slaves'].items():
         )
         c['slaves'].append(slave)
     elif 'ami' in slaveConfig:
+        if base not in SLAVENAMES:
+            SLAVENAMES[base] = []
         for index in range(slaveConfig['slaves']):
             name = '%s/%d' % (base, index)
             password = generate_password(32)
@@ -149,7 +151,14 @@ for base, slaveConfig in privateData['slaves'].items():
     else:
         for index, password in enumerate(slaveConfig['passwords']):
             name = '%s/%d' % (base, index)
-            SLAVENAMES[base].append(name)
+            if 'aws/rhel-7.2' in base:
+              # Use AWS RHEL buildslave as AWS CentOS buildslave.
+              if 'aws/centos-7' not in SLAVENAMES:
+                  SLAVENAMES['aws/centos-7'] = [name]
+              else:
+                  SLAVENAMES['aws/centos-7'].append(name)
+            else:
+                SLAVENAMES[base] = [name]
             c['slaves'].append(BuildSlave(
                 name, password=password,
                 max_builds=slaveConfig.get('max_builds'),
@@ -173,7 +182,7 @@ c['codebaseGenerator'] = lambda change: CODEBASES[change["repository"]]
 
 c['change_source'] = []
 
-from flocker_bb.builders import flocker, maint
+from flocker_bb.builders import flocker, maint, flocker_acceptance
 
 c['builders'] = []
 c['schedulers'] = []
@@ -184,6 +193,7 @@ def addBuilderModule(module):
     c['schedulers'].extend(module.getSchedulers())
 
 addBuilderModule(flocker)
+addBuilderModule(flocker_acceptance)
 addBuilderModule(maint)
 
 

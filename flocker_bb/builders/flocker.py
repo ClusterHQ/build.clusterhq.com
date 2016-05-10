@@ -103,7 +103,7 @@ def getFlockerFactory(python):
 def installDependencies():
     return [
         pip("dependencies", ["."]),
-        pip("extras", ["--process-dependency-links", ".[dev]"]),
+        pip("extras", ["-e", ".[dev]"]),
         ]
 
 
