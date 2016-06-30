@@ -1,3 +1,7 @@
+# Copyright ClusterHQ Inc.  See LICENSE file for details.
+from os import path
+
+from characteristic import attributes, Attribute
 from buildbot.steps.shell import ShellCommand, SetPropertyFromCommand
 from buildbot.steps.python_twisted import Trial
 from buildbot.steps.python import Sphinx
@@ -7,25 +11,34 @@ from buildbot.steps.source.git import Git
 from buildbot.process.properties import Interpolate, Property
 from buildbot.steps.trigger import Trigger
 from buildbot.config import error
-from buildbot.locks import MasterLock
+from buildbot.locks import MasterLock, SlaveLock
 from buildbot.changes.filter import ChangeFilter
-
-from os import path
-
-from characteristic import attributes, Attribute
+from buildbot.config import BuilderConfig
+from buildbot.schedulers.basic import AnyBranchScheduler
+from buildbot.schedulers.forcesched import (
+    CodebaseParameter,
+    FixedParameter,
+    ForceScheduler,
+    StringParameter,
+)
 
 from ..steps import (
-    VIRTUALENV_DIR, buildVirtualEnv, virtualenvBinary,
-    getFactory,
+    BranchType,
     GITHUB,
     TWISTED_GIT,
-    pip,
-    isMasterBranch, isReleaseBranch,
-    resultPath, resultURL,
+    VIRTUALENV_DIR,
+    buildVirtualEnv,
     flockerRevision,
     getBranchType,
-    BranchType,
-    )
+    getFactory,
+    idleSlave,
+    isMasterBranch,
+    isReleaseBranch,
+    pip,
+    report_expected_failures_parameter,
+    resultPath, resultURL,
+    virtualenvBinary,
+)
 
 # This is where temporary files associated with a build will be dumped.
 TMPDIR = Interpolate(b"%(prop:workdir)s/tmp-%(prop:buildnumber)s")
@@ -499,15 +512,6 @@ def makeHomebrewRecipeTestFactory():
 
     return factory
 
-
-from buildbot.config import BuilderConfig
-from buildbot.schedulers.basic import AnyBranchScheduler
-from buildbot.schedulers.forcesched import (
-    CodebaseParameter, StringParameter, ForceScheduler, FixedParameter)
-from buildbot.locks import SlaveLock
-
-from ..steps import report_expected_failures_parameter
-from ..steps import idleSlave
 
 # A lock to prevent multiple functional tests running at the same time
 functionalLock = SlaveLock('functional-tests')

@@ -1,24 +1,38 @@
+# Copyright ClusterHQ Inc.  See LICENSE file for details.
 # -*- python -*-
 # ex: set syntax=python:
-
-from os.path import dirname
 import sys
+from os.path import dirname
+from tempfile import NamedTemporaryFile
+
+from buildbot.buildslave import BuildSlave
+from buildbot.manhole import AuthorizedKeysManhole
+from buildbot.status.web import authz
+from buildbot.status.web.auth import BasicAuth
+import jinja2
+from twisted.internet import reactor
+from twisted.python.filepath import FilePath
+from twisted.python.util import sibpath
+
 sys.path.insert(0, dirname(__file__))
 del sys, dirname
+from flocker_bb import privateData
+from flocker_bb.boxes import FlockerWebStatus as WebStatus
+from flocker_bb.builders import flocker, maint, flocker_acceptance
+from flocker_bb.ec2 import rackspace_slave, ec2_slave
+from flocker_bb.github import createGithubStatus
+from flocker_bb.monitoring import Monitor
+from flocker_bb.password import generate_password
+from flocker_bb.zulip import createZulip
+from flocker_bb.zulip_status import createZulipStatus
 
 # This is the dictionary that the buildmaster pays attention to. We also use
 # a shorter alias to save typing.
 c = BuildmasterConfig = {}
 
-from twisted.python.filepath import FilePath
-
-from flocker_bb import privateData
 # Some credentials
 USER = privateData['auth']['user'].encode("utf-8")
 PASSWORD = privateData['auth']['password'].encode("utf-8")
-
-from flocker_bb.zulip import createZulip
-from twisted.internet import reactor
 
 if 'zulip' in privateData:
     ZULIP_BOT = privateData['zulip']['user']
@@ -31,10 +45,6 @@ def maybeAddManhole(config, privateData):
         manhole = privateData['manhole']
     except KeyError:
         return
-
-    from tempfile import NamedTemporaryFile
-
-    from buildbot.manhole import AuthorizedKeysManhole
 
     with NamedTemporaryFile(delete=False) as authorized_keys:
         authorized_keys.write(
@@ -50,10 +60,6 @@ maybeAddManhole(c, privateData)
 # This must match the value configured into the buildslaves (with their
 # --master option)
 c['slavePortnum'] = 9989
-
-from flocker_bb.password import generate_password
-from flocker_bb.ec2 import rackspace_slave, ec2_slave
-from buildbot.buildslave import BuildSlave
 
 cloudInit = FilePath(__file__).sibling("slave").child(
     "cloud-init.sh").getContent()
@@ -152,11 +158,11 @@ for base, slaveConfig in privateData['slaves'].items():
         for index, password in enumerate(slaveConfig['passwords']):
             name = '%s/%d' % (base, index)
             if 'aws/rhel-7.2' in base:
-              # Use AWS RHEL buildslave as AWS CentOS buildslave.
-              if 'aws/centos-7' not in SLAVENAMES:
-                  SLAVENAMES['aws/centos-7'] = [name]
-              else:
-                  SLAVENAMES['aws/centos-7'].append(name)
+                # Use AWS RHEL buildslave as AWS CentOS buildslave.
+                if 'aws/centos-7' not in SLAVENAMES:
+                    SLAVENAMES['aws/centos-7'] = [name]
+                else:
+                    SLAVENAMES['aws/centos-7'].append(name)
             else:
                 SLAVENAMES[base] = [name]
             c['slaves'].append(BuildSlave(
@@ -176,13 +182,11 @@ FLOCKER_REPOSITORY = "git@github.com:ClusterHQ/flocker.git"
 CODEBASES = {
     FLOCKER_REPOSITORY: "flocker",
     "https://github.com/ClusterHQ/flocker": "flocker",
-    }
+}
 
 c['codebaseGenerator'] = lambda change: CODEBASES[change["repository"]]
 
 c['change_source'] = []
-
-from flocker_bb.builders import flocker, maint, flocker_acceptance
 
 c['builders'] = []
 c['schedulers'] = []
@@ -205,7 +209,6 @@ failing_builders = frozenset(privateData.get('failing_builders', ()))
 
 c['status'] = []
 
-from flocker_bb.github import createGithubStatus
 if privateData['github']['report_status']:
     c['status'].append(createGithubStatus(
         'flocker', token=privateData['github']['token'],
@@ -213,14 +216,7 @@ if privateData['github']['report_status']:
         ))
 
 
-from flocker_bb.monitoring import Monitor
 c['status'].append(Monitor())
-
-from flocker_bb.boxes import FlockerWebStatus as WebStatus
-from buildbot.status.web import authz
-from buildbot.status.web.auth import BasicAuth
-from twisted.python.util import sibpath
-import jinja2
 
 
 authz_cfg = authz.Authz(
@@ -248,7 +244,6 @@ c['status'].append(WebStatus(
 ))
 
 
-from flocker_bb.zulip_status import createZulipStatus
 if 'zulip' in privateData:
     ZULIP_STREAM = privateData['zulip'].get('stream', u"BuildBot")
     CRITICAL_STREAM = privateData['zulip'].get('critical_stream',

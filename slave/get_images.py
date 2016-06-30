@@ -1,3 +1,4 @@
+# Copyright ClusterHQ Inc.  See LICENSE file for details.
 """
 Command-line tool to facilitate manual testing of image discovery.
 

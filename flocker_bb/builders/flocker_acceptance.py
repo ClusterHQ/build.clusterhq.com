@@ -1,29 +1,33 @@
+# Copyright ClusterHQ Inc.  See LICENSE file for details.
 from urllib import quote
 
-from buildbot.steps.shell import ShellCommand, SetPropertyFromCommand
-from buildbot.process.properties import Interpolate, Property, renderer
-from buildbot.steps.python_twisted import Trial
-from buildbot.steps.trigger import Trigger
-from buildbot.steps.transfer import StringDownload
-from buildbot.interfaces import IBuildStepFactory
+from buildbot.config import BuilderConfig
+from buildbot.schedulers.forcesched import (
+    CodebaseParameter,
+    FixedParameter,
+    ForceScheduler,
+    StringParameter,
+)
+from buildbot.schedulers.triggerable import Triggerable
+from buildbot.process.properties import Interpolate, renderer
+from buildbot.locks import MasterLock
+from characteristic import attributes, Attribute
 
+from flocker_bb.builders.flocker import (
+    _flockerTests,
+    getFlockerFactory,
+    installDependencies,
+)
+from .flocker import OMNIBUS_DISTRIBUTIONS
 from ..steps import (
-    virtualenvBinary,
     GITHUB,
     buildbotURL,
-    MasterWriteFile, asJSON,
-    pip,
     flockerBranch,
-    resultPath, resultURL,
+    idleSlave,
+    report_expected_failures_parameter,
     slave_environ,
-    )
-
-# FIXME
-from flocker_bb.builders.flocker import (
-    check_version, installDependencies, _flockerTests, getFlockerFactory)
-
-
-from characteristic import attributes, Attribute
+    virtualenvBinary,
+)
 
 
 def dotted_version(version):
@@ -79,20 +83,6 @@ def run_acceptance_tests(configuration):
         ],
     ))
     return factory
-
-
-from buildbot.config import BuilderConfig
-from buildbot.schedulers.basic import AnyBranchScheduler
-from buildbot.schedulers.forcesched import (
-    CodebaseParameter, StringParameter, ForceScheduler, FixedParameter)
-from buildbot.schedulers.triggerable import Triggerable
-from buildbot.changes.filter import ChangeFilter
-
-
-from ..steps import idleSlave
-
-
-from buildbot.locks import MasterLock
 
 
 # Dictionary mapping providers for acceptence testing to a list of
@@ -171,10 +161,6 @@ BUILDERS = [
     configuration.builder_name
     for configuration in ACCEPTANCE_CONFIGURATIONS
 ]
-
-from ..steps import MergeForward, report_expected_failures_parameter
-
-from .flocker import OMNIBUS_DISTRIBUTIONS
 
 
 def getSchedulers():
