@@ -1,5 +1,9 @@
+# Copyright ClusterHQ Inc.  See LICENSE file for details.
 from twisted.python import log
 from twisted.internet import reactor
+
+from buildbot.process.buildrequestdistributor import BasicBuildChooser
+from buildbot.process.slavebuilder import AbstractSlaveBuilder
 
 
 def botmaster_maybeStartBuildsForSlave(self, slave_name):
@@ -17,16 +21,10 @@ def botmaster_maybeStartBuildsForSlave(self, slave_name):
     reactor.callLater(10, do_start)
 
 
-from buildbot.process.slavebuilder import AbstractSlaveBuilder
-
-
 def slavebuilder_buildStarted(self):
     AbstractSlaveBuilder.buildStarted(self)
     if self.slave and hasattr(self.slave, 'buildStarted'):
         self.slave.buildStarted(self)
-
-
-from buildbot.process.buildrequestdistributor import BasicBuildChooser
 
 
 class NoFallBackBuildChooser(BasicBuildChooser):

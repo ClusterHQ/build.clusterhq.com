@@ -64,7 +64,8 @@ Run ``python start-aws.py --help`` to see the available options to this command.
 
 Install pre-requisites and start Docker::
 
-   [aws]$ sudo yum install -y docker-io fabric git
+   [aws]$ sudo yum install -y fabric git
+   [aws]$ curl -sSL https://get.docker.com/ | sudo sh
    [aws]$ sudo setenforce 0
    [aws]$ sudo systemctl start docker
 
