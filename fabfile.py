@@ -5,7 +5,7 @@ import json
 
 # We assume we are running on a fedora 20 AWS image.
 # These are setup with an `fedora` user, so hard code that.
-env.user = 'centos'
+env.user = 'fedora'
 
 
 def cmd(*args):
@@ -29,7 +29,7 @@ def get_lastpass_config(key):
     return config
 
 
-def loadConfig(configFile, use_acceptance_config=False):
+def loadConfig(configFile, use_acceptance_config=True):
     """
     Load config.
 
